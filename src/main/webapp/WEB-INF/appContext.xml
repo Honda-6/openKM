@@ -19,7 +19,7 @@
   <beans:import resource="soap.xml"/>
   <beans:import resource="rest.xml"/>
   <beans:import resource="cmis.xml"/>
-  
+
   <!-- Swagger -->
   <beans:bean id="swagger2Feature" class="com.openkm.core.Swagger2Config" />
 
@@ -61,6 +61,10 @@
     <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
     <security:http-basic/>
   </security:http>
+
+  <security:authentication-manager>
+    <security:authentication-provider ref="keycloakAuthProvider"/>
+  </security:authentication-manager>
 
   <!-- Syndication using Basic authentication -->
   <security:http pattern="/feed/**" create-session="stateless">
@@ -130,10 +134,10 @@
       </beans:list>
     </beans:property>
   </beans:bean>
-
+  <context:property-placeholder location="classpath:application.properties" />
   <!-- Security access logger -->
   <beans:bean id="loggerListener" class="com.openkm.spring.LoggerListener"/>
-
+  <beans:bean id="keycloakAuthProvider" class="com.openkm.spring.KeycloakAuthenticationProvider"/>
   <jee:jndi-lookup id="dataSource" jndi-name="jdbc/OpenKMDS" resource-ref="true"/>
 
   <!-- Security configuration moved to $CATALINA_HOME/OpenKM.xml -->
