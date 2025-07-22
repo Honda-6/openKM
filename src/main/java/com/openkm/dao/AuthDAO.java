@@ -28,6 +28,7 @@ import com.openkm.dao.bean.QueryParams;
 import com.openkm.dao.bean.Role;
 import com.openkm.dao.bean.User;
 import com.openkm.spring.PrincipalUtils;
+import com.openkm.util.KeycloakUtils;
 import com.openkm.util.SecureStore;
 import org.hibernate.*;
 import org.slf4j.Logger;
@@ -56,13 +57,20 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
+			KeycloakUtils kcUtils = new KeycloakUtils();
+			kcUtils.createUser(user.getId(), user.getPassword());
 			user.setPassword(SecureStore.md5Encode(user.getPassword().getBytes()));
 			session.save(user);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException | NoSuchAlgorithmException e) {
 			HibernateUtil.rollback(tx);
 			throw new DatabaseException(e.getMessage(), e);
-		} finally {
+		} catch (Exception e) {
+			HibernateUtil.rollback(tx);
+			log.error(e.getMessage(), e);
+			throw new DatabaseException(e.getMessage(), e);
+		}
+		finally {
 			HibernateUtil.close(session);
 		}
 

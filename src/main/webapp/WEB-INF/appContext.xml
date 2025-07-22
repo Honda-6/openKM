@@ -137,6 +137,7 @@
   <context:property-placeholder location="classpath:application.properties" />
   <!-- Security access logger -->
   <beans:bean id="loggerListener" class="com.openkm.spring.LoggerListener"/>
+  <beans:bean id="keycloakUtils" class="com.openkm.util.KeycloakUtils"/>
   <beans:bean id="keycloakAuthProvider" class="com.openkm.spring.KeycloakAuthenticationProvider"/>
   <jee:jndi-lookup id="dataSource" jndi-name="jdbc/OpenKMDS" resource-ref="true"/>
 

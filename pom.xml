@@ -161,7 +161,7 @@
 <!--      <artifactId>keycloak-admin-client</artifactId>-->
 <!--      <version>26.0.6</version>-->
 <!--    </dependency>-->
-    
+
     <!-- Logback -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -879,6 +879,19 @@
       <artifactId>html5gwt</artifactId>
       <version>140127</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.5.13</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20210307</version>
+    </dependency>
+
   </dependencies>
 
   <build>
