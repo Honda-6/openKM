@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
@@ -256,10 +257,16 @@ public class AuthDAO {
 				qp.getShared().remove(usrId);
 				session.update(qp);
 			}
+			KeycloakUtils keycloakUtils = new KeycloakUtils();
+			keycloakUtils.deleteUser(user);
 
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
+			throw new DatabaseException(e.getMessage(), e);
+		} catch (IOException e){
+			HibernateUtil.rollback(tx);
+			log.error(e.getMessage(), e);
 			throw new DatabaseException(e.getMessage(), e);
 		} finally {
 			HibernateUtil.close(session);

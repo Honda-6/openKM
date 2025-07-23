@@ -2,12 +2,14 @@ package com.openkm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.Role;
 import com.openkm.dao.bean.User;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -25,6 +27,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -236,6 +239,41 @@ public class KeycloakUtils {
 			 CloseableHttpResponse response = client.execute(post)) {
 			if (response.getStatusLine().getStatusCode() != 204) {
 				throw new RuntimeException("Failed to assign client role: " + response.getStatusLine());
+			}
+		}
+	}
+	public void deleteUser(User user) throws IOException {
+		String token = getAccessToken("superuser", "sudo");
+		String internalUserId = getInternalUserId(token,user.getId());
+		deleteKCUser(token,internalUserId);
+	}
+	private void deleteKCUser(String token, String userId) throws IOException {
+		HttpDelete delete = new HttpDelete(kcBase + "/admin/realms/" + realmId + "/users/" + userId);
+		delete.setHeader("Authorization", "Bearer " + token);
+
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(delete)) {
+
+			int status = response.getStatusLine().getStatusCode();
+			if (status == 404) {
+				throw new RuntimeException("User not found.");
+			} else if(status != 204) {
+				throw new RemoteException("Failed to delete user: " + status + "\n" + EntityUtils.toString(response.getEntity()));
+			}
+		}
+	}
+	private String getInternalUserId(String token, String username) throws IOException {
+		HttpGet get = new HttpGet(kcBase + "/admin/realms/" + realmId + "/users?username=" + username);
+		get.setHeader("Authorization", "Bearer " + token);
+
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(get)) {
+
+			JSONArray users = new JSONArray(EntityUtils.toString(response.getEntity()));
+			if (users.length() > 0) {
+				return users.getJSONObject(0).getString("id");
+			} else {
+				throw new RuntimeException("User not found: " + username);
 			}
 		}
 	}
