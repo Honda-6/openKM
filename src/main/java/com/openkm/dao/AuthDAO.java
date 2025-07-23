@@ -62,7 +62,7 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			KeycloakUtils keycloakUtils = new KeycloakUtils();
+			KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
 			keycloakUtils.createUser(user);
 			user.setPassword(SecureStore.md5Encode(user.getPassword().getBytes()));
 			session.save(user);
@@ -257,7 +257,7 @@ public class AuthDAO {
 				qp.getShared().remove(usrId);
 				session.update(qp);
 			}
-			KeycloakUtils keycloakUtils = new KeycloakUtils();
+			KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
 			keycloakUtils.deleteUser(user);
 
 			HibernateUtil.commit(tx);

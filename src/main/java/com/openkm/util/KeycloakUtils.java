@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 @Component
 public class KeycloakUtils {
 
+	private static KeycloakUtils instance;
+
 	@Value("${tokenEndpoint}")
 	private String tokenEndpoint;
 
@@ -52,13 +54,11 @@ public class KeycloakUtils {
 	@Value("${realmId}")
 	private String realmId;
 
-	public KeycloakUtils() {
-		this.tokenEndpoint = "http://localhost:8080/realms/some-app/protocol/openid-connect/token";
-		this.realmId = "some-app";
-		this.kcBase = "http://localhost:8080/";
-		this.realmURL = "http://localhost:8080/realms/some-app/";
-		this.clientId = "some-api";
-		this.clientSecret = "So3uN7TUYHq3HVN8sdHuEpOeXpvfn5Gm";
+	public static KeycloakUtils getInstance(){
+		return instance;
+	}
+	private KeycloakUtils() {
+		instance = this;
 	}
 	private String getAccessToken(String username, String password) throws IOException {
 
