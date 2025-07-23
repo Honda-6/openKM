@@ -2,6 +2,7 @@ package com.openkm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openkm.dao.bean.User;
 import com.openkm.spring.PrincipalUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpPost;
@@ -16,6 +17,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.opensaml.xml.encryption.Public;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class KeycloakUtils {
+
 	@Value("${tokenEndpoint}")
 	private String tokenEndpoint;
 
@@ -50,15 +54,15 @@ public class KeycloakUtils {
 	@Value("${realmId}")
 	private String realmId;
 
-	public KeycloakUtils() {}
-
+	public KeycloakUtils() {
+		this.tokenEndpoint = "http://localhost:8080/realms/some-app/protocol/openid-connect/token";
+		this.realmId = "some-app";
+		this.kcBase = "http://localhost:8080/";
+		this.realmURL = "http://localhost:8080/realms/some-app/";
+		this.clientId = "some-api";
+		this.clientSecret = "So3uN7TUYHq3HVN8sdHuEpOeXpvfn5Gm";
+	}
 	private String getAccessToken(String username, String password) throws IOException {
-		System.out.println(clientId);
-		System.out.println(clientSecret);
-		System.out.println(tokenEndpoint);
-		System.out.println(realmURL);
-		System.out.println(kcBase);
-		System.out.println(realmId);
 
 		String urlParameters = "grant_type=password"
 			+ "&client_id=" + URLEncoder.encode(clientId, "UTF-8")
@@ -118,14 +122,29 @@ public class KeycloakUtils {
 		return authorities;
 	}
 
-	public void createUser(String username, String password) throws IOException {
-		String token = getAccessToken(PrincipalUtils.getUser(), PrincipalUtils.getAuthentication().getCredentials().toString());
+	public void createUser(User userDetails) throws IOException {
+		String token = getAccessToken("superuser", "sudo");
 		HttpPost post = new HttpPost(kcBase + "/admin/realms/" + realmId + "/users");
 		post.setHeader("Authorization", "Bearer " + token);
 		post.setHeader("Content-Type", "application/json");
 
 		JSONObject user = new JSONObject();
-		user.put("username", username);
+		String[] fullName = userDetails.getName().split(" ");
+
+		if(fullName.length > 0) {
+			user.put("firstName", fullName[0]);
+			if(fullName.length > 1) {
+				user.put("lastName", fullName[1]);
+			}else {
+				user.put("lastName","");
+			}
+		}
+		else {
+			user.put("firstName","");
+		}
+		user.put("username", userDetails.getId());
+		user.put("email", userDetails.getEmail());
+		user.put("emailVerified",true);
 		user.put("enabled", true);
 
 		post.setEntity(new StringEntity(user.toString()));
@@ -137,7 +156,7 @@ public class KeycloakUtils {
 				Header location = response.getFirstHeader("Location");
 				if (location != null) {
 					String userId = location.getValue().replaceAll(".*/", "");
-					setPassword(token, userId, password);
+					setPassword(token, userId, userDetails.getPassword());
 				}
 			} else {
 				System.out.println("Failed to create user: " + response.getStatusLine());

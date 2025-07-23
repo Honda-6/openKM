@@ -33,12 +33,16 @@ import com.openkm.util.SecureStore;
 import org.hibernate.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
+
 public class AuthDAO {
 	private static Logger log = LoggerFactory.getLogger(AuthDAO.class);
+
 
 	private AuthDAO() {
 	}
@@ -57,8 +61,8 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			KeycloakUtils kcUtils = new KeycloakUtils();
-			kcUtils.createUser(user.getId(), user.getPassword());
+			KeycloakUtils keycloakUtils = new KeycloakUtils();
+			keycloakUtils.createUser(user);
 			user.setPassword(SecureStore.md5Encode(user.getPassword().getBytes()));
 			session.save(user);
 			HibernateUtil.commit(tx);
