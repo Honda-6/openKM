@@ -2,27 +2,22 @@ package com.openkm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openkm.dao.bean.Role;
 import com.openkm.dao.bean.User;
-import com.openkm.spring.PrincipalUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
-import org.opensaml.xml.encryption.Public;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
@@ -134,7 +129,7 @@ public class KeycloakUtils {
 		if(fullName.length > 0) {
 			user.put("firstName", fullName[0]);
 			if(fullName.length > 1) {
-				user.put("lastName", fullName[1]);
+				user.put("lastName", fullName[fullName.length - 1]);
 			}else {
 				user.put("lastName","");
 			}
@@ -152,14 +147,14 @@ public class KeycloakUtils {
 		try (CloseableHttpClient client = HttpClients.createDefault();
 			 CloseableHttpResponse response = client.execute(post)) {
 			if (response.getStatusLine().getStatusCode() == 201) {
-				System.out.println("User created.");
 				Header location = response.getFirstHeader("Location");
 				if (location != null) {
 					String userId = location.getValue().replaceAll(".*/", "");
 					setPassword(token, userId, userDetails.getPassword());
+					createRole(userDetails,token,userId);
 				}
 			} else {
-				System.out.println("Failed to create user: " + response.getStatusLine());
+				System.err.println("Failed to create user: " + response.getStatusLine());
 			}
 		}
 	}
@@ -176,9 +171,72 @@ public class KeycloakUtils {
 
 		put.setEntity(new StringEntity(pwd.toString()));
 
+		try {
+			CloseableHttpClient client = HttpClients.createDefault();
+			client.execute(put);
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+			throw e;
+		}
+	}
+	private void createRole(User user, String token, String userId) throws IOException {
+		Collection<Role> roles = user.getRoles();
+		String roleName = "";
+		for (Role role : roles) {
+			if(role.getId().equals("ROLE_ADMIN")) {
+				roleName = "admin_role";
+				break;
+			}
+		}
+		if(roleName.isEmpty())
+			roleName = "user_role";
+		String clientInternalId = getClientUUID(token,this.clientId);
+		JSONObject keycloakRole = getClientRole(token,clientInternalId,roleName);
+		assignClientRoleToUser(token,userId,clientInternalId,keycloakRole);
+
+	}
+	private String getClientUUID(String token, String clientName) throws IOException {
+		HttpGet get = new HttpGet(kcBase + "/admin/realms/" + realmId + "/clients");
+		get.setHeader("Authorization", "Bearer " + token);
+
 		try (CloseableHttpClient client = HttpClients.createDefault();
-			 CloseableHttpResponse response = client.execute(put)) {
-			System.out.println("Password set: " + response.getStatusLine());
+			 CloseableHttpResponse response = client.execute(get)) {
+			JSONArray clients = new JSONArray(EntityUtils.toString(response.getEntity()));
+			for (int i = 0; i < clients.length(); i++) {
+				JSONObject c = clients.getJSONObject(i);
+				if (clientName.equals(c.getString("clientId"))) {
+					return c.getString("id");
+				}
+			}
+			throw new RuntimeException("Client not found: " + clientName);
+		}
+	}
+
+	private JSONObject getClientRole(String token, String clientUUID, String roleName) throws IOException {
+		HttpGet get = new HttpGet(kcBase + "/admin/realms/" + realmId + "/clients/" + clientUUID + "/roles/" + roleName);
+		get.setHeader("Authorization", "Bearer " + token);
+
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(get)) {
+			return new JSONObject(EntityUtils.toString(response.getEntity()));
+		}
+	}
+
+	private void assignClientRoleToUser(String token, String userId, String clientUUID, JSONObject role) throws IOException {
+		HttpPost post = new HttpPost(kcBase + "/admin/realms/" + realmId + "/users/" + userId + "/role-mappings/clients/" + clientUUID);
+		post.setHeader("Authorization", "Bearer " + token);
+		post.setHeader("Content-Type", "application/json");
+
+		JSONArray roles = new JSONArray();
+		roles.put(role);
+
+		post.setEntity(new StringEntity(roles.toString()));
+
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(post)) {
+			if (response.getStatusLine().getStatusCode() != 204) {
+				throw new RuntimeException("Failed to assign client role: " + response.getStatusLine());
+			}
 		}
 	}
 }
