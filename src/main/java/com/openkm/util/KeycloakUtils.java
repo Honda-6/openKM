@@ -2,7 +2,6 @@ package com.openkm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.Role;
 import com.openkm.dao.bean.User;
 import org.apache.http.Header;
@@ -58,7 +57,9 @@ public class KeycloakUtils {
 		return instance;
 	}
 	private KeycloakUtils() {
-		instance = this;
+		if(instance == null) {
+			instance = this;
+		}
 	}
 	private String getAccessToken(String username, String password) throws IOException {
 
