@@ -2,6 +2,7 @@ package com.openkm.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openkm.core.Config;
 import com.openkm.dao.bean.Role;
 import com.openkm.dao.bean.User;
 import org.apache.http.Header;
@@ -14,6 +15,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,6 +35,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class KeycloakUtils {
+
+	private static final Logger log = LoggerFactory.getLogger(KeycloakUtils.class);
 
 	private static KeycloakUtils instance;
 
@@ -106,18 +111,15 @@ public class KeycloakUtils {
 			}
 
 		} catch (Exception e) {
-			System.err.println(e.getMessage());
+			log.error(e.getMessage());
 			throw new AuthenticationServiceException(e.getMessage());
 		}
 
 
 		List<GrantedAuthority> authorities = new ArrayList<>();
+		if(roles.contains(Config.DEFAULT_ADMIN_ROLE))
+			authorities.add(new SimpleGrantedAuthority(Config.DEFAULT_ADMIN_ROLE));
 
-		for (String role : roles) {
-			if ("admin_role".equals(role)) {
-				authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-			}
-		}
 		return authorities;
 	}
 
@@ -158,7 +160,8 @@ public class KeycloakUtils {
 					createRole(userDetails,token,userId);
 				}
 			} else {
-				System.err.println("Failed to create user: " + response.getStatusLine());
+				log.error("Failed to create user: " + response.getStatusLine());
+				throw new RuntimeException("Error creating user");
 			}
 		}
 	}
@@ -179,7 +182,7 @@ public class KeycloakUtils {
 			CloseableHttpClient client = HttpClients.createDefault();
 			client.execute(put);
 		} catch (Exception e) {
-			System.err.println(e.getMessage());
+			log.error(e.getMessage());
 			throw e;
 		}
 	}
@@ -187,13 +190,13 @@ public class KeycloakUtils {
 		Collection<Role> roles = user.getRoles();
 		String roleName = "";
 		for (Role role : roles) {
-			if(role.getId().equals("ROLE_ADMIN")) {
-				roleName = "admin_role";
+			if(role.getId().equals(Config.DEFAULT_ADMIN_ROLE)) {
+				roleName = Config.DEFAULT_ADMIN_ROLE;
 				break;
 			}
 		}
 		if(roleName.isEmpty())
-			roleName = "user_role";
+			roleName = Config.DEFAULT_USER_ROLE;
 		String clientInternalId = getClientUUID(token,this.clientId);
 		JSONObject keycloakRole = getClientRole(token,clientInternalId,roleName);
 		assignClientRoleToUser(token,userId,clientInternalId,keycloakRole);
