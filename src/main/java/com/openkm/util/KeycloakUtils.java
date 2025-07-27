@@ -15,6 +15,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +33,23 @@ import java.net.URLEncoder;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.net.URI;
+
+
+class HttpDeleteWithBody extends HttpEntityEnclosingRequestBase {
+	public static final String METHOD_NAME = "DELETE";
+
+	public HttpDeleteWithBody(final String uri) {
+		super();
+		setURI(URI.create(uri));
+	}
+
+	@Override
+	public String getMethod() {
+		return METHOD_NAME;
+	}
+}
+
 
 @Component
 public class KeycloakUtils {
@@ -119,6 +137,8 @@ public class KeycloakUtils {
 		List<GrantedAuthority> authorities = new ArrayList<>();
 		if(roles.contains(Config.DEFAULT_ADMIN_ROLE))
 			authorities.add(new SimpleGrantedAuthority(Config.DEFAULT_ADMIN_ROLE));
+		else
+			authorities.add(new SimpleGrantedAuthority(Config.DEFAULT_USER_ROLE));
 
 		return authorities;
 	}
@@ -130,26 +150,11 @@ public class KeycloakUtils {
 		post.setHeader("Content-Type", "application/json");
 
 		JSONObject user = new JSONObject();
-		String[] fullName = userDetails.getName().split(" ");
-
-		if(fullName.length > 0) {
-			user.put("firstName", fullName[0]);
-			if(fullName.length > 1) {
-				user.put("lastName", fullName[fullName.length - 1]);
-			}else {
-				user.put("lastName","");
-			}
-		}
-		else {
-			user.put("firstName","");
-		}
-		user.put("username", userDetails.getId());
-		user.put("email", userDetails.getEmail());
+		setJSON(userDetails, user);
 		user.put("emailVerified",true);
 		user.put("enabled", true);
 
 		post.setEntity(new StringEntity(user.toString()));
-
 		try (CloseableHttpClient client = HttpClients.createDefault();
 			 CloseableHttpResponse response = client.execute(post)) {
 			if (response.getStatusLine().getStatusCode() == 201) {
@@ -166,6 +171,77 @@ public class KeycloakUtils {
 		}
 	}
 
+	public void updatePassword(String username, String newPassword) throws IOException {
+		String token = getAccessToken("superuser", "sudo");
+		String userInternalId = getInternalUserId(token, username);
+		setPassword(token, userInternalId, newPassword);
+	}
+
+	private void updateKCEmail(String token, String userInternalId, String email) throws IOException {
+		HttpPut put = new HttpPut(kcBase + "/admin/realms/" + realmId + "/users/" + userInternalId);
+		put.setHeader("Authorization", "Bearer " + token);
+		put.setHeader("Content-Type", "application/json");
+		JSONObject newData = new JSONObject();
+		newData.put("email", email);
+		put.setEntity(new StringEntity(newData.toString()));
+
+		try(CloseableHttpClient client = HttpClients.createDefault();
+			CloseableHttpResponse response = client.execute(put)){
+			if(response.getStatusLine().getStatusCode() != 204){
+				throw new RuntimeException("Failed to update user email: " + response.getStatusLine());
+			}
+		}
+	}
+
+	public void updateEmail(String username, String newEmail) throws IOException {
+		String token = getAccessToken("superuser", "sudo");
+		String userInternalId = getInternalUserId(token, username);
+		updateKCEmail(token, userInternalId, newEmail);
+
+	}
+
+	public void updateUserData(User userDetails) throws IOException {
+		String token = getAccessToken("superuser", "sudo");
+		String userInternalId = getInternalUserId(token, userDetails.getId());
+		HttpPut put = new HttpPut(kcBase + "/admin/realms/" + realmId + "/users/" + userInternalId);
+		put.setHeader("Authorization", "Bearer " + token);
+		put.setHeader("Content-Type", "application/json");
+
+		JSONObject user = new JSONObject();
+		setJSON(userDetails, user);
+
+		put.setEntity(new StringEntity(user.toString()));
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(put)) {
+			if (response.getStatusLine().getStatusCode() == 204) {
+				removeAllClientRolesFromUser(token, userInternalId);
+				createRole(userDetails,token,userInternalId);
+			} else {
+				log.error("Failed to update user data: {}", response.getStatusLine());
+				throw new RuntimeException("Error updating user");
+			}
+		}
+
+	}
+
+	private void setJSON(User userDetails, JSONObject user) {
+		String[] fullName = userDetails.getName().split(" ");
+
+		if(fullName.length > 0) {
+			user.put("firstName", fullName[0]);
+			if(fullName.length > 1) {
+				user.put("lastName", fullName[fullName.length - 1]);
+			}else {
+				user.put("lastName","");
+			}
+		}
+		else {
+			user.put("firstName","");
+		}
+		user.put("username", userDetails.getId());
+		user.put("email", userDetails.getEmail());
+	}
+
 	private void setPassword(String token, String userId, String password) throws IOException {
 		HttpPut put = new HttpPut(kcBase + "/admin/realms/" + realmId + "/users/" + userId + "/reset-password");
 		put.setHeader("Authorization", "Bearer " + token);
@@ -178,14 +254,14 @@ public class KeycloakUtils {
 
 		put.setEntity(new StringEntity(pwd.toString()));
 
-		try {
-			CloseableHttpClient client = HttpClients.createDefault();
-			client.execute(put);
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			throw e;
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(put)) {
+			if (response.getStatusLine().getStatusCode() != 204) {
+				throw new RuntimeException("Failed to set password: " + response.getStatusLine());
+			}
 		}
 	}
+
 	private void createRole(User user, String token, String userId) throws IOException {
 		Collection<Role> roles = user.getRoles();
 		String roleName = "";
@@ -246,11 +322,13 @@ public class KeycloakUtils {
 			}
 		}
 	}
+
 	public void deleteUser(User user) throws IOException {
 		String token = getAccessToken("superuser", "sudo");
 		String internalUserId = getInternalUserId(token,user.getId());
 		deleteKCUser(token,internalUserId);
 	}
+
 	private void deleteKCUser(String token, String userId) throws IOException {
 		HttpDelete delete = new HttpDelete(kcBase + "/admin/realms/" + realmId + "/users/" + userId);
 		delete.setHeader("Authorization", "Bearer " + token);
@@ -281,4 +359,38 @@ public class KeycloakUtils {
 			}
 		}
 	}
+	private void removeAllClientRolesFromUser(String token, String userId) throws IOException {
+		String clientUUID = getClientUUID(token,clientId);
+		HttpGet get = new HttpGet(kcBase + "/admin/realms/" + realmId + "/users/" + userId + "/role-mappings/clients/" + clientUUID);
+		get.setHeader("Authorization", "Bearer " + token);
+
+		JSONArray assignedRoles;
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(get)) {
+
+			int status = response.getStatusLine().getStatusCode();
+			if (status != 200) {
+				throw new RuntimeException("Failed to get assigned client roles: " + status);
+			}
+			assignedRoles = new JSONArray(EntityUtils.toString(response.getEntity()));
+		}
+
+		if (assignedRoles.isEmpty()) {
+			return;
+		}
+
+		HttpDeleteWithBody delete = new HttpDeleteWithBody(kcBase + "/admin/realms/" + realmId + "/users/" + userId + "/role-mappings/clients/" + clientUUID);
+		delete.setHeader("Authorization", "Bearer " + token);
+		delete.setHeader("Content-Type", "application/json");
+		delete.setEntity(new StringEntity(assignedRoles.toString()));
+
+		try (CloseableHttpClient client = HttpClients.createDefault();
+			 CloseableHttpResponse response = client.execute(delete)) {
+
+			if (response.getStatusLine().getStatusCode() != 204) {
+				throw new RuntimeException("Failed to remove client roles: " + response.getStatusLine());
+			}
+		}
+	}
+
 }

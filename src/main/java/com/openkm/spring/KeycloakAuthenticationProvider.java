@@ -8,8 +8,6 @@ import org.springframework.security.core.*;
 import org.springframework.stereotype.Component;
 
 
-import java.util.*;
-
 @Component
 public class KeycloakAuthenticationProvider implements AuthenticationProvider {
 
@@ -19,11 +17,7 @@ public class KeycloakAuthenticationProvider implements AuthenticationProvider {
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 		String username = authentication.getName();
 		String password = authentication.getCredentials().toString();
-		List<GrantedAuthority> authorities = keycloakUtils.getAuthorities(username, password);
-
-		if(authorities.isEmpty())
-			throw new AuthenticationServiceException("Unauthorized user or user not found");
-		return new UsernamePasswordAuthenticationToken(username, password, authorities);
+		return new UsernamePasswordAuthenticationToken(username, password, keycloakUtils.getAuthorities(username, password));
 	}
 
 	@Override

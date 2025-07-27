@@ -51,7 +51,7 @@ public class AuthDAO {
 	 */
 	public static void createUser(User user) throws DatabaseException, AccessDeniedException {
 		log.debug("createUser({})", user);
-		// Check if user has enought grants for the action
+		// Check if user has enough grants for the action
 		checkAccessGrants(null);
 
 		Session session = null;
@@ -65,15 +65,11 @@ public class AuthDAO {
 			user.setPassword(SecureStore.md5Encode(user.getPassword().getBytes()));
 			session.save(user);
 			HibernateUtil.commit(tx);
-		} catch (HibernateException | NoSuchAlgorithmException e) {
-			HibernateUtil.rollback(tx);
-			throw new DatabaseException(e.getMessage(), e);
-		} catch (Exception e) {
+		} catch (HibernateException | NoSuchAlgorithmException | IOException e) {
 			HibernateUtil.rollback(tx);
 			log.error(e.getMessage(), e);
 			throw new DatabaseException(e.getMessage(), e);
-		}
-		finally {
+		} finally {
 			HibernateUtil.close(session);
 		}
 
@@ -97,12 +93,15 @@ public class AuthDAO {
 			tx = session.beginTransaction();
 			Query q = session.createQuery(qs);
 			q.setParameter("id", user.getId());
+			KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
+			keycloakUtils.updateUserData(user);
 			String password = (String) q.setMaxResults(1).uniqueResult();
 			user.setPassword(password);
 			session.update(user);
 			HibernateUtil.commit(tx);
-		} catch (HibernateException e) {
+		} catch (HibernateException | IOException e) {
 			HibernateUtil.rollback(tx);
+			log.error(e.getMessage(), e);
 			throw new DatabaseException(e.getMessage(), e);
 		} finally {
 			HibernateUtil.close(session);
@@ -156,6 +155,8 @@ public class AuthDAO {
 		try {
 			if (usrPassword != null && usrPassword.trim().length() > 0) {
 				session = HibernateUtil.getSessionFactory().openSession();
+				KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
+				keycloakUtils.updatePassword(usrId,usrPassword);
 				tx = session.beginTransaction();
 				Query q = session.createQuery(qs);
 				q.setString("password", SecureStore.md5Encode(usrPassword.getBytes()));
@@ -163,8 +164,9 @@ public class AuthDAO {
 				q.executeUpdate();
 				HibernateUtil.commit(tx);
 			}
-		} catch (HibernateException | NoSuchAlgorithmException e) {
+		} catch (HibernateException | NoSuchAlgorithmException | IOException e) {
 			HibernateUtil.rollback(tx);
+			log.error(e.getMessage(), e);
 			throw new DatabaseException(e.getMessage(), e);
 		} finally {
 			HibernateUtil.close(session);
@@ -193,10 +195,13 @@ public class AuthDAO {
 				q.setString("email", usrEmail);
 				q.setString("id", usrId);
 				q.executeUpdate();
+				KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
+				keycloakUtils.updateEmail(usrId,usrEmail);
 				HibernateUtil.commit(tx);
 			}
-		} catch (HibernateException e) {
+		} catch (HibernateException | IOException e) {
 			HibernateUtil.rollback(tx);
+			log.error(e.getMessage(), e);
 			throw new DatabaseException(e.getMessage(), e);
 		} finally {
 			HibernateUtil.close(session);
@@ -259,10 +264,7 @@ public class AuthDAO {
 			keycloakUtils.deleteUser(user);
 
 			HibernateUtil.commit(tx);
-		} catch (HibernateException e) {
-			HibernateUtil.rollback(tx);
-			throw new DatabaseException(e.getMessage(), e);
-		} catch (IOException e){
+		} catch (HibernateException | IOException e) {
 			HibernateUtil.rollback(tx);
 			log.error(e.getMessage(), e);
 			throw new DatabaseException(e.getMessage(), e);
