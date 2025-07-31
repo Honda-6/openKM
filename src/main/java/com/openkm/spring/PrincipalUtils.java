@@ -32,10 +32,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * http://www.mkyong.com/spring-security/get-current-logged-in-username-in-spring-security/
@@ -82,17 +79,18 @@ public class PrincipalUtils {
 	public static boolean hasRole(String role) {
 		Authentication auth = getAuthentication();
 
-		if (auth != null) {
-			UserDetails user = (UserDetails) auth.getPrincipal();
+		if (auth == null) return false;
 
-			for (GrantedAuthority ga : user.getAuthorities()) {
-				if (ga.getAuthority().equals(role)) {
-					return true;
-				}
-			}
+		Object principal = auth.getPrincipal();
+		Collection<? extends GrantedAuthority> authorities;
+
+		if (principal instanceof UserDetails) {
+			authorities = ((UserDetails) principal).getAuthorities();
+		} else {
+			authorities = auth.getAuthorities(); // fallback if principal is just a string
 		}
 
-		return false;
+		return authorities != null && authorities.contains(new SimpleGrantedAuthority(role));
 	}
 
 	/**
