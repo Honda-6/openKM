@@ -12,23 +12,18 @@ public class DeleteDocumentActionHandler implements ActionHandler {
 
 	@Override
 	public void execute(ExecutionContext context) throws Exception {
-		String path = (String) context.getContextInstance().getVariable("document");
+		String uuid = (String) context.getContextInstance().getVariable("uuid");
 		try {
-
-			if (path == null) {
-				String uuid = (String) context.getContextInstance().getVariable("uuid");
-				if (uuid != null) {
-					Document doc = OKMDocument.getInstance().getProperties(null, uuid);
-					path = doc.getPath();
-				} else {
-					throw new RuntimeException("Missing 'document' and 'uuid' workflow variables.");
-				}
+			if (uuid != null) {
+				Document doc = OKMDocument.getInstance().getProperties(null, uuid);
+				OKMDocument.getInstance().purge(null, doc.getPath());
+			} else {
+				throw new RuntimeException("Missing 'document' and 'uuid' workflow variables.");
 			}
-			OKMDocument.getInstance().purge(null, path);
 		} catch (PathNotFoundException e) {
 			throw new RuntimeException("File not found!", e);
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to delete document: " + path, e);
+			throw new RuntimeException("Failed to delete document", e);
 		}
 	}
 }
