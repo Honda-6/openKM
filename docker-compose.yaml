@@ -1,0 +1,42 @@
+services:
+  openkm:
+    build:
+      context: .
+    image: okm:latest
+    container_name: openkm
+    ports:
+      - "8082:8080"
+    environment:
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REALM_URL=${REALM_URL}
+      - TOKEN_ENDPOINT=${TOKEN_ENDPOINT}
+      - KEYCLOAK_BASE=${KEYCLOAK_BASE}
+      - CLIENT_ID=${CLIENT_ID}
+      - REALM_ID=${REALM_ID}
+    volumes:
+      - ${OPENKM_HOME}/backup/server.xml:/usr/local/tomcat/conf/server.xml
+      - ${OPENKM_HOME}/backup/OpenKM.cfg:/usr/local/tomcat/OpenKM.cfg
+      - ${OPENKM_HOME}/tomcat_home/logback.xml:/usr/local/tomcat/logback.xml
+    networks:
+      - linkdevkeycloak_keycloak-net
+      # Connect to Keycloak container's network to avoid hardcoding localhost's ip address to access the API endpoints
+  mssqlokm:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: mssql-okm
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: ${OKM_DB_PASS}
+      MSSQL_PID: Express
+    ports:
+      - "1435:1433"
+    networks:
+      - linkdevkeycloak_keycloak-net
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U ${OKM_DB_USER} -P ${OKM_DB_PASS} -Q 'SELECT 1' -C" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+networks:
+  linkdevkeycloak_keycloak-net:
+    external: true

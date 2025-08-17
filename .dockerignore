@@ -1,0 +1,8 @@
+target/OpenKM
+target/test-classes
+target/maven-status
+target/maven-archiver
+target/gwt-unitCache
+target/generated-sources
+target/generated-test-sources
+target/.generated
