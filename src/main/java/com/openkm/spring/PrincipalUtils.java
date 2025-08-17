@@ -32,10 +32,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * http://www.mkyong.com/spring-security/get-current-logged-in-username-in-spring-security/
@@ -79,22 +76,41 @@ public class PrincipalUtils {
 	/**
 	 * Check for role
 	 */
+//	public static boolean hasRole(String role) {
+//		Authentication auth = getAuthentication();
+//
+//		if (auth != null) {
+//			UserDetails user = (UserDetails) auth.getPrincipal();
+//
+//			for (GrantedAuthority ga : user.getAuthorities()) {
+//				if (ga.getAuthority().equals(role)) {
+//					return true;
+//				}
+//			}
+//		}
+//
+//		return false;
+//	}
+	/**
+		* The previous function throws a runtime error when returning a principal object because it may return
+		* a principal of type string (username) and not UserDetails thus leading to ClassCastError
+	 **/
 	public static boolean hasRole(String role) {
-		Authentication auth = getAuthentication();
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth == null) return false;
 
-		if (auth != null) {
-			UserDetails user = (UserDetails) auth.getPrincipal();
+		Object principal = auth.getPrincipal();
+		Collection<? extends GrantedAuthority> authorities;
 
-			for (GrantedAuthority ga : user.getAuthorities()) {
-				if (ga.getAuthority().equals(role)) {
-					return true;
-				}
-			}
+		if (principal instanceof UserDetails) {
+			authorities = ((UserDetails) principal).getAuthorities();
+		} else {
+			authorities = auth.getAuthorities();
+			// fallback if principal is just a string and return the list of roles within GrantedAuthority Objects
 		}
 
-		return false;
+		return authorities != null && authorities.contains(new SimpleGrantedAuthority(role));
 	}
-
 	/**
 	 * Get Authentication by token and also set it as current Authentication.
 	 */
