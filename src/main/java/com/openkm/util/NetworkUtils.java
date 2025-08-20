@@ -45,11 +45,11 @@ public class NetworkUtils {
 		Name name = ReverseMap.fromAddress(hostIp);
 		int type = Type.PTR;
 		int dclass = DClass.IN;
-		Record rec = Record.newRecord(name, type, dclass);
+		org.xbill.DNS.Record rec = org.xbill.DNS.Record.newRecord(name, type, dclass);
 		Message query = Message.newQuery(rec);
 		Message response = res.send(query);
 
-		Record[] answers = response.getSectionArray(Section.ANSWER);
+		org.xbill.DNS.Record[] answers = response.getSectionArray(Section.ANSWER);
 		if (answers.length == 0)
 			return hostIp;
 		else

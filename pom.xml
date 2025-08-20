@@ -52,11 +52,11 @@
 
   <properties>
     <!-- Using this GWT version -->
-    <gwt.version>2.8.2</gwt.version>
+    <gwt.version>2.9.0</gwt.version>
 
     <!-- Using this Spring version -->
-    <spring.version>3.2.18.RELEASE</spring.version>
-    <spring.security.version>3.2.10.RELEASE</spring.security.version>
+    <spring.version>5.3.39</spring.version>
+    <spring.security.version>5.3.13.RELEASE</spring.security.version>
 
     <!-- Apache CXF -->
     <cxf.version>3.2.6</cxf.version>
@@ -77,10 +77,10 @@
     <opencmis.version>0.12.0</opencmis.version>
 
     <!-- Tell the compiler we can use 1.8 -->
-    <java.version>1.8</java.version>
-    <java.compiler>1.8</java.compiler>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <java.version>11</java.version>
+    <java.compiler>21</java.compiler>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
 
     <!-- Default source encoding ${default.encoding} -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -891,7 +891,13 @@
       <artifactId>json</artifactId>
       <version>20210307</version>
     </dependency>
-
+<!--  <MIGRATION>-->
+    <dependency>
+      <groupId>com.sun.xml.ws</groupId>
+      <artifactId>jaxws-rt</artifactId>
+      <version>2.3.3</version>
+      <type>pom</type>
+    </dependency>
   </dependencies>
 
   <build>
@@ -1020,7 +1026,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-war-plugin</artifactId>
-            <version>2.1.1</version>
+            <version>3.3.2</version>
             <configuration>
               <!-- http://ykyuen.wordpress.com/2009/10/30/maven-dependency-on-jarwar-package -->
               <attachClasses>true</attachClasses>
