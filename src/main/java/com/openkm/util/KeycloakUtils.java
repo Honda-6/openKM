@@ -120,7 +120,7 @@ public class KeycloakUtils {
 			String payload = new String(Base64.getDecoder().decode(parts[1]), "UTF-8");
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode tokenJson = mapper.readTree(payload);
-			JsonNode rolesNode = tokenJson.path("resource_access").path("some-api").path("roles");
+			JsonNode rolesNode = tokenJson.path("resource_access").path(this.clientId).path("roles");
 
 			if (rolesNode.isArray()) {
 				for (JsonNode role : rolesNode) {
