@@ -33,113 +33,56 @@
 
   <security:global-method-security secured-annotations="enabled"/>
 
-  <!-- Remove prefix to be able of use custom roles -->
-  <beans:bean id="roleVoter" class="org.springframework.security.access.vote.RoleVoter">
-    <beans:property name="rolePrefix" value="ROLE_"/>
-  </beans:bean>
+<!--  &lt;!&ndash; REST &ndash;&gt;-->
+<!--  <security:http pattern="/services/rest/**" create-session="stateless">-->
+<!--    <security:intercept-url pattern="/**" access="isAuthenticated()"/>-->
+<!--    <security:http-basic/>-->
+<!--  </security:http>-->
 
-  <!-- Status -->
-  <security:http pattern="/Status" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
+<!--  &lt;!&ndash; Additional filter chain for normal users, matching all other requests &ndash;&gt;-->
+<!--  &lt;!&ndash; http://info.michael-simons.eu/2011/01/28/disable-jsessionid-path-parameter-in-java-web-applications/ &ndash;&gt;-->
+<!--  <security:http access-decision-manager-ref="accessDecisionManager">-->
+<!--    <security:csrf disabled="true"/>-->
+<!--    &lt;!&ndash; GWT &ndash;&gt;-->
+<!--    <security:intercept-url pattern="/frontend/**" access="isAuthenticated()"/>-->
 
-  <!-- Download -->
-  <security:http pattern="/Download" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
+<!--    &lt;!&ndash; JSPs &ndash;&gt;-->
+<!--    <security:intercept-url pattern="/login.jsp" access="isAnonymous()"/>-->
+<!--    <security:intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/>-->
+<!--    <security:intercept-url pattern="/mobile/**" access="isAuthenticated()"/>-->
 
-  <!-- Workflow deploy -->
-  <security:http pattern="/workflow-register" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
+<!--    &lt;!&ndash; Servlets &ndash;&gt;-->
+<!--    <security:intercept-url pattern="/RepositoryStartup" access="isAuthenticated()"/>-->
+<!--    <security:intercept-url pattern="/TextToSpeech" access="isAuthenticated()"/>-->
+<!--    <security:intercept-url pattern="/HtmlPreview" access="isAuthenticated()"/>-->
+<!--    <security:intercept-url pattern="/SyntaxHighlighter" access="isAuthenticated()"/>-->
+<!--    <security:intercept-url pattern="/Test" access="isAuthenticated()"/>-->
 
-  <!-- WebDAV using Basic authentication -->
-  <security:http pattern="/webdav/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
+<!--    &lt;!&ndash; Extensions &ndash;&gt;-->
+<!--    <security:intercept-url pattern="/extension/ZohoFileUpload" access="isAnonymous()"/>-->
+<!--    <security:intercept-url pattern="/extension/**" access="isAuthenticated()"/>-->
 
-  <security:authentication-manager>
-    <security:authentication-provider ref="keycloakAuthProvider"/>
-  </security:authentication-manager>
+<!--    &lt;!&ndash; Login page &ndash;&gt;-->
+<!--    <security:form-login login-page="/login.jsp"-->
+<!--                         authentication-failure-url="/login.jsp?error=1"-->
+<!--                         login-processing-url="/j_spring_security_check"-->
+<!--                         username-parameter="j_username"-->
+<!--                         password-parameter="j_password"/>-->
 
-  <!-- Syndication using Basic authentication -->
-  <security:http pattern="/feed/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
+<!--    <security:access-denied-handler error-page="/unauthorized.jsp" />-->
 
-  <!-- OpenCMIS (Browser) using Basic authentication -->
-  <security:http pattern="/cmis/browser/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
+<!--  </security:http>-->
 
-  <!-- OpenCMIS (AtomPub) using Basic authentication -->
-  <security:http pattern="/cmis/atom/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- OpenCMIS (AtomPub) using Basic authentication -->
-  <security:http pattern="/cmis/atom11/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- REST -->
-  <security:http pattern="/services/rest/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="isAuthenticated()"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- Additional filter chain for normal users, matching all other requests -->
-  <!-- http://info.michael-simons.eu/2011/01/28/disable-jsessionid-path-parameter-in-java-web-applications/ -->
-  <security:http access-decision-manager-ref="accessDecisionManager">
-    <security:csrf disabled="true"/>
-    <!-- GWT -->
-    <security:intercept-url pattern="/frontend/**" access="isAuthenticated()"/>
-
-    <!-- JSPs -->
-    <security:intercept-url pattern="/login.jsp" access="isAnonymous()"/>
-    <security:intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/>
-    <security:intercept-url pattern="/mobile/**" access="isAuthenticated()"/>
-
-    <!-- Servlets -->
-    <security:intercept-url pattern="/RepositoryStartup" access="isAuthenticated()"/>
-    <security:intercept-url pattern="/TextToSpeech" access="isAuthenticated()"/>
-    <security:intercept-url pattern="/HtmlPreview" access="isAuthenticated()"/>
-    <security:intercept-url pattern="/SyntaxHighlighter" access="isAuthenticated()"/>
-    <security:intercept-url pattern="/Test" access="isAuthenticated()"/>
-
-    <!-- Extensions -->
-    <security:intercept-url pattern="/extension/ZohoFileUpload" access="isAnonymous()"/>
-    <security:intercept-url pattern="/extension/**" access="isAuthenticated()"/>
-
-    <!-- Login page -->
-    <security:form-login login-page="/login.jsp"
-                         authentication-failure-url="/login.jsp?error=1"
-                         login-processing-url="/j_spring_security_check"
-                         username-parameter="j_username"
-                         password-parameter="j_password"/>
-
-    <security:access-denied-handler error-page="/unauthorized.jsp" />
-
-  </security:http>
-
-  <!-- Needed for changing default role prefix -->
-  <beans:bean id="accessDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">
-    <beans:constructor-arg>
-      <beans:list>
-        <beans:bean class="org.springframework.security.web.access.expression.WebExpressionVoter"/>
-        <beans:ref bean="roleVoter"/>
-        <beans:bean class="org.springframework.security.access.vote.AuthenticatedVoter"/>
-      </beans:list>
-    </beans:constructor-arg>
-  </beans:bean>
+<!--  &lt;!&ndash; Needed for changing default role prefix &ndash;&gt;-->
+<!--  <beans:bean id="accessDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">-->
+<!--    <beans:constructor-arg>-->
+<!--      <beans:list>-->
+<!--        <beans:bean class="org.springframework.security.web.access.expression.WebExpressionVoter"/>-->
+<!--        <beans:ref bean="roleVoter"/>-->
+<!--        <beans:bean class="org.springframework.security.access.vote.AuthenticatedVoter"/>-->
+<!--      </beans:list>-->
+<!--    </beans:constructor-arg>-->
+<!--  </beans:bean>-->
   <context:property-placeholder location="classpath:application.properties" />
   <!-- Security access logger -->
   <beans:bean id="loggerListener" class="com.openkm.spring.LoggerListener"/>
