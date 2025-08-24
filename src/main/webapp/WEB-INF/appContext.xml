@@ -33,47 +33,7 @@
 
   <security:global-method-security secured-annotations="enabled"/>
 
-<!--  &lt;!&ndash; REST &ndash;&gt;-->
-<!--  <security:http pattern="/services/rest/**" create-session="stateless">-->
-<!--    <security:intercept-url pattern="/**" access="isAuthenticated()"/>-->
-<!--    <security:http-basic/>-->
-<!--  </security:http>-->
-
-<!--  &lt;!&ndash; Additional filter chain for normal users, matching all other requests &ndash;&gt;-->
-<!--  &lt;!&ndash; http://info.michael-simons.eu/2011/01/28/disable-jsessionid-path-parameter-in-java-web-applications/ &ndash;&gt;-->
-<!--  <security:http access-decision-manager-ref="accessDecisionManager">-->
-<!--    <security:csrf disabled="true"/>-->
-<!--    &lt;!&ndash; GWT &ndash;&gt;-->
-<!--    <security:intercept-url pattern="/frontend/**" access="isAuthenticated()"/>-->
-
-<!--    &lt;!&ndash; JSPs &ndash;&gt;-->
-<!--    <security:intercept-url pattern="/login.jsp" access="isAnonymous()"/>-->
-<!--    <security:intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/>-->
-<!--    <security:intercept-url pattern="/mobile/**" access="isAuthenticated()"/>-->
-
-<!--    &lt;!&ndash; Servlets &ndash;&gt;-->
-<!--    <security:intercept-url pattern="/RepositoryStartup" access="isAuthenticated()"/>-->
-<!--    <security:intercept-url pattern="/TextToSpeech" access="isAuthenticated()"/>-->
-<!--    <security:intercept-url pattern="/HtmlPreview" access="isAuthenticated()"/>-->
-<!--    <security:intercept-url pattern="/SyntaxHighlighter" access="isAuthenticated()"/>-->
-<!--    <security:intercept-url pattern="/Test" access="isAuthenticated()"/>-->
-
-<!--    &lt;!&ndash; Extensions &ndash;&gt;-->
-<!--    <security:intercept-url pattern="/extension/ZohoFileUpload" access="isAnonymous()"/>-->
-<!--    <security:intercept-url pattern="/extension/**" access="isAuthenticated()"/>-->
-
-<!--    &lt;!&ndash; Login page &ndash;&gt;-->
-<!--    <security:form-login login-page="/login.jsp"-->
-<!--                         authentication-failure-url="/login.jsp?error=1"-->
-<!--                         login-processing-url="/j_spring_security_check"-->
-<!--                         username-parameter="j_username"-->
-<!--                         password-parameter="j_password"/>-->
-
-<!--    <security:access-denied-handler error-page="/unauthorized.jsp" />-->
-
-<!--  </security:http>-->
-
-<!--  &lt;!&ndash; Needed for changing default role prefix &ndash;&gt;-->
+  <!-- Needed for changing default role prefix -->
 <!--  <beans:bean id="accessDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">-->
 <!--    <beans:constructor-arg>-->
 <!--      <beans:list>-->
@@ -86,7 +46,7 @@
   <context:property-placeholder location="classpath:application.properties" />
   <!-- Security access logger -->
   <beans:bean id="loggerListener" class="com.openkm.spring.LoggerListener"/>
-  <beans:bean id="keycloakUtils" class="com.openkm.util.KeycloakUtils"/>
+  <!-- <beans:bean id="keycloakUtils" class="com.openkm.util.KeycloakUtils"/> -->
   <beans:bean id="keycloakAuthProvider" class="com.openkm.spring.KeycloakAuthenticationProvider"/>
   <jee:jndi-lookup id="dataSource" jndi-name="jdbc/OpenKMDS" resource-ref="true"/>
   <!-- Security configuration moved to $CATALINA_HOME/OpenKM.xml -->

@@ -36,7 +36,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.antMatchers("/services/rest/**").authenticated()
 			.antMatchers("/frontend/**").authenticated()
 			.antMatchers("/login.jsp").anonymous()
-			.antMatchers("/admin/**").hasRole("ADMIN")
+			.antMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
 			.antMatchers("/mobile/**").authenticated()
 			.antMatchers("/RepositoryStartup").authenticated()
 			.antMatchers("/TextToSpeech").authenticated()
@@ -56,6 +56,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.passwordParameter("j_password")
 			.and()
 			.exceptionHandling()
-			.accessDeniedPage("/unauthorized.jsp");
+			.accessDeniedPage("/unauthorized.jsp")
+			.and()
+			.headers().frameOptions().sameOrigin();
 	}
 }
