@@ -373,7 +373,7 @@ public class StartUp implements HasWidgetHandlerExtension, HasWidgetEvent {
 			}
 		};
 
-		keepAlive.scheduleRepeating(new Double(scheduleTime).intValue()); // 15 min
+		keepAlive.scheduleRepeating(Double.valueOf(scheduleTime).intValue()); // 15 min
 	}
 
 	/**

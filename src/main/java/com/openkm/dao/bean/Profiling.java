@@ -21,23 +21,17 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Index;
-import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Calendar;
 
 @Entity
-@Table(name = "OKM_PROFILING")
-@org.hibernate.annotations.Table(appliesTo = "OKM_PROFILING",
-		indexes = {
-				// CREATE INDEX IDX_PROFILING_DATCLS ON OKM_PROFILING(PRL_DATE, PRL_CLAZZ);
-				@Index(name = "IDX_PROFILING_DATCLS", columnNames = {"PRL_DATE", "PRL_CLAZZ"}),
-				// CREATE INDEX IDX_PROFILING_USRCLS ON OKM_PROFILING(PRL_USER, PRL_CLAZZ);
-				@Index(name = "IDX_PROFILING_USRCLS", columnNames = {"PRL_USER", "PRL_CLAZZ"})
-		}
-)
+@Table(name = "OKM_PROFILING",
+	indexes = {
+		@Index(name = "IDX_PROFILING_DATCLS", columnList = "PRL_DATE, PRL_CLAZZ"),
+		@Index(name = "IDX_PROFILING_USRCLS", columnList = "PRL_USER, PRL_CLAZZ"),
+		@Index(name = "IDX_PROFILING_DATE", columnList = "PRL_DATE")
+	})
 public class Profiling implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private static final int MAX_LENGTH = 4000;
@@ -48,8 +42,6 @@ public class Profiling implements Serializable {
 	private long id;
 
 	@Column(name = "PRL_DATE")
-	// CREATE INDEX IDX_PROFILING_DATE ON OKM_PROFILING(PRL_DATE);
-	@Index(name = "IDX_PROFILING_DATE")
 	private Calendar date;
 
 	@Column(name = "PRL_USER", length = 64)
@@ -71,7 +63,6 @@ public class Profiling implements Serializable {
 
 	@Column(name = "PRL_TRACE")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String trace;
 
 	public long getId() {

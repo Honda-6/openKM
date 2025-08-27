@@ -59,7 +59,7 @@ public class CacheProvider {
 				}
 
 				CacheManager manager = CacheManager.create(is);
-				log.info("Cache disk store path: {}", manager.getDiskStorePath());
+				log.info("Cache disk store path: {}", manager.getName());
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
 			} finally {

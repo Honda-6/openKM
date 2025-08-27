@@ -270,7 +270,7 @@ public class SecurityUser extends Composite {
 				authService.grantUser(uuid, user.getId(), GWTPermission.READ,
 						Main.get().securityPopup.recursive.getValue(), new AsyncCallback<Object>() {
 							public void onSuccess(Object result) {
-								assignedUser.addRow(user, new Integer(GWTPermission.READ), false);
+								assignedUser.addRow(user, Integer.valueOf(GWTPermission.READ), false);
 								unassignedUser.removeSelectedRow();
 								Main.get().securityPopup.status.unsetFlag_update();
 							}
@@ -283,7 +283,7 @@ public class SecurityUser extends Composite {
 			} else {
 				boolean modified = false;
 
-				if (isGrantChanged(user.getId(), new Integer(GWTPermission.READ))) {
+				if (isGrantChanged(user.getId(), Integer.valueOf(GWTPermission.READ))) {
 					changedGrants.put(user.getId(), GWTPermission.READ);
 					modified = true;
 				} else {
@@ -291,7 +291,7 @@ public class SecurityUser extends Composite {
 				}
 
 				unassignedUser.removeSelectedRow();
-				assignedUser.addRow(user, new Integer(GWTPermission.READ), modified);
+				assignedUser.addRow(user, Integer.valueOf(GWTPermission.READ), modified);
 				Main.get().securityPopup.securityPanel.evaluateChangeButton();
 			}
 		}
@@ -321,7 +321,7 @@ public class SecurityUser extends Composite {
 			} else {
 				boolean modified = false;
 
-				if (isGrantChanged(user.getId(), new Integer(GWTPermission.REMOVED))) {
+				if (isGrantChanged(user.getId(), Integer.valueOf(GWTPermission.REMOVED))) {
 					changedGrants.put(user.getId(), GWTPermission.REMOVED);
 					modified = true;
 				} else {

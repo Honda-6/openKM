@@ -23,9 +23,8 @@ package com.openkm.dao.bean;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Entity
@@ -53,11 +52,9 @@ public class Css implements Serializable {
 
 	@Column(name = "CSS_CONTENT")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String content;
 
 	@Column(name = "CSS_ACTIVE", nullable = false)
-	@Type(type = "true_false")
 	private boolean active;
 
 	public long getId() {

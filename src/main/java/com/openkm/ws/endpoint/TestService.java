@@ -25,9 +25,9 @@ import com.openkm.bean.Note;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebParam;
+import jakarta.jws.WebService;
 import java.util.Arrays;
 
 @WebService(name = "OKMTest", serviceName = "OKMTest", targetNamespace = "http://ws.openkm.com")

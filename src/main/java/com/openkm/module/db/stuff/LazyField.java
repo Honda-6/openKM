@@ -24,7 +24,6 @@ package com.openkm.module.db.stuff;
 import com.openkm.extractor.RegisteredExtractors;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.AbstractField;
-import org.apache.lucene.document.Fieldable;
 import org.hibernate.search.bridge.LuceneOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ import java.io.Reader;
  * @see http://community.jboss.org/wiki/HibernateSearchAndOfflineTextExtraction
  */
 @SuppressWarnings("serial")
-public class LazyField extends AbstractField implements Fieldable {
+public class LazyField extends AbstractField {
 	private static Logger log = LoggerFactory.getLogger(LazyField.class);
 	PersistentFile persistentFile;
 	String content;

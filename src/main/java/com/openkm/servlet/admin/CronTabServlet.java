@@ -30,23 +30,28 @@ import com.openkm.dao.bean.CronTab;
 import com.openkm.util.SecureStore;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WebUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,25 +138,25 @@ public class CronTabServlet extends BaseServlet {
 		updateSessionManager(request);
 
 		try {
-			if (ServletFileUpload.isMultipartContent(request)) {
+			if (JakartaServletFileUpload.isMultipartContent(request)) {
 				InputStream is = null;
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				List<FileItem> items = upload.parseRequest(request);
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				List<DiskFileItem> items = upload.parseRequest(request);
 				CronTab ct = new CronTab();
 
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("action")) {
-							action = item.getString("UTF-8");
+							action = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("ct_id")) {
-							ct.setId(Integer.parseInt(item.getString("UTF-8")));
+							ct.setId(Integer.parseInt(item.getString(StandardCharsets.UTF_8)));
 						} else if (item.getFieldName().equals("ct_name")) {
-							ct.setName(item.getString("UTF-8"));
+							ct.setName(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("ct_mail")) {
-							ct.setMail(item.getString("UTF-8"));
+							ct.setMail(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("ct_expression")) {
-							ct.setExpression(item.getString("UTF-8"));
+							ct.setExpression(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("ct_active")) {
 							ct.setActive(true);
 						}

@@ -19,24 +19,27 @@ import com.openkm.util.impexp.RepositoryImporter;
 import com.openkm.util.impexp.TextInfoDecorator;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
+//import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -83,43 +86,45 @@ public class FileUploadServlet extends OKMHttpServlet {
 		Ref<FileUploadResponse> fuResponse = new Ref<>(new FileUploadResponse());
 
 		try {
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
 			response.setContentType(MimeTypeConfig.MIME_TEXT);
 			out = response.getWriter();
 			log.debug("isMultipart: {}", isMultipart);
 
 			// Create a factory for disk-based file items
 			if (isMultipart) {
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
 				String contentLength = request.getHeader("Content-Length");
 				FileUploadListener listener = new FileUploadListener(Long.parseLong(contentLength));
 
 				// Saving listener to session
 				request.getSession().setAttribute(UploadConstants.FILE_UPLOAD_STATUS, listener);
-				upload.setHeaderEncoding("UTF-8");
-
+				// Configure upload settings
+				upload.setHeaderCharset(java.nio.charset.StandardCharsets.UTF_8);
+				
 				// upload servlet allows to set upload listener
-				upload.setProgressListener(listener);
-				List<FileItem> items = upload.parseRequest(request);
+				upload.setProgressListener((pBytesRead, pContentLength, pItems) -> 
+					listener.update(pBytesRead, pContentLength, pItems));
+				
+				var items = upload.parseRequest(request);
 
 				// Parse the request and get all parameters and the uploaded
 				// file
-				for (Iterator<FileItem> it = items.iterator(); it.hasNext(); ) {
-					FileItem item = it.next();
+				for (var item : items) {
 
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("path")) {
-							path = item.getString("UTF-8");
+							path = item.getString(StandardCharsets.UTF_8);
 							path = PathUtils.toValidPathName(path);
 						} else if (item.getFieldName().equals("action")) {
-							action = Integer.parseInt(item.getString("UTF-8"));
+							action = Integer.parseInt(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("users")) {
-							users = item.getString("UTF-8");
+							users = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("mails")) {
-							mails = item.getString("UTF-8");
+							mails = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("roles")) {
-							roles = item.getString("UTF-8");
+							roles = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("notify")) {
 							notify = true;
 						} else if (item.getFieldName().equals("importZip")) {
@@ -127,22 +132,22 @@ public class FileUploadServlet extends OKMHttpServlet {
 						} else if (item.getFieldName().equals("autoCheckOut")) {
 							autoCheckOut = true;
 						} else if (item.getFieldName().equals("message")) {
-							message = item.getString("UTF-8");
+							message = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("comment")) {
-							comment = item.getString("UTF-8");
+							comment = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("folder")) {
-							folder = item.getString("UTF-8");
+							folder = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("cipherName")) {
-							cipherName = item.getString("UTF-8");
+							cipherName = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("rename")) {
-							rename = item.getString("UTF-8");
+							rename = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("redirect")) {
 							redirect = true;
-							redirectURL = item.getString("UTF-8");
+							redirectURL = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("convertToPdf")) {
 							convertToPdf = true;
 						} else if (item.getFieldName().equals("increaseVersion")) {
-							increaseVersion = Integer.parseInt(item.getString("UTF-8"));
+							increaseVersion = Integer.parseInt(item.getString(StandardCharsets.UTF_8));
 						}
 					} else {
 						fileName = item.getName();
@@ -321,8 +326,8 @@ public class FileUploadServlet extends OKMHttpServlet {
 				// If the document have been added to the repository, perform user notification if has no error
 				if ((action == UIFileUploadConstants.ACTION_INSERT || action == UIFileUploadConstants.ACTION_UPDATE) && notify
 						&& fuResponse.get().getError().equals("")) {
-					List<String> userNames = new ArrayList<>(Arrays.asList(users.isEmpty() ? new String[0] : users.split(",")));
-					List<String> roleNames = new ArrayList<>(Arrays.asList(roles.isEmpty() ? new String[0] : roles.split(",")));
+					List<String> userNames = new ArrayList<>(Arrays.asList((users != null && !users.isEmpty()) ? users.split(",") : new String[0]));
+					List<String> roleNames = new ArrayList<>(Arrays.asList((roles != null && !roles.isEmpty()) ? roles.split(",") : new String[0]));
 
 					for (String role : roleNames) {
 						List<String> usersInRole = OKMAuth.getInstance().getUsersByRole(null, role);
@@ -334,7 +339,7 @@ public class FileUploadServlet extends OKMHttpServlet {
 						}
 					}
 
-					String notifyPath = URLDecoder.decode(fuResponse.get().getPath(), "UTF-8");
+					String notifyPath = URLDecoder.decode(fuResponse.get().getPath(), StandardCharsets.UTF_8);
 					List<String> mailList = MailUtils.parseMailList(mails);
 					OKMNotification.getInstance().notify(null, notifyPath, userNames, mailList, message, false);
 				}
@@ -440,7 +445,9 @@ public class FileUploadServlet extends OKMHttpServlet {
 			}
 
 			IOUtils.closeQuietly(is);
-			out.flush();
+			if (out != null) {
+				out.flush();
+			}
 			IOUtils.closeQuietly(out);
 			System.gc();
 		}

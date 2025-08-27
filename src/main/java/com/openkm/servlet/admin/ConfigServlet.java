@@ -32,20 +32,24 @@ import com.openkm.dao.HibernateUtil;
 import com.openkm.dao.bean.Config;
 import com.openkm.servlet.admin.DatabaseQueryServlet.WorkerUpdate;
 import com.openkm.util.*;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -130,27 +134,27 @@ public class ConfigServlet extends BaseServlet {
 		updateSessionManager(request);
 
 		try {
-			if (ServletFileUpload.isMultipartContent(request)) {
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				List<FileItem> items = upload.parseRequest(request);
+			if (JakartaServletFileUpload.isMultipartContent(request)) {
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				List<DiskFileItem> items = upload.parseRequest(request);
 				ConfigStoredFile stFile = new ConfigStoredFile();
 				Config cfg = new Config();
 				byte[] data = null;
 				InputStream is;
 
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("action")) {
-							action = item.getString("UTF-8");
+							action = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("filter")) {
-							filter = item.getString("UTF-8");
+							filter = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("cfg_key")) {
-							cfg.setKey(item.getString("UTF-8"));
+							cfg.setKey(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("cfg_type")) {
-							cfg.setType(item.getString("UTF-8"));
+							cfg.setType(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("cfg_value")) {
-							cfg.setValue(item.getString("UTF-8").trim());
+							cfg.setValue(item.getString(StandardCharsets.UTF_8).trim());
 						}
 					} else {
 						is = item.getInputStream();
@@ -196,7 +200,7 @@ public class ConfigServlet extends BaseServlet {
 					}
 				}
 
-				if (action.equals("create")) {
+				if (action != null && action.equals("create")) {
 					if (Config.FILE.equals(cfg.getType())) {
 						cfg.setValue(new Gson().toJson(stFile));
 					} else if (Config.BOOLEAN.equals(cfg.getType())) {
@@ -220,7 +224,7 @@ public class ConfigServlet extends BaseServlet {
 
 					// Activity log
 					UserActivity.log(userId, "ADMIN_CONFIG_CREATE", cfg.getKey(), null, cfg.toString());
-				} else if (action.equals("edit")) {
+				} else if (action != null && action.equals("edit")) {
 					if (Config.FILE.equals(cfg.getType())) {
 						cfg.setValue(new Gson().toJson(stFile));
 					} else if (Config.BOOLEAN.equals(cfg.getType())) {
@@ -259,13 +263,13 @@ public class ConfigServlet extends BaseServlet {
 
 					// Activity log
 					UserActivity.log(userId, "ADMIN_CONFIG_EDIT", cfg.getKey(), null, cfg.toString());
-				} else if (action.equals("delete")) {
+				} else if (action != null && action.equals("delete")) {
 					ConfigDAO.delete(cfg.getKey());
 					com.openkm.core.Config.reload(sc, new Properties());
 
 					// Activity log
 					UserActivity.log(userId, "ADMIN_CONFIG_DELETE", cfg.getKey(), null, null);
-				} else if (action.equals("import")) {
+				} else if (action != null && action.equals("import")) {
 					dbSession = HibernateUtil.getSessionFactory().openSession();
 					importConfig(userId, request, response, data, dbSession);
 

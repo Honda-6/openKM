@@ -413,7 +413,7 @@ public class PaginationServlet extends OKMRemoteServiceServlet implements OKMPag
 				value1 = ((NodeMail) arg1.getObj()).getSize();
 			}
 
-			return new Long(value0 - value1).intValue();
+			return Long.valueOf(value0 - value1).intValue();
 		}
 	}
 

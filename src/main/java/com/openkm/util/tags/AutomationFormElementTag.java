@@ -26,8 +26,8 @@ import com.openkm.dao.OmrDAO;
 import com.openkm.dao.bean.Automation;
 import com.openkm.dao.bean.Omr;
 
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 import java.io.IOException;
 
 @SuppressWarnings("serial")

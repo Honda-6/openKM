@@ -33,11 +33,15 @@ import com.openkm.util.DatabaseMetadataUtils;
 import com.openkm.util.FormatUtil;
 import com.openkm.util.UserActivity;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.hibernate.HibernateException;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -46,14 +50,15 @@ import org.hibernate.type.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.*;
@@ -114,26 +119,26 @@ public class DatabaseQueryServlet extends BaseServlet {
 		Session session = null;
 
 		try {
-			if (ServletFileUpload.isMultipartContent(request)) {
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				List<FileItem> items = upload.parseRequest(request);
+			if (JakartaServletFileUpload.isMultipartContent(request)) {
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				List<DiskFileItem> items = upload.parseRequest(request);
 				boolean showSql = false;
 				String vtable = "";
 				String type = "";
 				String qs = "";
 				byte[] data = null;
 
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("qs")) {
-							qs = item.getString("UTF-8");
+							qs = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("type")) {
-							type = item.getString("UTF-8");
+							type = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("showSql")) {
 							showSql = true;
 						} else if (item.getFieldName().equals("vtables")) {
-							vtable = item.getString("UTF-8");
+							vtable = item.getString(StandardCharsets.UTF_8);
 						}
 					} else {
 						data = item.get();

@@ -94,7 +94,7 @@ public class ExtendedColumnSorter extends ColumnSorter {
 						if (numberParts.length == 3) {
 							version = version + "000";
 						}
-						rowToOrder.setObject(new Double(version));
+						rowToOrder.setObject(Double.valueOf(version));
 						rowToOrder.setDataId(String.valueOf(i));
 						elementToOrder.add(rowToOrder);
 						break;

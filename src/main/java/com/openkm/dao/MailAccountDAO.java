@@ -27,7 +27,8 @@ import com.openkm.dao.bean.MailAccount;
 import com.openkm.dao.bean.MailFilter;
 import com.openkm.dao.bean.MailFilterRule;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
+import org.hibernate.query.MutationQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -52,7 +53,7 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(ma);
+			session.persist(ma);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -76,11 +77,11 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
+			Query<String> q = session.createQuery(qs, String.class);
 			q.setParameter("id", ma.getId());
-			String pass = (String) q.setMaxResults(1).uniqueResult();
+			String pass = q.setMaxResults(1).uniqueResult();
 			ma.setMailPassword(pass);
-			session.update(ma);
+			session.merge(ma);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -105,9 +106,9 @@ public class MailAccountDAO {
 			if (mailPassword != null && mailPassword.trim().length() > 0) {
 				session = HibernateUtil.getSessionFactory().openSession();
 				tx = session.beginTransaction();
-				Query q = session.createQuery(qs);
-				q.setString("mailPassword", mailPassword);
-				q.setLong("id", maId);
+				MutationQuery q = session.createMutationQuery(qs);
+				q.setParameter("mailPassword", mailPassword);
+				q.setParameter("id", maId);
 				q.executeUpdate();
 				HibernateUtil.commit(tx);
 			}
@@ -132,8 +133,8 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			MailAccount ma = (MailAccount) session.load(MailAccount.class, maId);
-			session.delete(ma);
+			MailAccount ma = session.get(MailAccount.class, maId);
+			session.remove(ma);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -148,7 +149,6 @@ public class MailAccountDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<MailAccount> findByUser(String usrId, boolean filterByActive) throws DatabaseException {
 		log.debug("findByUser({}, {})", usrId, filterByActive);
 		String qs = "from MailAccount ma where ma.user=:user " +
@@ -157,14 +157,14 @@ public class MailAccountDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", usrId);
+			Query<MailAccount> q = session.createQuery(qs, MailAccount.class);
+			q.setParameter("user", usrId);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<MailAccount> ret = q.list();
+			List<MailAccount> ret = q.getResultList();
 			log.debug("findByUser: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -177,7 +177,6 @@ public class MailAccountDAO {
 	/**
 	 * find all mail accounts
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<MailAccount> findAll(boolean filterByActive) throws DatabaseException {
 		log.debug("findAll({})", filterByActive);
 		String qs = "from MailAccount ma " + (filterByActive ? "where ma.active=:active" : "") +
@@ -186,13 +185,13 @@ public class MailAccountDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
+			Query<MailAccount> q = session.createQuery(qs, MailAccount.class);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<MailAccount> ret = q.list();
+			List<MailAccount> ret = q.getResultList();
 			log.debug("findAll: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -212,9 +211,9 @@ public class MailAccountDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", maId);
-			MailAccount ret = (MailAccount) q.setMaxResults(1).uniqueResult();
+			Query<MailAccount> q = session.createQuery(qs, MailAccount.class);
+			q.setParameter("id", maId);
+			MailAccount ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -235,7 +234,7 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(mf);
+			session.merge(mf);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -258,8 +257,8 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			MailFilter mf = (MailFilter) session.load(MailFilter.class, mfId);
-			session.delete(mf);
+			MailFilter mf = session.get(MailFilter.class, mfId);
+			session.remove(mf);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -282,13 +281,13 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			MailFilter ret = (MailFilter) session.load(MailFilter.class, mfId);
+			MailFilter ret = session.get(MailFilter.class, mfId);
 			String nodePath = NodeBaseDAO.getInstance().getPathFromUuid(session, ret.getNode());
 
 			// Always keep path in sync with uuid
 			if (!nodePath.equals(ret.getPath())) {
 				ret.setPath(nodePath);
-				session.update(ret);
+				session.merge(ret);
 			}
 
 			HibernateUtil.commit(tx);
@@ -316,7 +315,7 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(fr);
+			session.merge(fr);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -339,8 +338,8 @@ public class MailAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			MailFilterRule fr = (MailFilterRule) session.load(MailFilterRule.class, frId);
-			session.delete(fr);
+			MailFilterRule fr = session.get(MailFilterRule.class, frId);
+			session.remove(fr);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -361,7 +360,7 @@ public class MailAccountDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			MailFilterRule ret = (MailFilterRule) session.load(MailFilterRule.class, frId);
+			MailFilterRule ret = session.get(MailFilterRule.class, frId);
 			log.debug("findRuleByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

@@ -256,7 +256,7 @@ public class OpenLdapPrincipalAdapter implements PrincipalAdapter {
 
         if (elto != null) {
             log.debug("Get '{}' from cache", key);
-            al = (List<String>) elto.getValue();
+            al = (List<String>) elto.getObjectValue();
         } else {
             log.debug("Get '{}' from LDAP", key);
             Hashtable<String, String> env = getEnvironment();

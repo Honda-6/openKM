@@ -21,7 +21,6 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 import com.openkm.frontend.client.bean.GWTFolder;
 
 import java.util.ArrayList;
@@ -34,7 +33,7 @@ import java.util.List;
  * @author jllort
  *
  */
-public class GWTInput extends GWTFormElement implements IsSerializable {
+public class GWTInput extends GWTFormElement {
 	public static final String TYPE_TEXT = "text";
 	public static final String TYPE_DATE = "date";
 	public static final String TYPE_LINK = "link";

@@ -21,9 +21,7 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -106,11 +104,9 @@ public class AutomationRule implements Serializable {
 	private int order;
 
 	@Column(name = "ARL_EXCLUSIVE", nullable = false)
-	@Type(type = "true_false")
 	private Boolean exclusive = Boolean.FALSE;
 
 	@Column(name = "ARL_ACTIVE", nullable = false)
-	@Type(type = "true_false")
 	private Boolean active = Boolean.FALSE;
 
 	@OrderBy("order ASC")

@@ -169,7 +169,7 @@ public class RootResource implements PropFindableResource, GetableResource, Coll
 
 	@Override
 	public Long getQuotaUsed() {
-		return new Long(0);
+		return 0L;
 	}
 
 	@Override

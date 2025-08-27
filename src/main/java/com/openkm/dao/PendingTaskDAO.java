@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.PendingTask;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +51,6 @@ public class PendingTaskDAO extends GenericDAO<PendingTask, Long> {
 	/**
 	 * Find by content and name
 	 */
-	@SuppressWarnings("unchecked")
 	public List<PendingTask> findByTask(String task) throws DatabaseException {
 		log.debug("findByTask({})", task);
 		String qs = "from PendingTask pt where pt.task=:task order by pt.created";
@@ -59,9 +58,9 @@ public class PendingTaskDAO extends GenericDAO<PendingTask, Long> {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("task", task);
-			List<PendingTask> ret = q.list();
+			Query<PendingTask> q = session.createQuery(qs, PendingTask.class);
+			q.setParameter("task", task);
+			List<PendingTask> ret = q.getResultList();
 			log.debug("findByTask: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

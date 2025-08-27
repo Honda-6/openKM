@@ -21,9 +21,8 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Entity
@@ -50,7 +49,6 @@ public class Config implements Serializable {
 
 	@Column(name = "CFG_VALUE")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String value;
 
 	public String getKey() {

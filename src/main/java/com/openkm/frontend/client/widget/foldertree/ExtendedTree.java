@@ -21,7 +21,6 @@
 
 package com.openkm.frontend.client.widget.foldertree;
 
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -42,7 +41,7 @@ import java.util.Vector;
  * @author jllort
  *
  */
-public class ExtendedTree extends Tree implements HasSelectionHandlers<TreeItem> {
+public class ExtendedTree extends Tree{
 	// Drag pixels sensibility
 	private static final int DRAG_PIXELS_SENSIBILITY = 3;
 

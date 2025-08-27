@@ -25,7 +25,7 @@ import com.openkm.core.Config;
 import com.openkm.core.DatabaseException;
 import com.openkm.util.FormatUtil;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.jdbc.Work;
@@ -164,7 +164,6 @@ public class LegacyDAO {
 	/**
 	 * Execute query
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Object> executeQuery(String query) throws DatabaseException {
 		log.debug("executeValueQuery({})", query);
 		Session session = null;
@@ -173,8 +172,8 @@ public class LegacyDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(query);
-			List<Object> ret = q.list();
+			Query<Object> q = session.createQuery(query, Object.class);
+			List<Object> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("executeValueQuery: {}", ret);
 			return ret;
@@ -197,7 +196,7 @@ public class LegacyDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(query);
+			Query<Object> q = session.createQuery(query, Object.class);
 			Object ret = q.uniqueResult();
 			HibernateUtil.commit(tx);
 			log.debug("executeQueryUnique: {}", ret);
@@ -213,7 +212,6 @@ public class LegacyDAO {
 	/**
 	 * Execute HQL query
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Object> executeHQL(final String query) throws DatabaseException {
 		log.debug("executeHQL({})", query);
 		Session session = null;
@@ -222,8 +220,8 @@ public class LegacyDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(query);
-			List<Object> ret = q.list();
+			Query<Object> q = session.createQuery(query, Object.class);
+			List<Object> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("executeHQL: {}", ret);
 			return ret;

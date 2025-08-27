@@ -29,7 +29,7 @@ import com.openkm.util.SecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.MessagingException;
+import jakarta.mail.MessagingException;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.TimerTask;

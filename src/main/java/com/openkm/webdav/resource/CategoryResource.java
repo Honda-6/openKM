@@ -173,7 +173,7 @@ public class CategoryResource implements CollectionResource, PropFindableResourc
 
 	@Override
 	public Long getQuotaUsed() {
-		return new Long(0);
+		return 0L;
 	}
 
 	@Override

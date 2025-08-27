@@ -29,6 +29,8 @@ import net.sourceforge.jiu.geometry.ScaleReplication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.mockito.Answers.valueOf;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -553,7 +555,7 @@ public class ImageManipulation {
 					char ch = line.charAt(i);
 					if (ch != '-' && ch != '0') {
 						ascTemplateLocations[ascTemplate[m][n]] = ch;
-						Field field = fields.get(new Character(ch));
+						Field field = fields.get(Character.valueOf(ch));
 						ascTemplateFields[ascTemplate[m][n]] = field;
 						field.addPos(ascTemplate[m][n]); // always added in row, column order
 						log.debug("added " + m + ":" + n + ":" + ascTemplate[m][n] + ":" + realMarkLocations[ascTemplate[m][n]] + ":" + ch);
@@ -584,7 +586,7 @@ public class ImageManipulation {
 			y = realMarkLocations[i] % 10000;
 
 			if (mark.isMark(x, y)) {
-				Field field = fields.get(new Character((char) (ascTemplateLocations[i])));
+				Field field = fields.get(Character.valueOf((char) (ascTemplateLocations[i])));
 				log.debug("*** " + i + ":" + (char) (ascTemplateLocations[i]) + ":" + field);
 
 				if (field != null) {

@@ -97,7 +97,7 @@ public class SearchDAO {
 				Constructor<?> constructor = Analyzer.getConstructor(Config.LUCENE_VERSION.getClass());
 				analyzer = (Analyzer) constructor.newInstance(Config.LUCENE_VERSION);
 			} else {
-				analyzer = (Analyzer) Analyzer.newInstance();
+				analyzer = (Analyzer) Analyzer.getDeclaredConstructor().newInstance();
 			}
 		} catch (Exception e) {
 			log.warn(e.getMessage(), e);
@@ -564,7 +564,7 @@ public class SearchDAO {
 				tx = session.beginTransaction();
 
 				// Security Check
-				NodeBase parentNode = (NodeBase) session.load(NodeBase.class, parentUuid);
+				NodeBase parentNode = session.get(NodeBase.class, parentUuid);
 				SecurityHelper.checkRead(parentNode);
 
 				ret = findFoldersInDepthHelper(session, parentUuid);
@@ -599,8 +599,8 @@ public class SearchDAO {
 		List<String> ret = new ArrayList<>();
 		String qs = "from NodeFolder nf where nf.parent=:parent";
 		org.hibernate.Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", parentUuid);
-		List<NodeFolder> results = q.list();
+		q.setParameter("parent", parentUuid);
+		List<NodeFolder> results = q.getResultList();
 
 		// Security Check
 		DbAccessManager am = SecurityHelper.getAccessManager();

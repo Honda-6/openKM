@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.Profile;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -49,7 +49,8 @@ public class ProfileDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(up);
+			Long id = (Long) up.getId();
+			session.persist(up);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}", id);
 			return id;
@@ -72,7 +73,7 @@ public class ProfileDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(up);
+			session.merge(up);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -95,8 +96,8 @@ public class ProfileDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Profile up = (Profile) session.load(Profile.class, upId);
-			session.delete(up);
+			Profile up = session.get(Profile.class, upId);
+			session.remove(up);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -118,9 +119,9 @@ public class ProfileDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", upId);
-			Profile ret = (Profile) q.setMaxResults(1).uniqueResult();
+			Query<Profile> q = session.createQuery(qs, Profile.class);
+			q.setParameter("id", upId);
+			Profile ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -133,7 +134,7 @@ public class ProfileDAO {
 	/**
 	 * Find by pk
 	 */
-	@SuppressWarnings("unchecked")
+
 	public static List<Profile> findAll(boolean filterByActive) throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from Profile prf " + (filterByActive ? "where prf.active=:active" : "");
@@ -141,13 +142,13 @@ public class ProfileDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
+			Query<Profile> q = session.createQuery(qs, Profile.class);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<Profile> ret = q.list();
+			List<Profile> ret = q.getResultList();
 			log.debug("findAll: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -167,9 +168,9 @@ public class ProfileDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			Profile ret = (Profile) q.setMaxResults(1).uniqueResult();
+			Query<Profile> q = session.createQuery(qs, Profile.class);
+			q.setParameter("user", user);
+			Profile ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByUser: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

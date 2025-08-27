@@ -2,11 +2,11 @@ package com.openkm.extension.servlet;
 
 import com.openkm.core.HttpSessionManager;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class BaseServlet extends HttpServlet {
@@ -19,7 +19,7 @@ public class BaseServlet extends HttpServlet {
 	 */
 	protected void sendErrorRedirect(HttpServletRequest request, HttpServletResponse response,
 	                                 Throwable e) throws ServletException, IOException {
-		request.setAttribute("javax.servlet.jsp.jspException", e);
+		request.setAttribute("jakarta.servlet.jsp.jspException", e);
 		ServletContext sc = getServletConfig().getServletContext();
 		sc.getRequestDispatcher("/error.jsp").forward(request, response);
 	}

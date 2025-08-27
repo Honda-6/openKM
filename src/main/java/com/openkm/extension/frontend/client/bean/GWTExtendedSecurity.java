@@ -21,7 +21,6 @@
 
 package com.openkm.extension.frontend.client.bean;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 import com.openkm.frontend.client.util.metadata.DatabaseMetadataCommon;
 
 import java.util.Map;
@@ -32,7 +31,7 @@ import java.util.Map;
  * @author jllort
  *
  */
-public class GWTExtendedSecurity extends DatabaseMetadataCommon implements IsSerializable {
+public class GWTExtendedSecurity extends DatabaseMetadataCommon {
 	public static final String TYPE_USER = "user";
 	public static final String TYPE_ROLE = "role";
 

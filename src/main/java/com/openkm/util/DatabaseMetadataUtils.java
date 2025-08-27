@@ -204,7 +204,7 @@ public class DatabaseMetadataUtils {
 			dmv.setTable(map.get(DatabaseMetadataMap.MV_NAME_TABLE));
 
 			if (map.containsKey(DatabaseMetadataMap.MV_NAME_ID)) {
-				dmv.setId(new Double(map.get(DatabaseMetadataMap.MV_NAME_ID)).longValue());
+				dmv.setId(Double.valueOf(map.get(DatabaseMetadataMap.MV_NAME_ID)).longValue());
 			}
 
 			List<DatabaseMetadataType> types = DatabaseMetadataDAO.findAllTypes(dmv.getTable());

@@ -21,20 +21,19 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Index;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Calendar;
 
 @Entity
-@Table(name = "OKM_DASHBOARD_ACTIVITY")
-@org.hibernate.annotations.Table(appliesTo = "OKM_DASHBOARD_ACTIVITY",
+@Table(name = "OKM_DASHBOARD_ACTIVITY",
 		indexes = {
 				// CREATE INDEX IDX_DASH_ACTI_DATACT ON OKM_DASHBOARD_ACTIVITY(DAC_DATE, DAC_ACTION);
-				@Index(name = "IDX_DASH_ACTI_DATACT", columnNames = {"DAC_DATE", "DAC_ACTION"}),
+				@Index(name = "IDX_DASH_ACTI_DATACT", columnList = "DAC_DATE, DAC_ACTION"),
 				// CREATE INDEX IDX_DASH_ACTI_USRACT ON OKM_DASHBOARD_ACTIVITY(DAC_USER, DAC_ACTION);
-				@Index(name = "IDX_DASH_ACTI_USRACT", columnNames = {"DAC_USER", "DAC_ACTION"})
+				@Index(name = "IDX_DASH_ACTI_USRACT", columnList = "DAC_USER, DAC_ACTION"),
+				// CREATE INDEX IDX_DASH_ACTI_DATE ON OKM_DASHBOARD_ACTIVITY(DAC_DATE);
+				@Index(name = "IDX_DASH_ACTI_DATE", columnList = "DAC_DATE")
 		}
 )
 public class DashboardActivity implements Serializable {
@@ -47,8 +46,6 @@ public class DashboardActivity implements Serializable {
 	private long id;
 
 	@Column(name = "DAC_DATE")
-	// CREATE INDEX IDX_DASH_ACTI_DATE ON OKM_DASHBOARD_ACTIVITY(DAC_DATE);
-	@Index(name = "IDX_DASH_ACTI_DATE")
 	private Calendar date;
 
 	@Column(name = "DAC_USER", length = 64)

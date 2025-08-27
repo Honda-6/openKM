@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.CronTab;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -50,10 +50,10 @@ public class CronTabDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(ct);
+			session.persist(ct);
 			HibernateUtil.commit(tx);
-			log.debug("create: {}", id);
-			return id;
+			log.debug("create: {}", ct.getId());
+			return ct.getId();
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
 			throw new DatabaseException(e.getMessage(), e);
@@ -76,9 +76,9 @@ public class CronTabDAO {
 			tx = session.beginTransaction();
 
 			if (ct.getFileContent() == null || ct.getFileContent().length() == 0) {
-				Query q = session.createQuery(qs);
+				Query<Object[]> q = session.createQuery(qs, Object[].class);
 				q.setParameter("id", ct.getId());
-				Object[] data = (Object[]) q.setMaxResults(1).uniqueResult();
+				Object[] data = q.setMaxResults(1).uniqueResult();
 				ct.setFileContent((String) data[0]);
 				ct.setFileName((String) data[1]);
 				ct.setFileMime((String) data[2]);
@@ -86,7 +86,7 @@ public class CronTabDAO {
 				ct.setLastEnd((Calendar) data[4]);
 			}
 
-			session.update(ct);
+			session.merge(ct);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -109,8 +109,8 @@ public class CronTabDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			CronTab ct = (CronTab) session.load(CronTab.class, ctId);
-			session.delete(ct);
+			CronTab ct = session.get(CronTab.class, ctId);
+			session.remove(ct);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -132,9 +132,9 @@ public class CronTabDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", ctId);
-			CronTab ret = (CronTab) q.setMaxResults(1).uniqueResult();
+			Query<CronTab> q = session.createQuery(qs, CronTab.class);
+			q.setParameter("id", ctId);
+			CronTab ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -154,9 +154,9 @@ public class CronTabDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("name", name);
-			CronTab ret = (CronTab) q.setMaxResults(1).uniqueResult();
+			Query<CronTab> q = session.createQuery(qs, CronTab.class);
+			q.setParameter("name", name);
+			CronTab ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByName: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -169,7 +169,6 @@ public class CronTabDAO {
 	/**
 	 * Find all
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<CronTab> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from CronTab ct order by ct.id";
@@ -177,8 +176,8 @@ public class CronTabDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<CronTab> ret = q.list();
+			Query<CronTab> q = session.createQuery(qs, CronTab.class);
+			List<CronTab> ret = q.getResultList();
 			log.debug("findAll: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -199,9 +198,9 @@ public class CronTabDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			CronTab ct = (CronTab) session.load(CronTab.class, ctId);
+			CronTab ct = session.get(CronTab.class, ctId);
 			ct.setLastBegin(Calendar.getInstance());
-			session.update(ct);
+			session.merge(ct);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -224,9 +223,9 @@ public class CronTabDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			CronTab ct = (CronTab) session.load(CronTab.class, ctId);
+			CronTab ct = session.get(CronTab.class, ctId);
 			ct.setLastEnd(Calendar.getInstance());
-			session.update(ct);
+			session.merge(ct);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);

@@ -24,7 +24,8 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.Dashboard;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
+import org.hibernate.query.MutationQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -42,7 +43,6 @@ public class DashboardDAO {
 	/**
 	 * Get dashboard stats
 	 */
-	@SuppressWarnings("unchecked")
 	public Dashboard findByPk(int dsId) throws DatabaseException {
 		log.debug("findByPk({})", dsId);
 		String qs = "from Dashboard db where db.id=:id";
@@ -50,9 +50,9 @@ public class DashboardDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setInteger("id", dsId);
-			List<Dashboard> results = q.list(); // uniqueResult
+			Query<Dashboard> q = session.createQuery(qs, Dashboard.class);
+			q.setParameter("id", dsId);
+			List<Dashboard> results = q.getResultList(); // uniqueResult
 			Dashboard ret = null;
 
 			if (results.size() == 1) {
@@ -80,14 +80,14 @@ public class DashboardDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("user", db.getUser());
-			q.setString("source", db.getSource());
-			q.setString("node", db.getNode());
-			q.setCalendar("date", db.getDate());
+			Query<Dashboard> q = session.createQuery(qs, Dashboard.class);
+			q.setParameter("user", db.getUser());
+			q.setParameter("source", db.getSource());
+			q.setParameter("node", db.getNode());
+			q.setParameter("date", db.getDate());
 
-			if (q.list().isEmpty()) {
-				session.save(db);
+			if (q.getResultList().isEmpty()) {
+				session.persist(db);
 			}
 
 			HibernateUtil.commit(tx);
@@ -109,8 +109,8 @@ public class DashboardDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Dashboard ds = (Dashboard) session.load(Dashboard.class, dsId);
-			session.delete(ds);
+			Dashboard ds = session.get(Dashboard.class, dsId);
+			session.remove(ds);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -123,7 +123,6 @@ public class DashboardDAO {
 	/**
 	 * Find by user source
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Dashboard> findByUserSource(String user, String source) throws
 			DatabaseException {
 		log.debug("findByUserSource({}, {})", user, source);
@@ -132,10 +131,10 @@ public class DashboardDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			q.setString("source", source);
-			List<Dashboard> ret = q.list();
+			Query<Dashboard> q = session.createQuery(qs, Dashboard.class);
+			q.setParameter("user", user);
+			q.setParameter("source", source);
+			List<Dashboard> ret = q.getResultList();
 			log.debug("findByUserSource: " + ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -157,9 +156,9 @@ public class DashboardDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			q.setString("source", source);
+			Query<Dashboard> q = session.createQuery(qs, Dashboard.class);
+			q.setParameter("user", user);
+			q.setParameter("source", source);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -186,11 +185,11 @@ public class DashboardDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			q.setString("source", source);
-			q.setString("node", node);
-			q.setCalendar("date", date);
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("user", user);
+			q.setParameter("source", source);
+			q.setParameter("node", node);
+			q.setParameter("date", date);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {

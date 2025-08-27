@@ -25,7 +25,7 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.HibernateUtil;
 import com.openkm.extension.dao.bean.ZohoToken;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -55,7 +55,8 @@ public class ZohoTokenDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			String id = (String) session.save(zot);
+			String id = (String) zot.getId();
+			session.persist(zot);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}", id);
 			return id;
@@ -78,7 +79,7 @@ public class ZohoTokenDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(zot);
+			session.merge(zot);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -101,8 +102,8 @@ public class ZohoTokenDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			ZohoToken zed = (ZohoToken) session.load(ZohoToken.class, zotId);
-			session.delete(zed);
+			ZohoToken zed = session.get(ZohoToken.class, zotId);
+			session.remove(zed);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -124,9 +125,9 @@ public class ZohoTokenDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("id", id);
-			ZohoToken ret = (ZohoToken) q.setMaxResults(1).uniqueResult();
+			Query<ZohoToken> q = session.createQuery(qs, ZohoToken.class);
+			q.setParameter("id", id);
+			ZohoToken ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -139,7 +140,7 @@ public class ZohoTokenDAO {
 	/**
 	 * Find all tokens
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<ZohoToken> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "select zot from ZohoToken zot order by zot.id asc";
@@ -148,8 +149,8 @@ public class ZohoTokenDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<ZohoToken> ret = q.list();
+			Query<ZohoToken> q = session.createQuery(qs,ZohoToken.class);
+			List<ZohoToken> ret = q.getResultList();
 
 			log.debug("findAll: {}", ret);
 			return ret;

@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.DashboardActivity;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.MutationQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -48,7 +48,7 @@ public class DashboardActivityDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(dashAct);
+			session.persist(dashAct);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -70,10 +70,10 @@ public class DashboardActivityDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
+			MutationQuery q = session.createMutationQuery(qs);
 			Calendar cal = Calendar.getInstance();
 			cal.add(Calendar.MONTH, -1);
-			q.setCalendar("date", cal);
+			q.setParameter("date", cal);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {

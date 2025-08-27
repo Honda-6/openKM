@@ -144,7 +144,7 @@ public class UserNews extends Composite {
 		public void onSuccess(Object result) {
 			table.removeRow(getSelectedRow());
 			table.selectPrevRow();
-			data.remove(new Integer(searchIdToDelete));
+			data.remove(Integer.valueOf(searchIdToDelete));
 			Main.get().mainPanel.dashboard.newsDashboard.getUserSearchs(true);
 			status.unsetFlag_deleteSearch();
 		}
@@ -227,7 +227,7 @@ public class UserNews extends Composite {
 	public void getSearch() {
 		if (getSelectedRow() >= 0) {
 			int id = Integer.parseInt(table.getText(getSelectedRow(), 2));
-			Main.get().mainPanel.search.searchBrowser.searchResult.getSearch(data.get(new Integer(id)));
+			Main.get().mainPanel.search.searchBrowser.searchResult.getSearch(data.get(Integer.valueOf(id)));
 		}
 	}
 
@@ -239,7 +239,7 @@ public class UserNews extends Composite {
 	public GWTQueryParams getSavedSearch() {
 		if (getSelectedRow() >= 0) {
 			int id = Integer.parseInt(table.getText(getSelectedRow(), 2));
-			return data.get(new Integer(id));
+			return data.get(Integer.valueOf(id));
 		} else {
 			return null;
 		}
@@ -253,9 +253,9 @@ public class UserNews extends Composite {
 			status.setFlag_deleteSearch();
 			searchIdToDelete = Integer.parseInt(table.getText(getSelectedRow(), 2));
 			if (!getSavedSearch().isShared()) {
-				searchService.deleteSearch(data.get(new Integer(searchIdToDelete)).getId(), callbackDeleteSearch);
+				searchService.deleteSearch(data.get(Integer.valueOf(searchIdToDelete)).getId(), callbackDeleteSearch);
 			} else {
-				searchService.unshare(data.get(new Integer(searchIdToDelete)).getId(), callbackDeleteSearch);
+				searchService.unshare(data.get(Integer.valueOf(searchIdToDelete)).getId(), callbackDeleteSearch);
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 package com.openkm.rest;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 public class GenericException extends WebApplicationException {
 	private static final long serialVersionUID = 1L;

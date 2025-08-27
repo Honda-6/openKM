@@ -21,7 +21,9 @@
 
 package com.openkm.servlet.frontend;
 
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+// import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+// import com.google.gwt.user.server.rpc.SerializationPolicy;
+import com.google.gwt.user.server.rpc.jakarta.RemoteServiceServlet;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.openkm.core.Config;
 import com.openkm.core.HttpSessionManager;
@@ -29,9 +31,9 @@ import com.openkm.frontend.client.bean.GWTWorkspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Extends the RemoteServiceServlet to obtain token auth on development and production

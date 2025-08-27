@@ -24,6 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.RegisteredPropertyGroup;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ public class RegisteredPropertyGroupDAO extends GenericDAO<RegisteredPropertyGro
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.saveOrUpdate(rpg);
+			session.merge(rpg);
 			HibernateUtil.commit(tx);
 			log.debug("create: void");
 		} catch (HibernateException e) {
@@ -72,7 +73,7 @@ public class RegisteredPropertyGroupDAO extends GenericDAO<RegisteredPropertyGro
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			RegisteredPropertyGroup ret = (RegisteredPropertyGroup) session.load(RegisteredPropertyGroup.class, grpName);
+			RegisteredPropertyGroup ret = session.get(RegisteredPropertyGroup.class, grpName);
 			initialize(ret);
 			log.debug("findByPk: {}", ret);
 			return ret;
@@ -86,7 +87,6 @@ public class RegisteredPropertyGroupDAO extends GenericDAO<RegisteredPropertyGro
 	/**
 	 * Find all property groups
 	 */
-	@SuppressWarnings("unchecked")
 	public List<RegisteredPropertyGroup> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from RegisteredPropertyGroup rpg";
@@ -94,8 +94,8 @@ public class RegisteredPropertyGroupDAO extends GenericDAO<RegisteredPropertyGro
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<RegisteredPropertyGroup> ret = q.list();
+			Query<RegisteredPropertyGroup> q = session.createQuery(qs, RegisteredPropertyGroup.class);
+			List<RegisteredPropertyGroup> ret = q.getResultList();
 			initialize(ret);
 			log.debug("findAll: {}", ret);
 			return ret;

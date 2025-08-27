@@ -43,7 +43,7 @@ public class ClientPasswordCallback implements CallbackHandler {
 
 	@Override
 	public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-		log.info("handle({})", callbacks);
+		log.info("handle({})", ((Object[])callbacks));
 		WSPasswordCallback pwdCallback = (WSPasswordCallback) callbacks[0];
 
 		log.debug("identifier: " + pwdCallback.getIdentifier());

@@ -404,7 +404,7 @@ public class WorkspaceUserProperties {
 			Main.get().startUp.nextStatus(StartUp.STARTUP_GET_TAXONOMY_ROOT);
 
 			// Getting ui messages
-			getUINotificationMessages(new Long(Main.get().workspaceUserProperties.workspace.getUINotificationSchedule() / 2).intValue());
+			getUINotificationMessages(Long.valueOf(Main.get().workspaceUserProperties.workspace.getUINotificationSchedule() / 2).intValue());
 		}
 
 		@Override

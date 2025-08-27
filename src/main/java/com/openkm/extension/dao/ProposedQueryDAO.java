@@ -27,7 +27,8 @@ import com.openkm.dao.bean.QueryParams;
 import com.openkm.extension.dao.bean.ProposedQueryReceived;
 import com.openkm.extension.dao.bean.ProposedQuerySent;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -73,7 +74,7 @@ public class ProposedQueryDAO {
 			pqReceived.setSentDate(Calendar.getInstance());
 			qp.getProposedReceived().add(pqReceived);
 
-			session.save(qp);
+			session.persist(qp);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -96,8 +97,8 @@ public class ProposedQueryDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			ProposedQuerySent pq = (ProposedQuerySent) session.load(ProposedQuerySent.class, pqId);
-			session.delete(pq);
+			ProposedQuerySent pq = session.get(ProposedQuerySent.class, pqId);
+			session.remove(pq);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -120,8 +121,8 @@ public class ProposedQueryDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			ProposedQueryReceived pq = (ProposedQueryReceived) session.load(ProposedQueryReceived.class, pqId);
-			session.delete(pq);
+			ProposedQueryReceived pq = session.get(ProposedQueryReceived.class, pqId);
+			session.remove(pq);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -136,7 +137,7 @@ public class ProposedQueryDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<String> findProposedQueriesUsersFrom(String me) throws DatabaseException {
 		log.debug("findProposedQueriesUsersFrom({})", me);
 		String qs = "select distinct(pq.from) from ProposedQueryReceived pq where pq.user=:me order by pq.from";
@@ -144,9 +145,9 @@ public class ProposedQueryDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("me", me);
+			List<String> ret = q.getResultList();
 			log.debug("findProposedQueriesUsersFrom: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -159,7 +160,7 @@ public class ProposedQueryDAO {
 	/**
 	 * Return a map users and number of unread proposed queries from them
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static Map<String, Long> findProposedQueriesUsersFromUnread(String me) throws DatabaseException {
 		log.debug("findProposedQueriesUsersFromUnread({})", me);
 		String qs = "select pq.from, count(pq.from) from ProposedQueryReceived pq " +
@@ -168,9 +169,9 @@ public class ProposedQueryDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			List<Object[]> list = q.list();
+			Query<Object[]> q = session.createQuery(qs, Object[].class);
+			q.setParameter("me", me);
+			List<Object[]> list = q.getResultList();
 			Map<String, Long> ret = new HashMap<>();
 
 			for (Object[] item : list) {
@@ -189,7 +190,7 @@ public class ProposedQueryDAO {
 	/**
 	 * Find received by user
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<ProposedQueryReceived> findProposedQueryByMeFromUser(String me, String user) throws DatabaseException {
 		log.debug("findProposedQueryByMeFromUser({})", user);
 		String qs = "from ProposedQueryReceived pq where pq.from=:user and pq.user=:me order by pq.id";
@@ -197,10 +198,10 @@ public class ProposedQueryDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			q.setString("user", user);
-			List<ProposedQueryReceived> ret = q.list();
+			Query<ProposedQueryReceived> q = session.createQuery(qs, ProposedQueryReceived.class);
+			q.setParameter("me", me);
+			q.setParameter("user", user);
+			List<ProposedQueryReceived> ret = q.getResultList();
 			log.debug("findProposedQueryByMeFromUser: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -213,7 +214,7 @@ public class ProposedQueryDAO {
 	/**
 	 * Find users whom sent an proposed query
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<String> findProposedQuerySentUsersTo(String me) throws DatabaseException {
 		log.debug("findSentUsersTo({})", me);
 		String qs = "select distinct(pq.user) from ProposedQuerySent pq where pq.from=:me order by pq.user";
@@ -221,9 +222,9 @@ public class ProposedQueryDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("me", me);
+			List<String> ret = q.getResultList();
 			log.debug("findProposedQuerySentUsersTo: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -243,9 +244,9 @@ public class ProposedQueryDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", pqId);
-			q.setCalendar("seenDate", Calendar.getInstance());
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("id", pqId);
+			q.setParameter("seenDate", Calendar.getInstance());
 			q.executeUpdate();
 			log.debug("markSeen: void");
 		} catch (HibernateException e) {
@@ -265,9 +266,9 @@ public class ProposedQueryDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", pqId);
-			q.setBoolean("accepted", true);
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("id", pqId);
+			q.setParameter("accepted", true);
 			q.executeUpdate();
 			log.debug("markAccepted: void");
 		} catch (HibernateException e) {

@@ -31,20 +31,23 @@ import com.openkm.util.FileUtils;
 import com.openkm.util.PropertyGroupUtils;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WebUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+//import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+//import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -101,25 +104,25 @@ public class OmrServlet extends BaseServlet {
 		updateSessionManager(request);
 
 		try {
-			if (ServletFileUpload.isMultipartContent(request)) {
+			if (JakartaServletFileUpload.isMultipartContent(request)) {
 				String fileName = null;
 				InputStream is = null;
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				List<FileItem> items = upload.parseRequest(request);
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				List<DiskFileItem> items = upload.parseRequest(request);
 				Set<String> properties = new HashSet<>();
 				Omr om = new Omr();
 
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("action")) {
-							action = item.getString("UTF-8");
+							action = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("om_id")) {
-							om.setId(Integer.parseInt(item.getString("UTF-8")));
+							om.setId(Integer.parseInt(item.getString(StandardCharsets.UTF_8)));
 						} else if (item.getFieldName().equals("om_name")) {
-							om.setName(item.getString("UTF-8"));
+							om.setName(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("om_properties")) {
-							properties.add(item.getString("UTF-8"));
+							properties.add(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("om_active")) {
 							om.setActive(true);
 						}

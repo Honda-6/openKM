@@ -1924,6 +1924,6 @@ public class MainMenu extends Composite {
 			}
 		};
 
-		menusRefreshing.scheduleRepeating(new Double(scheduleTime).intValue());
+		menusRefreshing.scheduleRepeating(Double.valueOf(scheduleTime).intValue());
 	}
 }

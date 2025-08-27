@@ -27,7 +27,7 @@ import com.openkm.core.Config;
 import com.openkm.core.DatabaseException;
 import com.openkm.core.PathNotFoundException;
 import com.openkm.dao.NodeBaseDAO;
-import com.openkm.dao.PluginDAO;
+//import com.openkm.dao.PluginDAO;
 import com.openkm.module.db.stuff.PersistentFile;
 import com.openkm.util.PluginUtils;
 import com.openkm.util.SystemProfiling;

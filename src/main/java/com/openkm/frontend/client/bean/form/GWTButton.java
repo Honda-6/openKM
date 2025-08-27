@@ -21,13 +21,12 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * @author jllort
  *
  */
-public class GWTButton extends GWTFormElement implements IsSerializable {
+public class GWTButton extends GWTFormElement {
 	private String transition = "";
 	private String confirmation = "";
 	private String style = "";

@@ -23,8 +23,8 @@ package com.openkm.util.tags;
 
 import com.openkm.util.PathUtils;
 
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 import java.io.IOException;
 
 @SuppressWarnings("serial")

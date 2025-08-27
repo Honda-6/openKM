@@ -21,9 +21,8 @@
 
 package com.openkm.extension.dao.bean;
 
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Calendar;
 
@@ -53,12 +52,10 @@ public class WikiPage implements Serializable {
 	private String node;
 
 	@Column(name = "WKP_DELETED", nullable = false)
-	@Type(type = "true_false")
 	private boolean deleted;
 
 	@Column(name = "WKP_CONTENT")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String content;
 
 	public long getId() {

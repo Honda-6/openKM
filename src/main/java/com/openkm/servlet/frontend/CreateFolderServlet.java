@@ -9,22 +9,25 @@ import com.openkm.extension.core.ExtensionException;
 import com.openkm.frontend.client.constants.UploadConstants;
 import com.openkm.frontend.client.constants.service.ErrorCode;
 import com.openkm.util.PathUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -44,7 +47,7 @@ public class CreateFolderServlet extends OKMHttpServlet {
 		String path = null;
 		int action = 0;
 		PrintWriter out = null;
-		java.io.File tmp = null;
+		//java.io.File tmp = null;
 		boolean redirect = false;
 		String redirectURL = "";
 		updateSessionManager(request);
@@ -53,31 +56,32 @@ public class CreateFolderServlet extends OKMHttpServlet {
 		Ref<FileUploadResponse> fuResponse = new Ref<>(new FileUploadResponse());
 
 		try {
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
 			response.setContentType(MimeTypeConfig.MIME_TEXT);
 			out = response.getWriter();
 			log.debug("isMultipart: {}", isMultipart);
 
 			// Create a factory for disk-based file items
 			if (isMultipart) {
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
 				String contentLength = request.getHeader("Content-Length");
 				FileUploadListener listener = new FileUploadListener(Long.parseLong(contentLength));
 
 				// Saving listener to session
 				request.getSession().setAttribute(UploadConstants.FILE_UPLOAD_STATUS, listener);
-				upload.setHeaderEncoding("UTF-8");
+				upload.setHeaderCharset(StandardCharsets.UTF_8);
 
 				// upload servlet allows to set upload listener
-				upload.setProgressListener(listener);
-				List<FileItem> items = upload.parseRequest(request);
+				upload.setProgressListener((pBytesRead, pContentLength, pItems) -> 
+					listener.update(pBytesRead, pContentLength, pItems));
+				List<org.apache.commons.fileupload2.core.DiskFileItem> items = upload.parseRequest(request);
 
 				// Parse the request and get all parameters and the uploaded file
-				for (FileItem item : items) {
+				for (org.apache.commons.fileupload2.core.DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("path")) {
-							path = item.getString("UTF-8");
+							path = item.getString(StandardCharsets.UTF_8);
 							break;
 						}
 					}

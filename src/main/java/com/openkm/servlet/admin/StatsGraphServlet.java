@@ -44,10 +44,10 @@ import org.jfree.ui.RectangleEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -246,7 +246,7 @@ public class StatsGraphServlet extends BaseServlet {
 			title = "Folders by context";
 		}
 
-		if (title != null && sizes.length > 0 && percents.length > 0) {
+		if (title != null && sizes != null && sizes.length > 0 && percents != null && percents.length > 0) {
 			String taxonomySize = DOCUMENTS_SIZE.equals(type) ? FormatUtil.formatSize(sizes[0]) : Long.toString(sizes[0]);
 			String personalSize = DOCUMENTS_SIZE.equals(type) ? FormatUtil.formatSize(sizes[1]) : Long.toString(sizes[1]);
 			String templateSize = DOCUMENTS_SIZE.equals(type) ? FormatUtil.formatSize(sizes[2]) : Long.toString(sizes[2]);

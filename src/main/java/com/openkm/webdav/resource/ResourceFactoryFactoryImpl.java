@@ -26,11 +26,11 @@ import com.bradmcevoy.http.ResourceFactory;
 import com.bradmcevoy.http.ResourceFactoryFactory;
 import com.bradmcevoy.http.webdav.DefaultWebDavResponseHandler;
 import com.bradmcevoy.http.webdav.WebDavResponseHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 
 public class ResourceFactoryFactoryImpl implements ResourceFactoryFactory {
-	private Logger log = LoggerFactory.getLogger(ResourceFactoryFactoryImpl.class);
+	//private Logger log = LoggerFactory.getLogger(ResourceFactoryFactoryImpl.class);
 	private static AuthenticationService authenticationService;
 	private static ResourceFactory resourceFactory;
 

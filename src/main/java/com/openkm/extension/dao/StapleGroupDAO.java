@@ -27,7 +27,7 @@ import com.openkm.dao.HibernateUtil;
 import com.openkm.extension.dao.bean.Staple;
 import com.openkm.extension.dao.bean.StapleGroup;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -52,7 +52,8 @@ public class StapleGroupDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(sg);
+			Long id = (Long) sg.getId();
+			session.persist(sg);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}", id);
 			return id;
@@ -75,8 +76,8 @@ public class StapleGroupDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			StapleGroup sg = (StapleGroup) session.load(StapleGroup.class, sgId);
-			session.delete(sg);
+			StapleGroup sg = session.get(StapleGroup.class, sgId);
+			session.remove(sg);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -99,8 +100,8 @@ public class StapleGroupDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Staple st = (Staple) session.load(Staple.class, stId);
-			session.delete(st);
+			Staple st = session.get(Staple.class, stId);
+			session.remove(st);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -115,7 +116,7 @@ public class StapleGroupDAO {
 	/**
 	 * Find all stapling groups
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<StapleGroup> findAll(String nodeUuid) throws DatabaseException,
 			RepositoryException {
 		log.debug("findAll({}, {})", nodeUuid);
@@ -125,9 +126,9 @@ public class StapleGroupDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("node", nodeUuid);
-			List<StapleGroup> ret = q.list();
+			Query<StapleGroup> q = session.createQuery(qs, StapleGroup.class);
+			q.setParameter("node", nodeUuid);
+			List<StapleGroup> ret = q.getResultList();
 
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -149,9 +150,9 @@ public class StapleGroupDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", sgId);
-			StapleGroup ret = (StapleGroup) q.setMaxResults(1).uniqueResult();
+			Query<StapleGroup> q = session.createQuery(qs, StapleGroup.class);
+			q.setParameter("id", sgId);
+			StapleGroup ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -173,11 +174,11 @@ public class StapleGroupDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
+			Query<String> q = session.createQuery(qs, String.class);
 			q.setParameter("id", sg.getId());
-			String user = (String) q.setMaxResults(1).uniqueResult();
+			String user = q.setMaxResults(1).uniqueResult();
 			sg.setUser(user);
-			session.update(sg);
+			session.merge(sg);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -192,7 +193,7 @@ public class StapleGroupDAO {
 	/**
 	 * Delete by node uuid
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static void purgeStaplesByNode(String nodeUuid) throws DatabaseException {
 		log.debug("purgeStaplesByNode({})", nodeUuid);
 		String qsStaples = "from Staple st where st.node=:uuid";
@@ -205,16 +206,16 @@ public class StapleGroupDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
 
-			Query qStaples = session.createQuery(qsStaples);
-			qStaples.setString("uuid", nodeUuid);
+			Query<Staple> qStaples = session.createQuery(qsStaples, Staple.class);
+			qStaples.setParameter("uuid", nodeUuid);
 
-			for (Staple st : (List<Staple>) qStaples.list()) {
-				session.delete(st);
+			for (Staple st : qStaples.getResultList()) {
+				session.remove(st);
 			}
 
 			// Remove empty staple groups
-			for (long sgId : (List<Long>) session.createQuery(qsEmpty).list()) {
-				session.createQuery(qsDelete).setLong("id", sgId).executeUpdate();
+			for (long sgId : (List<Long>) session.createQuery(qsEmpty, Long.class).getResultList()) {
+				session.createQuery(qsDelete, StapleGroup.class).setParameter("id", sgId).executeUpdate();
 			}
 
 			HibernateUtil.commit(tx);

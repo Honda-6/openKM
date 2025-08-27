@@ -25,10 +25,15 @@ import com.bradmcevoy.http.*;
 import com.bradmcevoy.http.webdav.WebDavResponseHandler;
 import com.openkm.webdav.resource.ResourceFactoryFactoryImpl;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+// import javax.servlet.ServletContext;
+// import javax.servlet.ServletException;
+// import javax.servlet.http.HttpServletRequest;
+// import javax.servlet.http.HttpServletResponse;
+
 import java.io.IOException;
 
 public final class WebDavService {
@@ -59,9 +64,10 @@ public final class WebDavService {
 	 *
 	 */
 	public void handleRequest(HttpServletRequest request, HttpServletResponse response, ServletContext ctx) throws IOException {
-		Request miltonRequest = new com.bradmcevoy.http.ServletRequest(request, ctx);
-		Response miltonResponse = new com.bradmcevoy.http.ServletResponse(response);
-		httpManager.process(miltonRequest, miltonResponse);
+		// Request miltonRequest = new com.bradmcevoy.http.ServletRequest(request, ctx);
+		// Response miltonResponse = new com.bradmcevoy.http.ServletResponse(response);
+		// httpManager.process(miltonRequest, miltonResponse);
+		throw new UnsupportedOperationException();
 	}
 
 	/**

@@ -294,7 +294,7 @@ public class UserInfo extends Composite {
 					imgUserQuota.setResource(OKMBundleResources.INSTANCE.quota6());
 				} else {
 					// Calculating %
-					percent = new Double((size * 100) / quotaLimit).intValue();
+					percent = Double.valueOf((size * 100) / quotaLimit).intValue();
 
 					if (percent == 0) {
 						percent = 1;

@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.LockToken;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ public class LockTokenDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(lt);
+			session.persist(lt);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -73,9 +73,9 @@ public class LockTokenDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			q.setString("token", token);
+			Query<LockToken> q = session.createQuery(qs, LockToken.class);
+			q.setParameter("user", user);
+			q.setParameter("token", token);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -91,7 +91,7 @@ public class LockTokenDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<LockToken> findByUser(String user) throws DatabaseException {
 		log.debug("findByUser({})", user);
 		String qs = "from LockToken lt where lt.user=:user";
@@ -99,9 +99,9 @@ public class LockTokenDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			List<LockToken> ret = q.list();
+			Query<LockToken> q = session.createQuery(qs, LockToken.class);
+			q.setParameter("user", user);
+			List<LockToken> ret = q.getResultList();
 			log.debug("findByUser: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

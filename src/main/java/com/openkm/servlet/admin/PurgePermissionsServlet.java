@@ -24,18 +24,17 @@ package com.openkm.servlet.admin;
 import com.openkm.dao.HibernateUtil;
 import com.openkm.dao.bean.NodeBase;
 import com.openkm.util.WebUtils;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Purge permissions
@@ -60,37 +59,37 @@ public class PurgePermissionsServlet extends BaseServlet {
 
 			if (action.equals("listUsers")) {
 				String qs = "select distinct(indices(nb.userPermissions)) from NodeBase nb";
-				Query query = session.createQuery(qs);
+				Query<NodeBase> query = session.createQuery(qs,NodeBase.class);
 				sc.setAttribute("type", "User");
 				sc.setAttribute("elements", query.list());
 				sc.getRequestDispatcher("/admin/purge_perms_list.jsp").forward(request, response);
 			} else if (action.equals("listRoles")) {
 				String qs = "select distinct(indices(nb.rolePermissions)) from NodeBase nb";
-				Query query = session.createQuery(qs);
+				Query<NodeBase> query = session.createQuery(qs,NodeBase.class);
 				sc.setAttribute("type", "Role");
 				sc.setAttribute("elements", query.list());
 				sc.getRequestDispatcher("/admin/purge_perms_list.jsp").forward(request, response);
 			} else if (action.equals("purgeUser")) {
 				String qs = "from NodeBase nb where :user in indices(nb.userPermissions)";
 				String user = WebUtils.getString(request, "elto");
-				Query query = session.createQuery(qs);
-				query.setString("user", user);
+				Query<NodeBase> query = session.createQuery(qs,NodeBase.class);
+				query.setParameter("user", user);
 
-				for (NodeBase node : (List<NodeBase>) query.list()) {
+				for (NodeBase node : query.list()) {
 					node.getUserPermissions().remove(user);
-					session.update(node);
+					session.merge(node);
 				}
 
 				response.sendRedirect(request.getContextPath() + request.getServletPath() + "?action=listUsers");
 			} else if (action.equals("purgeRole")) {
 				String qs = "from NodeBase nb where :role in indices(nb.rolePermissions)";
 				String role = WebUtils.getString(request, "elto");
-				Query query = session.createQuery(qs);
-				query.setString("role", role);
+				Query<NodeBase> query = session.createQuery(qs,NodeBase.class);
+				query.setParameter("role", role);
 
-				for (NodeBase node : (List<NodeBase>) query.list()) {
+				for (NodeBase node : query.list()) {
 					node.getRolePermissions().remove(role);
-					session.update(node);
+					session.merge(node);
 				}
 
 				response.sendRedirect(request.getContextPath() + request.getServletPath() + "?action=listRoles");

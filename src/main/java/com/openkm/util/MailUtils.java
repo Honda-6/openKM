@@ -59,14 +59,14 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.mail.*;
-import javax.mail.internet.*;
-import javax.mail.search.FlagTerm;
-import javax.mail.util.ByteArrayDataSource;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
+import jakarta.mail.search.FlagTerm;
+import jakarta.mail.util.ByteArrayDataSource;
 import javax.naming.InitialContext;
-//import javax.rmi.PortableRemoteObject;
+//import jakarta.rmi.PortableRemoteObject;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -76,7 +76,7 @@ import java.util.regex.Pattern;
 /**
  * Java Mail configuration properties
  * <p>
- * http://docs.oracle.com/javaee/7/api/javax/mail/internet/package-summary.html
+ * http://docs.oracle.com/javaee/7/api/jakarta/mail/internet/package-summary.html
  */
 public class MailUtils {
 	private static final Logger log = LoggerFactory.getLogger(MailUtils.class);
@@ -718,7 +718,7 @@ public class MailUtils {
 			log.info("======= ======= {} ======= =======", i);
 			log.info("Folder: {}", folder);
 			log.info("Subject: {}", msg.getSubject());
-			log.info("From: {}", msg.getFrom());
+			log.info("From: {}", ((Object)msg.getFrom()));
 			log.info("Received: {}", msg.getReceivedDate());
 			log.info("Sent: {}", msg.getSentDate());
 

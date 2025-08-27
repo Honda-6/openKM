@@ -1612,7 +1612,7 @@ public class CmisRepository {
 			for (Map.Entry<String, Integer> ue : OKMAuth.getInstance().getGrantedUsers(null, node.getUuid()).entrySet()) {
 				// create principal
 				AccessControlPrincipalDataImpl principal = new AccessControlPrincipalDataImpl();
-				principal.setPrincipalId(ue.getKey());
+				principal.setId(ue.getKey());
 
 				// create ACE
 				AccessControlEntryImpl entry = new AccessControlEntryImpl();

@@ -32,6 +32,7 @@ import com.openkm.dao.bean.AutomationValidation;
 import com.openkm.util.PluginUtils;
 import net.xeoh.plugins.base.Plugin;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +73,7 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(ar);
+			session.persist(ar);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -95,7 +96,7 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(ar);
+			session.merge(ar);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -118,7 +119,7 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(aa);
+			session.merge(aa);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -141,7 +142,7 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(av);
+			session.merge(av);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -164,8 +165,8 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			AutomationRule ra = (AutomationRule) session.load(AutomationRule.class, raId);
-			session.delete(ra);
+			AutomationRule ra = session.get(AutomationRule.class, raId);
+			session.remove(ra);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -188,8 +189,8 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			AutomationAction aa = (AutomationAction) session.load(AutomationAction.class, aaId);
-			session.delete(aa);
+			AutomationAction aa = session.get(AutomationAction.class, aaId);
+			session.remove(aa);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -212,8 +213,8 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			AutomationValidation av = (AutomationValidation) session.load(AutomationValidation.class, avId);
-			session.delete(av);
+			AutomationValidation av = session.get(AutomationValidation.class, avId);
+			session.remove(av);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -236,7 +237,7 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(aa);
+			session.persist(aa);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -259,7 +260,7 @@ public class AutomationDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(av);
+			session.persist(av);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -274,7 +275,6 @@ public class AutomationDAO {
 	/**
 	 * find all rules
 	 */
-	@SuppressWarnings("unchecked")
 	public List<AutomationRule> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from AutomationRule ar order by ar.order";
@@ -282,8 +282,8 @@ public class AutomationDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<AutomationRule> ret = q.list();
+			Query<AutomationRule> q = session.createQuery(qs, AutomationRule.class);
+			List<AutomationRule> ret = q.getResultList();
 			initializeRules(ret);
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -297,7 +297,6 @@ public class AutomationDAO {
 	/**
 	 * find filtered riles
 	 */
-	@SuppressWarnings("unchecked")
 	public List<AutomationRule> findByEvent(String event, String at) throws DatabaseException {
 		log.debug("findByEvent({}, {})", event, at);
 		String qs = "from AutomationRule ar where ar.event=:event and ar.at=:at order by ar.order";
@@ -305,10 +304,10 @@ public class AutomationDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("event", event);
-			q.setString("at", at);
-			List<AutomationRule> ret = q.list();
+			Query<AutomationRule> q = session.createQuery(qs, AutomationRule.class);
+			q.setParameter("event", event);
+			q.setParameter("at", at);
+			List<AutomationRule> ret = q.getResultList();
 			initializeRules(ret);
 			log.debug("findByEvent: {}", ret);
 			return ret;
@@ -464,9 +463,9 @@ public class AutomationDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", arId);
-			AutomationRule ret = (AutomationRule) q.setMaxResults(1).uniqueResult();
+			Query<AutomationRule> q = session.createQuery(qs, AutomationRule.class);
+			q.setParameter("id", arId);
+			AutomationRule ret = q.setMaxResults(1).uniqueResult();
 			initialize(ret);
 			log.debug("findByPk: {}", ret);
 			return ret;
@@ -509,9 +508,9 @@ public class AutomationDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", avId);
-			AutomationValidation ret = (AutomationValidation) q.setMaxResults(1).uniqueResult();
+			Query<AutomationValidation> q = session.createQuery(qs, AutomationValidation.class);
+			q.setParameter("id", avId);
+			AutomationValidation ret = q.setMaxResults(1).uniqueResult();
 			initialize(ret);
 			log.debug("findValidationByPk: {}", ret);
 			return ret;
@@ -532,9 +531,9 @@ public class AutomationDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", aaId);
-			AutomationAction ret = (AutomationAction) q.setMaxResults(1).uniqueResult();
+			Query<AutomationAction> q = session.createQuery(qs, AutomationAction.class);
+			q.setParameter("id", aaId);
+			AutomationAction ret = q.setMaxResults(1).uniqueResult();
 			initialize(ret);
 			log.debug("findActionByPk: {}", ret);
 			return ret;

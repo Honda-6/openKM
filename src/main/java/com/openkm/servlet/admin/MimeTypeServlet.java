@@ -31,20 +31,24 @@ import com.openkm.util.SecureStore;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WarUtils;
 import com.openkm.util.WebUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -99,28 +103,28 @@ public class MimeTypeServlet extends BaseServlet {
 		updateSessionManager(request);
 
 		try {
-			if (ServletFileUpload.isMultipartContent(request)) {
+			if (JakartaServletFileUpload.isMultipartContent(request)) {
 				InputStream is = null;
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				List<FileItem> items = upload.parseRequest(request);
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				List<DiskFileItem> items = upload.parseRequest(request);
 				MimeType mt = new MimeType();
 				byte[] data = null;
 
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("action")) {
-							action = item.getString("UTF-8");
+							action = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("mt_id")) {
-							mt.setId(Integer.parseInt(item.getString("UTF-8")));
+							mt.setId(Integer.parseInt(item.getString(StandardCharsets.UTF_8)));
 						} else if (item.getFieldName().equals("mt_name")) {
-							mt.setName(item.getString("UTF-8").toLowerCase());
+							mt.setName(item.getString(StandardCharsets.UTF_8).toLowerCase());
 						} else if (item.getFieldName().equals("mt_description")) {
-							mt.setDescription(item.getString("UTF-8"));
+							mt.setDescription(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("mt_search")) {
 							mt.setSearch(true);
 						} else if (item.getFieldName().equals("mt_extensions")) {
-							String[] extensions = item.getString("UTF-8").split(" ");
+							String[] extensions = item.getString(StandardCharsets.UTF_8).split(" ");
 
 							for (int i = 0; i < extensions.length; i++) {
 								mt.getExtensions().add(extensions[i].toLowerCase());

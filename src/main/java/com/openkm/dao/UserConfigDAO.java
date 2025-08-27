@@ -30,7 +30,8 @@ import com.openkm.core.PathNotFoundException;
 import com.openkm.dao.bean.*;
 import com.openkm.util.SystemProfiling;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -53,7 +54,7 @@ public class UserConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(uc);
+			session.persist(uc);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -76,7 +77,7 @@ public class UserConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(uc);
+			session.merge(uc);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -100,9 +101,9 @@ public class UserConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setEntity("profile", ProfileDAO.findByPk(upId));
-			q.setString("user", ucUser);
+			Query<UserConfig> q = session.createQuery(qs, UserConfig.class);
+			q.setParameter("profile", ProfileDAO.findByPk(upId));
+			q.setParameter("user", ucUser);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -126,8 +127,8 @@ public class UserConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			UserConfig uc = (UserConfig) session.load(UserConfig.class, user);
-			session.delete(uc);
+			UserConfig uc = session.get(UserConfig.class, user);
+			session.remove(uc);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -151,11 +152,11 @@ public class UserConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("path", uc.getHomePath());
-			q.setString("node", uc.getHomeNode());
-			q.setString("type", uc.getHomeType());
-			q.setString("user", uc.getUser());
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("path", uc.getHomePath());
+			q.setParameter("node", uc.getHomeNode());
+			q.setParameter("type", uc.getHomeType());
+			q.setParameter("user", uc.getUser());
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -180,12 +181,12 @@ public class UserConfigDAO {
 			long begin = System.currentTimeMillis();
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			UserConfig ret = (UserConfig) session.get(UserConfig.class, user);
+			UserConfig ret = session.get(UserConfig.class, user);
 
 			if (ret == null) {
 				String repoRootPath = "/" + Repository.ROOT;
 				String repoRootUuid = NodeBaseDAO.getInstance().getUuidFromPath(repoRootPath);
-				NodeFolder nfHome = (NodeFolder) session.load(NodeFolder.class, repoRootUuid);
+				NodeFolder nfHome = session.get(NodeFolder.class, repoRootUuid);
 
 				ret = new UserConfig();
 				String path = NodeBaseDAO.getInstance().getPathFromUuid(session, nfHome.getUuid());
@@ -195,9 +196,9 @@ public class UserConfigDAO {
 				ret.setUser(user);
 				ret.setProfile(ProfileDAO.findByPk(1));
 
-				session.save(ret);
+				session.persist(ret);
 			} else {
-				NodeBase nfHome = (NodeBase) session.get(NodeBase.class, ret.getHomeNode());
+				NodeBase nfHome = session.get(NodeBase.class, ret.getHomeNode());
 
 				if (nfHome != null) {
 					String path = NodeBaseDAO.getInstance().getPathFromUuid(session, nfHome.getUuid());
@@ -212,18 +213,18 @@ public class UserConfigDAO {
 						ret.setHomeType(Mail.TYPE);
 					}
 
-					session.update(ret);
+					session.merge(ret);
 				} else {
 					String repoRootPath = "/" + Repository.ROOT;
 					String repoRootUuid = NodeBaseDAO.getInstance().getUuidFromPath(repoRootPath);
-					nfHome = (NodeFolder) session.load(NodeFolder.class, repoRootUuid);
+					nfHome = session.get(NodeFolder.class, repoRootUuid);
 
 					String path = NodeBaseDAO.getInstance().getPathFromUuid(session, nfHome.getUuid());
 					ret.setHomePath(path);
 					ret.setHomeNode(nfHome.getUuid());
 					ret.setHomeType(Folder.TYPE);
 
-					session.save(ret);
+					session.persist(ret);
 				}
 			}
 

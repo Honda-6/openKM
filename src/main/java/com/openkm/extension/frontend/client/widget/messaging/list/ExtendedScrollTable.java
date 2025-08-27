@@ -367,7 +367,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		dataTable.insertRow(rows);
 
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), propose);
+		data.put(Integer.valueOf(dataIndexValue), propose);
 
 		if (propose.isAccepted()) {
 			dataTable.setWidget(rows, 0, new Image(OKMBundleResources.INSTANCE.yes()));
@@ -429,7 +429,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		int rows = dataTable.getRowCount();
 		dataTable.insertRow(rows);
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), propose);
+		data.put(Integer.valueOf(dataIndexValue), propose);
 
 		dataTable.setHTML(rows, 0, "");
 		dataTable.setHTML(rows, 1, propose.getFrom());
@@ -486,7 +486,7 @@ public class ExtendedScrollTable extends ScrollTable {
 	private void refreshProposedSubscriptionRow(final GWTProposedSubscriptionReceived propose, int row) {
 		boolean seen = (propose.getSeenDate() == null);
 		// Sets folder object
-		data.put(new Integer(dataTable.getHTML(row, 5)), propose);
+		data.put(Integer.valueOf(dataTable.getHTML(row, 5)), propose);
 
 		if (propose.isAccepted()) {
 			dataTable.setWidget(row, 0, new Image(OKMBundleResources.INSTANCE.yes()));
@@ -536,7 +536,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		boolean seen = (propose.getSeenDate() == null);
 		dataTable.insertRow(rows);
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), propose);
+		data.put(Integer.valueOf(dataIndexValue), propose);
 
 		if (propose.isAccepted()) {
 			dataTable.setWidget(rows, 0, new Image(OKMBundleResources.INSTANCE.yes()));
@@ -594,7 +594,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		int rows = dataTable.getRowCount();
 		dataTable.insertRow(rows);
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), propose);
+		data.put(Integer.valueOf(dataIndexValue), propose);
 
 		dataTable.setHTML(rows, 0, "");
 		dataTable.setHTML(rows, 1, propose.getFrom());
@@ -646,7 +646,7 @@ public class ExtendedScrollTable extends ScrollTable {
 	private void refreshProposedQueryRow(final GWTProposedQueryReceived propose, int row) {
 		boolean seen = (propose.getSeenDate() == null);
 		// Sets folder object
-		data.put(new Integer(dataTable.getHTML(row, 5)), propose);
+		data.put(Integer.valueOf(dataTable.getHTML(row, 5)), propose);
 
 		if (propose.isAccepted()) {
 			dataTable.setWidget(row, 0, new Image(OKMBundleResources.INSTANCE.yes()));
@@ -691,7 +691,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		int rows = dataTable.getRowCount();
 		dataTable.insertRow(rows);
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), messageSent);
+		data.put(Integer.valueOf(dataIndexValue), messageSent);
 
 		dataTable.setHTML(rows, 0, "");
 		dataTable.setHTML(rows, 1, messageSent.getTo());
@@ -725,7 +725,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		dataTable.insertRow(rows);
 
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), messageReceived);
+		data.put(Integer.valueOf(dataIndexValue), messageReceived);
 
 		dataTable.setHTML(rows, 0, "");
 		dataTable.setHTML(rows, 1, UtilComunicator.getTextAsBoldHTML(messageReceived.getFrom(), seen));
@@ -761,7 +761,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		boolean seen = (messageReceived.getSeenDate() == null);
 
 		// Sets folder object
-		data.put(new Integer(dataTable.getHTML(row, 5)), messageReceived);
+		data.put(Integer.valueOf(dataTable.getHTML(row, 5)), messageReceived);
 		dataTable.setHTML(row, 0, "");
 		dataTable.setHTML(row, 1, UtilComunicator.getTextAsBoldHTML(messageReceived.getFrom(), seen));
 		dataTable.setHTML(

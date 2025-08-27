@@ -154,7 +154,9 @@ public class RDFREpository {
 				log.error(e.getMessage(), e);
 			} finally {
 				try {
-					con.close();
+					if (con != null) {
+						con.close();
+					}
 				} catch (Throwable e) {
 					log.error("Could not close connection....", e);
 				}

@@ -21,9 +21,7 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,11 +47,9 @@ public class AutomationAction implements Serializable {
 	@OrderColumn(name = "AAP_ORDER")
 	@CollectionTable(name = "OKM_AUTO_ACTION_PARAMS", joinColumns = {@JoinColumn(name = "AAP_VALIDATION")})
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private List<String> params = new ArrayList<>();
 
 	@Column(name = "AAC_ACTIVE", nullable = false)
-	@Type(type = "true_false")
 	private Boolean active = Boolean.FALSE;
 
 	public long getId() {

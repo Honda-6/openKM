@@ -2,7 +2,7 @@ package com.openkm.rest.util;
 
 import java.io.Serializable;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "changeSecurity")
 public class ChangeSecurity implements Serializable {

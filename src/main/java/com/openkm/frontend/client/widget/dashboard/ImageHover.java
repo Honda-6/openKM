@@ -32,7 +32,7 @@ import com.google.gwt.user.client.ui.Image;
  *
  * @author jllort
  */
-public class ImageHover extends Image implements HasClickHandlers, HasAllMouseHandlers {
+public class ImageHover extends Image{
 	private String url = "";
 	private String urlHover = "";
 

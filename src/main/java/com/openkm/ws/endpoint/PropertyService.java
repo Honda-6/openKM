@@ -27,9 +27,9 @@ import com.openkm.module.PropertyModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebParam;
+import jakarta.jws.WebService;
 
 @WebService(name = "OKMProperty", serviceName = "OKMProperty", targetNamespace = "http://ws.openkm.com")
 public class PropertyService implements PropertyModule {

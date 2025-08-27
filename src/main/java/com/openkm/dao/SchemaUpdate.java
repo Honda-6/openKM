@@ -82,7 +82,7 @@ public class SchemaUpdate {
 						doUpdate = false;
 					} else if (arg.startsWith("--naming=")) {
 						cfg.setNamingStrategy((NamingStrategy) ReflectHelper.classForName(
-								arg.substring(9)).newInstance());
+								arg.substring(9)).getDeclaredConstructor().newInstance());
 					} else if (arg.startsWith("--output=")) {
 						outFile = arg.substring(9);
 					}

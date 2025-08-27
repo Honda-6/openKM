@@ -23,24 +23,23 @@ package com.openkm.dao.bean;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Type;
-import org.hibernate.search.annotations.*;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Calendar;
 
 @Entity
 @Indexed
-@Table(name = "OKM_NODE_DOCUMENT_VERSION", uniqueConstraints = {
-		@UniqueConstraint(name = "IDX_NOD_DOC_VER_PARNAM", columnNames = {"NDV_PARENT", "NDV_NAME"})})
+@Table(name = "OKM_NODE_DOCUMENT_VERSION", 
+	uniqueConstraints = {
+		@UniqueConstraint(name = "IDX_NOD_DOC_VER_PARNAM", columnNames = {"NDV_PARENT", "NDV_NAME"})
+	},
+	indexes = {
+		@Index(name = "IDX_NOD_DOC_VER_PARCUR", columnList = "NDV_PARENT, NDV_CURRENT"),
+		@Index(name = "IDX_NOD_DOC_VER_PARENT", columnList = "NDV_PARENT")
+	})
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@org.hibernate.annotations.Table(appliesTo = "OKM_NODE_DOCUMENT_VERSION",
-		indexes = {
-				// CREATE INDEX IDX_NOD_DOC_VER_PARCUR ON OKM_NODE_DOCUMENT_VERSION(NDV_PARENT, NDV_CURRENT);
-				@org.hibernate.annotations.Index(name = "IDX_NOD_DOC_VER_PARCUR", columnNames = {"NDV_PARENT", "NDV_CURRENT"})
-		}
-)
 public class NodeDocumentVersion implements Serializable {
 	private static final long serialVersionUID = 1L;
 
@@ -50,48 +49,44 @@ public class NodeDocumentVersion implements Serializable {
 	private String uuid;
 
 	@Column(name = "NDV_PARENT", length = 64)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
-	// CREATE INDEX IDX_NDOC_VERSION_PARENT ON OKM_NODE_DOCUMENT_VERSION(NDV_PARENT);
-	@org.hibernate.annotations.Index(name = "IDX_NOD_DOC_VER_PARENT")
+	@GenericField
 	private String parent;
 
 	// The UUID of the previous version
 	@Column(name = "NDV_PREVIOUS", length = 64)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private String previous;
 
 	@Column(name = "NDV_SIZE")
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private long size;
 
 	@Column(name = "NDV_AUTHOR", length = 64)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private String author;
 
 	@Column(name = "NDV_CREATED")
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
-	@CalendarBridge(resolution = Resolution.DAY)
+	@GenericField
 	private Calendar created;
 
 	@Column(name = "NDV_NAME", length = 64)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private String name;
 
 	@Column(name = "NDV_CURRENT", nullable = false)
-	@Type(type = "true_false")
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private boolean current;
 
 	@Column(name = "NDV_COMMENT", length = 2048)
-	@Field(index = Index.TOKENIZED, store = Store.YES)
+	@FullTextField
 	private String comment;
 
 	@Column(name = "NDV_MIME_TYPE", length = 128)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private String mimeType;
 
 	@Column(name = "NDV_CHECKSUM", length = 32)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private String checksum;
 
 	// http://stackoverflow.com/questions/3677380/proper-hibernate-annotation-for-byte
@@ -100,7 +95,7 @@ public class NodeDocumentVersion implements Serializable {
 	private byte[] content;
 
 	@Transient
-	@Field(index = Index.TOKENIZED, store = Store.NO)
+	@FullTextField
 	private String text;
 
 	public String getUuid() {

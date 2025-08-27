@@ -43,7 +43,7 @@ import com.openkm.util.UserActivity;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,7 +214,7 @@ public class DbDashboardModule implements DashboardModule {
 	/**
 	 * Execute query with documents
 	 */
-	@SuppressWarnings("unchecked")
+	
 	private List<DashboardDocumentResult> executeQueryDocument(String user, String qs, String action, int maxResults)
 			throws RepositoryException, DatabaseException {
 		log.debug("executeQueryDocument({}, {}, {}, {})", user, qs, action, maxResults);
@@ -224,9 +224,9 @@ public class DbDashboardModule implements DashboardModule {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs).setCacheable(true);
-			q.setString("user", user);
-			List<NodeDocument> results = q.list();
+			Query<NodeDocument> q = session.createQuery(qs, NodeDocument.class).setCacheable(true);
+			q.setParameter("user", user);
+			List<NodeDocument> results = q.getResultList();
 
 			for (Iterator<NodeDocument> it = results.iterator(); it.hasNext() && i < maxResults; ) {
 				NodeDocument nDoc = it.next();
@@ -263,7 +263,7 @@ public class DbDashboardModule implements DashboardModule {
 	/**
 	 * Execute query with folders
 	 */
-	@SuppressWarnings("unchecked")
+	
 	private List<DashboardFolderResult> executeQueryFolder(String user, String qs, String action, int maxResults)
 			throws RepositoryException, DatabaseException {
 		List<DashboardFolderResult> al = new ArrayList<>();
@@ -272,8 +272,8 @@ public class DbDashboardModule implements DashboardModule {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<NodeFolder> results = q.list();
+			Query<NodeFolder> q = session.createQuery(qs, NodeFolder.class);
+			List<NodeFolder> results = q.getResultList();
 
 			for (Iterator<NodeFolder> it = results.iterator(); it.hasNext() && i < maxResults; ) {
 				NodeFolder nFld = it.next();
@@ -987,7 +987,7 @@ public class DbDashboardModule implements DashboardModule {
 
 		if (elto != null) {
 			log.debug("Get '{}' from cache", source);
-			List<DashboardDocumentResult> cachedResults = (List<DashboardDocumentResult>) elto.getValue();
+			List<DashboardDocumentResult> cachedResults = (List<DashboardDocumentResult>) elto.getObjectValue();
 			al = allowedCachedDocumentResults(cachedResults);
 		} else {
 			log.debug("Get '{}' from database", source);
@@ -996,14 +996,14 @@ public class DbDashboardModule implements DashboardModule {
 
 			try {
 				session = HibernateUtil.getSessionFactory().openSession();
-				Query q = session.createQuery(qs).setFetchSize(MAX_RESULTS);
+				Query<Object[]> q = session.createQuery(qs, Object[].class).setFetchSize(MAX_RESULTS);
 
 				if (date != null) {
-					q.setCalendar("date", date);
+					q.setParameter("date", date);
 				}
 
 				// While there is more query results and the MAX_RESULT limit has reached
-				for (Iterator<Object[]> it = q.iterate(); it.hasNext() && cont < MAX_RESULTS; cont++) {
+				for (Iterator<Object[]> it = q.getResultList().iterator(); it.hasNext() && cont < MAX_RESULTS; cont++) {
 					Object[] obj = it.next();
 					String resItem = (String) obj[0];
 					Calendar resDate = (Calendar) obj[1];
@@ -1087,7 +1087,7 @@ public class DbDashboardModule implements DashboardModule {
 		return al;
 	}
 
-	@SuppressWarnings("unchecked")
+	
 	private List<DashboardFolderResult> getTopFolders(String user, String source, String qs, Calendar date)
 			throws RepositoryException, DatabaseException {
 		log.debug("getTopFolders({}, {}, {}, {})", user, source, qs, (date != null ? date.getTime() : "null"));
@@ -1098,7 +1098,7 @@ public class DbDashboardModule implements DashboardModule {
 
 		if (elto != null) {
 			log.debug("Get '{}' from cache", source);
-			List<DashboardFolderResult> cachedResults = (List<DashboardFolderResult>) elto.getValue();
+			List<DashboardFolderResult> cachedResults = (List<DashboardFolderResult>) elto.getObjectValue();
 			al = allowedCachedFolderResults(cachedResults);
 		} else {
 			log.debug("Get '{}' from database", source);
@@ -1107,14 +1107,14 @@ public class DbDashboardModule implements DashboardModule {
 
 			try {
 				session = HibernateUtil.getSessionFactory().openSession();
-				Query q = session.createQuery(qs).setFetchSize(MAX_RESULTS);
+				Query<Object[]> q = session.createQuery(qs, Object[].class).setFetchSize(MAX_RESULTS);
 
 				if (date != null) {
-					q.setCalendar("date", date);
+					q.setParameter("date", date);
 				}
 
 				// While there is more query results and the MAX_RESULT limit has reached
-				for (Iterator<Object[]> it = q.iterate(); it.hasNext() && cont < MAX_RESULTS; cont++) {
+				for (Iterator<Object[]> it = q.getResultList().iterator(); it.hasNext() && cont < MAX_RESULTS; cont++) {
 					Object[] obj = it.next();
 					String resItem = (String) obj[0];
 					Calendar resDate = (Calendar) obj[1];
@@ -1291,7 +1291,7 @@ public class DbDashboardModule implements DashboardModule {
 	/**
 	 * Get documents from statement
 	 */
-	@SuppressWarnings("unchecked")
+	
 	private ArrayList<DashboardDocumentResult> getUserDocuments(String user, String source, String qs) throws DatabaseException {
 		log.debug("getUserDocuments({}, {}, {})", user, source, qs);
 		ArrayList<DashboardDocumentResult> al = new ArrayList<>();
@@ -1301,18 +1301,18 @@ public class DbDashboardModule implements DashboardModule {
 
 		if (elto != null) {
 			log.debug("Get '{}' from cache", source);
-			al = (ArrayList<DashboardDocumentResult>) elto.getValue();
+			al = (ArrayList<DashboardDocumentResult>) elto.getObjectValue();
 		} else {
 			log.debug("Get '{}' from database", source);
 			org.hibernate.Session hSession = null;
 
 			try {
 				hSession = HibernateUtil.getSessionFactory().openSession();
-				org.hibernate.Query q = hSession.createQuery(qs);
-				q.setString("user", user);
+				Query<Object[]> q = hSession.createQuery(qs, Object[].class);
+				q.setParameter("user", user);
 				q.setMaxResults(MAX_RESULTS);
 
-				for (Object[] actData : (Iterable<Object[]>) q.list()) {
+				for (Object[] actData : (Iterable<Object[]>) q.getResultList()) {
 					String actItem = (String) actData[0];
 					Calendar actDate = (Calendar) actData[1];
 
@@ -1344,7 +1344,7 @@ public class DbDashboardModule implements DashboardModule {
 	/**
 	 * Get mails from statement
 	 */
-	@SuppressWarnings("unchecked")
+	
 	private ArrayList<DashboardMailResult> getUserMails(String user, String source, String qs) throws DatabaseException {
 		log.debug("getUserMails({}, {}, {})", user, source, qs);
 		ArrayList<DashboardMailResult> al = new ArrayList<>();
@@ -1354,15 +1354,15 @@ public class DbDashboardModule implements DashboardModule {
 
 		if (elto != null) {
 			log.debug("Get '{}' from cache", source);
-			al = (ArrayList<DashboardMailResult>) elto.getValue();
+			al = (ArrayList<DashboardMailResult>) elto.getObjectValue();
 		} else {
 			log.debug("Get '{}' from database", source);
 			org.hibernate.Session hSession = null;
 
 			try {
 				hSession = HibernateUtil.getSessionFactory().openSession();
-				org.hibernate.Query q = hSession.createQuery(qs);
-				q.setString("user", user);
+				Query<DashboardActivity> q = hSession.createQuery(qs, DashboardActivity.class);
+				q.setParameter("user", user);
 				q.setMaxResults(MAX_RESULTS);
 
 				for (DashboardActivity da : (Iterable<DashboardActivity>) q.list()) {

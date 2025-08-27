@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.Date;
 
-public abstract class FsResource implements Resource, MoveableResource, CopyableResource, LockableResource,
+public abstract class FsResource implements MoveableResource, CopyableResource, LockableResource,
 		DigestResource {
 	private static final Logger log = LoggerFactory.getLogger(FsResource.class);
 	File file;

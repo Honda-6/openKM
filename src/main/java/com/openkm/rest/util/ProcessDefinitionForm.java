@@ -23,7 +23,7 @@ package com.openkm.rest.util;
 
 import com.openkm.ws.common.util.FormElementComplex;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;

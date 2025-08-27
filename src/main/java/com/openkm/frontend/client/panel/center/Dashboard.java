@@ -267,7 +267,7 @@ public class Dashboard extends Composite implements HasDashboardHandlerExtension
 			}
 		};
 
-		dashboardRefreshing.scheduleRepeating(new Double(scheduleTime).intValue());
+		dashboardRefreshing.scheduleRepeating(Double.valueOf(scheduleTime).intValue());
 	}
 
 	/**

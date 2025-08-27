@@ -2,21 +2,25 @@ package com.openkm.servlet.admin;
 
 import com.openkm.api.OKMWorkflow;
 import com.openkm.util.UserActivity;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -36,18 +40,19 @@ public class RegisterWorkflowServlet extends BaseServlet {
 		updateSessionManager(request);
 
 		try {
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
 			out = response.getWriter();
 
 			// Create a factory for disk-based file items
 			if (isMultipart) {
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				upload.setHeaderEncoding("UTF-8");
-				List<FileItem> items = upload.parseRequest(request);
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				// upload.setHeaderEncoding("UTF-8");
+				upload.setHeaderCharset(StandardCharsets.UTF_8);
+				List<DiskFileItem> items = upload.parseRequest(request);
 
 				// Parse the request and get all parameters and the uploaded file
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (!item.isFormField()) {
 						fileName = item.getName();
 						content = item.get();
@@ -70,8 +75,10 @@ public class RegisterWorkflowServlet extends BaseServlet {
 			log.error(e.getMessage(), e);
 			sendErrorRedirect(request, response, e);
 		} finally {
-			out.flush();
-			out.close();
+			if(out != null) {
+				out.flush();
+				out.close();
+			}
 		}
 	}
 }

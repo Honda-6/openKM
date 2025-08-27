@@ -21,9 +21,8 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,7 +50,6 @@ public class AutomationValidation implements Serializable {
 	private List<String> params = new ArrayList<>();
 
 	@Column(name = "AVL_ACTIVE", nullable = false)
-	@Type(type = "true_false")
 	private Boolean active = Boolean.FALSE;
 
 	public long getId() {

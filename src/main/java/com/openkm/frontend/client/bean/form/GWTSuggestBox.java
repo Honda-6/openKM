@@ -21,7 +21,6 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.List;
  * @author jllort
  *
  */
-public class GWTSuggestBox extends GWTFormElement implements IsSerializable {
+public class GWTSuggestBox extends GWTFormElement {
 	private List<GWTValidator> validators = new ArrayList<>();
 	private String value = "";
 	private String text = ""; // text Value

@@ -23,6 +23,8 @@ package com.openkm.frontend.client.service;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+// import com.google.gwt.user.client.rpc.jakarta.RemoteService;
+// import com.google.gwt.user.client.rpc.jakarta.RemoteServiceRelativePath;
 import com.openkm.frontend.client.OKMException;
 import com.openkm.frontend.client.bean.GWTUser;
 

@@ -34,6 +34,8 @@ import com.openkm.util.FormatUtil;
 import com.openkm.util.PathUtils;
 import com.openkm.util.SystemProfiling;
 import org.hibernate.*;
+import org.hibernate.query.Query;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.type.StandardBasicTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +64,7 @@ public class NodeBaseDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			NodeBase nBase = (NodeBase) session.get(NodeBase.class, uuid);
+			NodeBase nBase = session.get(NodeBase.class, uuid);
 
 			if (nBase == null) {
 				throw new PathNotFoundException(uuid);
@@ -129,7 +131,7 @@ public class NodeBaseDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			NodeBase nBase = (NodeBase) session.get(NodeBase.class, uuid);
+			NodeBase nBase = session.get(NodeBase.class, uuid);
 
 			if (nBase == null) {
 				return false;
@@ -180,7 +182,7 @@ public class NodeBaseDAO {
 		String path = "";
 
 		do {
-			NodeBase node = (NodeBase) session.get(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 
 			if (node == null) {
 				throw new PathNotFoundException(uuid);
@@ -225,7 +227,7 @@ public class NodeBaseDAO {
 	private String calculateUuidFromPath(Session session, String path) throws PathNotFoundException, HibernateException {
 		log.debug("calculateUuidFromPath({}, {})", session, path);
 		String qs = "select nb.uuid from NodeBase nb where nb.parent=:parent and nb.name=:name";
-		Query q = session.createQuery(qs).setCacheable(true);
+		Query<String> q = session.createQuery(qs, String.class).setCacheable(true);
 		String uuid = Config.ROOT_NODE_UUID;
 		String name = "";
 
@@ -234,9 +236,9 @@ public class NodeBaseDAO {
 
 		for (StringTokenizer st = new StringTokenizer(path, "/"); st.hasMoreTokens(); ) {
 			name = st.nextToken();
-			q.setString("name", name);
-			q.setString("parent", uuid);
-			uuid = (String) q.setMaxResults(1).uniqueResult();
+			q.setParameter("name", name);
+			q.setParameter("parent", uuid);
+			uuid = q.setMaxResults(1).uniqueResult();
 
 			if (uuid == null) {
 				throw new PathNotFoundException(path);
@@ -279,9 +281,9 @@ public class NodeBaseDAO {
 	private String searchPathFromUuid(Session session, String uuid) throws PathNotFoundException, HibernateException {
 		log.debug("searchPathFromUuid({})", uuid);
 		String qs = "select nb.path from NodeBase nb where nb.uuid=:uuid";
-		Query q = session.createQuery(qs);
-		q.setString("uuid", uuid);
-		String path = (String) q.setMaxResults(1).uniqueResult();
+		Query<String> q = session.createQuery(qs, String.class);
+		q.setParameter("uuid", uuid);
+		String path = q.setMaxResults(1).uniqueResult();
 		log.debug("searchPathFromUuid: {}", path);
 		return path;
 	}
@@ -297,9 +299,9 @@ public class NodeBaseDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("path", path);
-			String uuid = (String) q.setMaxResults(1).uniqueResult();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("path", path);
+			String uuid = q.setMaxResults(1).uniqueResult();
 
 			if (uuid == null) {
 				throw new PathNotFoundException(path);
@@ -328,7 +330,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			if (node != null) {
@@ -363,7 +365,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Root node
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 
 			if (recursive) {
 				long begin = System.currentTimeMillis();
@@ -413,7 +415,7 @@ public class NodeBaseDAO {
 				node.getUserPermissions().put(user, permissions | currentPermissions);
 			}
 
-			session.update(node);
+			session.merge(node);
 			return 1;
 		} else {
 			return 0;
@@ -423,16 +425,15 @@ public class NodeBaseDAO {
 	/**
 	 * Grant recursively
 	 */
-	@SuppressWarnings("unchecked")
 	private int grantUserPermissionsInDepth(Session session, NodeBase node, String user, int permissions) throws PathNotFoundException,
 			AccessDeniedException, DatabaseException, HibernateException {
 		int total = grantUserPermissions(session, node, user, permissions, true);
 
 		// Calculate children nodes
 		String qs = "from NodeBase nb where nb.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", node.getUuid());
-		List<NodeBase> ret = q.list();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", node.getUuid());
+		List<NodeBase> ret = q.getResultList();
 
 		// Security Check
 		SecurityHelper.pruneNodeList(ret);
@@ -458,7 +459,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Root node
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 
 			if (recursive) {
 				long begin = System.currentTimeMillis();
@@ -512,7 +513,7 @@ public class NodeBaseDAO {
 				}
 			}
 
-			session.update(node);
+			session.merge(node);
 			return 1;
 		} else {
 			return 0;
@@ -522,16 +523,15 @@ public class NodeBaseDAO {
 	/**
 	 * Revoke recursively
 	 */
-	@SuppressWarnings("unchecked")
 	private int revokeUserPermissionsInDepth(Session session, NodeBase node, String user, int permissions) throws PathNotFoundException,
 			AccessDeniedException, DatabaseException, HibernateException {
 		int total = revokeUserPermissions(session, node, user, permissions, true);
 
 		// Calculate children nodes
 		String qs = "from NodeBase nb where nb.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", node.getUuid());
-		List<NodeBase> ret = q.list();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", node.getUuid());
+		List<NodeBase> ret = q.getResultList();
 
 		// Security Check
 		SecurityHelper.pruneNodeList(ret);
@@ -557,7 +557,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			if (node != null) {
@@ -592,7 +592,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Root node
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 
 			if (recursive) {
 				long begin = System.currentTimeMillis();
@@ -642,7 +642,7 @@ public class NodeBaseDAO {
 				node.getRolePermissions().put(role, permissions | currentPermissions);
 			}
 
-			session.update(node);
+			session.merge(node);
 			return 1;
 		} else {
 			return 0;
@@ -652,16 +652,15 @@ public class NodeBaseDAO {
 	/**
 	 * Grant recursively
 	 */
-	@SuppressWarnings("unchecked")
 	private int grantRolePermissionsInDepth(Session session, NodeBase node, String role, int permissions) throws PathNotFoundException,
 			AccessDeniedException, DatabaseException, HibernateException {
 		int total = grantRolePermissions(session, node, role, permissions, true);
 
 		// Calculate children nodes
 		String qs = "from NodeBase nb where nb.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", node.getUuid());
-		List<NodeBase> ret = q.list();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", node.getUuid());
+		List<NodeBase> ret = q.getResultList();
 
 		// Security Check
 		SecurityHelper.pruneNodeList(ret);
@@ -687,7 +686,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Root node
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 
 			if (recursive) {
 				long begin = System.currentTimeMillis();
@@ -741,7 +740,7 @@ public class NodeBaseDAO {
 				}
 			}
 
-			session.update(node);
+			session.merge(node);
 			return 1;
 		} else {
 			return 0;
@@ -751,16 +750,15 @@ public class NodeBaseDAO {
 	/**
 	 * Revoke recursively
 	 */
-	@SuppressWarnings("unchecked")
 	private int revokeRolePermissionsInDepth(Session session, NodeBase node, String role, int permissions) throws PathNotFoundException,
 			AccessDeniedException, DatabaseException, HibernateException {
 		int total = revokeRolePermissions(session, node, role, permissions, true);
 
 		// Calculate children nodes
 		String qs = "from NodeBase nb where nb.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", node.getUuid());
-		List<NodeBase> ret = q.list();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", node.getUuid());
+		List<NodeBase> ret = q.getResultList();
 
 		// Security Check
 		SecurityHelper.pruneNodeList(ret);
@@ -787,7 +785,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Root node
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 
 			if (recursive) {
 				long begin = System.currentTimeMillis();
@@ -885,7 +883,7 @@ public class NodeBaseDAO {
 				}
 			}
 
-			session.update(node);
+			session.merge(node);
 			return 1;
 		} else {
 			return 0;
@@ -895,7 +893,6 @@ public class NodeBaseDAO {
 	/**
 	 * Change security recursively
 	 */
-	@SuppressWarnings("unchecked")
 	public int changeSecurityInDepth(Session session, NodeBase node, Map<String, Integer> grantUsers, Map<String, Integer> revokeUsers,
 			Map<String, Integer> grantRoles, Map<String, Integer> revokeRoles) throws PathNotFoundException, AccessDeniedException,
 			DatabaseException, HibernateException {
@@ -903,9 +900,9 @@ public class NodeBaseDAO {
 
 		// Calculate children nodes
 		String qs = "from NodeBase nb where nb.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", node.getUuid());
-		List<NodeBase> ret = q.list();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", node.getUuid());
+		List<NodeBase> ret = q.getResultList();
 
 		// Security Check
 		SecurityHelper.pruneNodeList(ret);
@@ -930,7 +927,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 			SecurityHelper.checkWrite(node);
 
@@ -938,7 +935,7 @@ public class NodeBaseDAO {
 				node.getCategories().add(catUuid);
 			}
 
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("addCategory: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
@@ -965,12 +962,12 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 			SecurityHelper.checkWrite(node);
 
 			node.getCategories().remove(catUuid);
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("removeCategory: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
@@ -998,7 +995,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			check = node.getCategories().contains(catId);
@@ -1033,15 +1030,15 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			if (Config.NATIVE_SQL_OPTIMIZATIONS) {
-				SQLQuery q = session.createSQLQuery(sql);
+				NativeQuery<String> q = session.createNativeQuery(sql, String.class);
 				// q.setCacheable(true);
-				q.setString("catUuid", catUuid);
+				q.setParameter("catUuid", catUuid);
 				q.addScalar("NCT_NODE", StandardBasicTypes.STRING);
-				check = !q.list().isEmpty();
+				check = !q.getResultList().isEmpty();
 			} else {
-				Query q = session.createQuery(qs).setCacheable(true);
-				q.setString("category", catUuid);
-				check = !q.list().isEmpty();
+				Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+				q.setParameter("category", catUuid);
+				check = !q.getResultList().isEmpty();
 			}
 
 			HibernateUtil.commit(tx);
@@ -1068,7 +1065,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 			SecurityHelper.checkWrite(node);
 
@@ -1076,7 +1073,7 @@ public class NodeBaseDAO {
 				node.getKeywords().add(keyword);
 			}
 
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("addKeyword: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
@@ -1103,12 +1100,12 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 			SecurityHelper.checkWrite(node);
 
 			node.getKeywords().remove(keyword);
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("removeCategory: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
@@ -1136,7 +1133,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			check = node.getKeywords().contains(keyword);
@@ -1168,14 +1165,14 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			if (!node.getSubscriptors().contains(user)) {
 				node.getSubscriptors().add(user);
 			}
 
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("subscribe: void");
 		} catch (PathNotFoundException | DatabaseException e) {
@@ -1202,11 +1199,11 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			node.getSubscriptors().remove(user);
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("unsubscribe: void");
 		} catch (PathNotFoundException | DatabaseException e) {
@@ -1231,7 +1228,7 @@ public class NodeBaseDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			Set<String> subscriptors = node.getSubscriptors();
@@ -1257,9 +1254,9 @@ public class NodeBaseDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("uuid", uuid);
-			String parent = (String) q.setMaxResults(1).uniqueResult();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("uuid", uuid);
+			String parent = q.setMaxResults(1).uniqueResult();
 			log.debug("getParentUuid: {}", parent);
 			return parent;
 		} catch (HibernateException e) {
@@ -1295,9 +1292,9 @@ public class NodeBaseDAO {
 	public NodeBase getParentNode(Session session, String uuid) throws HibernateException {
 		log.debug("getParentNode({}, {})", session, uuid);
 		String qs = "from NodeBase nb1 where nb1.uuid = (select nb2.parent from NodeBase nb2 where nb2.uuid=:uuid)";
-		Query q = session.createQuery(qs);
-		q.setString("uuid", uuid);
-		NodeBase parentNode = (NodeBase) q.setMaxResults(1).uniqueResult();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class);
+		q.setParameter("uuid", uuid);
+		NodeBase parentNode = q.setMaxResults(1).uniqueResult();
 		log.debug("getParentNode: {}", parentNode);
 		return parentNode;
 	}
@@ -1305,22 +1302,21 @@ public class NodeBaseDAO {
 	/**
 	 * Get parent node permissions
 	 */
-	@SuppressWarnings("unchecked")
 	public NodeBase getParentNodePermissions(Session session, String uuid) throws HibernateException {
 		log.debug("getParentNodePermissions({}, {})", session, uuid);
 		String qs = "select nb1.uuid, index(userPermissions), userPermissions, index(rolePermissions), rolePermissions "
 				+ "from NodeBase nb1 join nb1.userPermissions userPermissions join nb1.rolePermissions rolePermissions "
 				+ "where nb1.uuid = (select nb2.parent from NodeBase nb2 where nb2.uuid=:uuid)";
-		Query q = session.createQuery(qs).setCacheable(true);
+		Query<Object[]> q = session.createQuery(qs, Object[].class).setCacheable(true);
 		q.setCacheRegion(CACHE_PARENT_NODE_PERMISSIONS);
-		q.setString("uuid", uuid);
-		List<Object[]> perms = (List<Object[]>) q.list();
+		q.setParameter("uuid", uuid);
+		List<Object[]> perms = q.getResultList();
 		NodeBase nBase = null;
 
 		if (!perms.isEmpty()) {
 			nBase = new NodeBase();
 
-			for (Object[] tupla : (List<Object[]>) q.list()) {
+			for (Object[] tupla : perms) {
 				if (nBase.getUuid() == null) {
 					nBase.setUuid((String) tupla[0]);
 				}
@@ -1356,8 +1352,8 @@ public class NodeBaseDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
 
-			Query q = session.createQuery(qs);
-			total = (Long) q.setMaxResults(1).uniqueResult();
+			Query<Long> q = session.createQuery(qs, Long.class);
+			total = q.setMaxResults(1).uniqueResult();
 
 			HibernateUtil.commit(tx);
 			SystemProfiling.log(nodeType, System.currentTimeMillis() - begin);
@@ -1389,9 +1385,9 @@ public class NodeBaseDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
 
-			Query q = session.createQuery(qs);
-			q.setString("context", PathUtils.fixContext(context));
-			total = (Long) q.setMaxResults(1).uniqueResult();
+			Query<Long> q = session.createQuery(qs, Long.class);
+			q.setParameter("context", PathUtils.fixContext(context));
+			total = q.setMaxResults(1).uniqueResult();
 
 			HibernateUtil.commit(tx);
 			SystemProfiling.log(nodeType + ", " + context, System.currentTimeMillis() - begin);
@@ -1424,9 +1420,9 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			String uuid = getUuidFromPath(path);
-			Query q = session.createQuery(qs).setCacheable(true);
-			q.setString("parent", uuid);
-			total = (Long) q.setMaxResults(1).uniqueResult();
+			Query<Long> q = session.createQuery(qs, Long.class).setCacheable(true);
+			q.setParameter("parent", uuid);
+			total = q.setMaxResults(1).uniqueResult();
 
 			HibernateUtil.commit(tx);
 			SystemProfiling.log(nodeType + ", " + path, System.currentTimeMillis() - begin);
@@ -1479,14 +1475,13 @@ public class NodeBaseDAO {
 	/**
 	 * Helper method.
 	 */
-	@SuppressWarnings("unchecked")
 	private long getSubtreeCountHelper(Session session, String nodeType, String parentUuid, int depth, int level)
 			throws HibernateException, DatabaseException {
 		log.debug("getSubtreeCountHelper({}, {}, {},  {})", nodeType, parentUuid, depth, level);
 		String qs = "from NodeBase n where n.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", parentUuid);
-		List<NodeBase> nodes = q.list();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", parentUuid);
+		List<NodeBase> nodes = q.getResultList();
 		long total = 0;
 
 		for (NodeBase nBase : nodes) {
@@ -1545,14 +1540,13 @@ public class NodeBaseDAO {
 	/**
 	 * Helper method.
 	 */
-	@SuppressWarnings("unchecked")
 	private long subTreeHasMoreThanNodesHelper(Session session, String parentUuid, long maxNodes, long curNodes) throws HibernateException,
 			DatabaseException {
 		log.debug("getSubtreeCountHelper({}, {}, {})", parentUuid, maxNodes, curNodes);
 		String qs = "from NodeBase n where n.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", parentUuid);
-		List<NodeBase> nodes = q.list();
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", parentUuid);
+		List<NodeBase> nodes = q.getResultList();
 		long total = 0;
 
 		for (NodeBase nBase : nodes) {
@@ -1590,11 +1584,11 @@ public class NodeBaseDAO {
 	 */
 	public boolean testItemExistence(Session session, String parent, String name) throws HibernateException, DatabaseException {
 		String qs = "from NodeBase nb where nb.parent=:parent and nb.name=:name";
-		Query q = session.createQuery(qs);
-		q.setString("parent", parent);
-		q.setString("name", name);
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class);
+		q.setParameter("parent", parent);
+		q.setParameter("name", name);
 
-		return !q.list().isEmpty();
+		return !q.getResultList().isEmpty();
 	}
 
 	/**
@@ -1620,7 +1614,7 @@ public class NodeBaseDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			NodeBase nBase = (NodeBase) session.get(NodeBase.class, uuid);
+			NodeBase nBase = session.get(NodeBase.class, uuid);
 
 			if (nBase == null) {
 				throw new PathNotFoundException(uuid);
@@ -1659,7 +1653,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 			SecurityHelper.checkWrite(node);
 
@@ -1667,7 +1661,7 @@ public class NodeBaseDAO {
 				SecurityHelper.checkExtended(node, Permission.PROPERTY_GROUP);
 			}
 
-			RegisteredPropertyGroup rpg = (RegisteredPropertyGroup) session.get(RegisteredPropertyGroup.class, grpName);
+			RegisteredPropertyGroup rpg = session.get(RegisteredPropertyGroup.class, grpName);
 
 			if (rpg != null) {
 				for (String propName : rpg.getProperties().keySet()) {
@@ -1693,7 +1687,7 @@ public class NodeBaseDAO {
 				throw new RepositoryException("Property Group not registered: " + grpName);
 			}
 
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("addPropertyGroup: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
@@ -1720,7 +1714,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 			SecurityHelper.checkWrite(node);
 
@@ -1733,11 +1727,11 @@ public class NodeBaseDAO {
 
 				if (grpName.equals(nodProp.getGroup())) {
 					it.remove();
-					session.delete(nodProp);
+					session.remove(nodProp);
 				}
 			}
 
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("removePropertyGroup: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
@@ -1754,7 +1748,6 @@ public class NodeBaseDAO {
 	/**
 	 * Get assigned property groups
 	 */
-	@SuppressWarnings("unchecked")
 	public List<String> getPropertyGroups(String uuid) throws PathNotFoundException, DatabaseException {
 		log.debug("getPropertyGroups({}, {})", uuid);
 		String qs = "select distinct(nbp.group) from NodeBase nb join nb.properties nbp where nb.uuid=:uuid";
@@ -1766,12 +1759,12 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
-			Query q = session.createQuery(qs);
-			q.setString("uuid", uuid);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("uuid", uuid);
+			List<String> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("getPropertyGroups: {}", ret);
 			return ret;
@@ -1801,7 +1794,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			for (NodeProperty nodProp : node.getProperties()) {
@@ -1841,7 +1834,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 
 			for (NodeProperty nodProp : node.getProperties()) {
@@ -1910,7 +1903,7 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase node = (NodeBase) session.load(NodeBase.class, uuid);
+			NodeBase node = session.get(NodeBase.class, uuid);
 			SecurityHelper.checkRead(node);
 			SecurityHelper.checkWrite(node);
 
@@ -1956,7 +1949,7 @@ public class NodeBaseDAO {
 			}
 
 			node.setProperties(tmp);
-			session.update(node);
+			session.merge(node);
 			HibernateUtil.commit(tx);
 			log.debug("setProperties: {}", ret);
 			return ret;
@@ -1974,7 +1967,6 @@ public class NodeBaseDAO {
 	/**
 	 * Fix node stored path. Also valid for initialize when upgrading.
 	 */
-	@SuppressWarnings("unchecked")
 	public void fixNodePath() throws DatabaseException {
 		log.debug("fixNodePath()");
 		String qs = "from NodeBase nb where nb.parent=:parent";
@@ -1986,12 +1978,12 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// First level nodes
-			Query q = session.createQuery(qs).setCacheable(true);
-			q.setString("parent", Config.ROOT_NODE_UUID);
+			Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+			q.setParameter("parent", Config.ROOT_NODE_UUID);
 
-			for (NodeBase nb : (List<NodeBase>) q.list()) {
+			for (NodeBase nb : q.getResultList()) {
 				nb.setPath("/" + nb.getName());
-				session.update(nb);
+				session.merge(nb);
 
 				// Process in depth
 				fixNodePathHelper(session, nb);
@@ -2007,15 +1999,14 @@ public class NodeBaseDAO {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private void fixNodePathHelper(Session session, NodeBase parentNode) throws HibernateException {
 		String qs = "from NodeBase nb where nb.parent=:parent";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", parentNode.getUuid());
+		Query<NodeBase> q = session.createQuery(qs, NodeBase.class).setCacheable(true);
+		q.setParameter("parent", parentNode.getUuid());
 
-		for (NodeBase nb : (List<NodeBase>) q.list()) {
+		for (NodeBase nb : q.getResultList()) {
 			nb.setPath(parentNode.getPath() + "/" + nb.getName());
-			session.update(nb);
+			session.merge(nb);
 
 			// Process in depth
 			fixNodePathHelper(session, nb);
@@ -2033,10 +2024,10 @@ public class NodeBaseDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase srcNode = (NodeBase) session.load(NodeBase.class, srcUuid);
+			NodeBase srcNode = session.get(NodeBase.class, srcUuid);
 			SecurityHelper.checkRead(srcNode);
 
-			NodeBase dstNode = (NodeBase) session.load(NodeBase.class, dstUuid);
+			NodeBase dstNode = session.get(NodeBase.class, dstUuid);
 			SecurityHelper.checkRead(dstNode);
 			SecurityHelper.checkWrite(dstNode);
 
@@ -2082,7 +2073,7 @@ public class NodeBaseDAO {
 				}
 			}
 
-			session.update(dstNode);
+			session.merge(dstNode);
 			HibernateUtil.commit(tx);
 			log.debug("copyAttributes: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {

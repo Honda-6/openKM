@@ -21,7 +21,6 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.List;
  * @author jllort
  *
  */
-public class GWTPrint extends GWTFormElement implements IsSerializable {
+public class GWTPrint extends GWTFormElement {
 	private List<GWTValidator> validators = new ArrayList<>();
 	private List<GWTNode> nodes = new ArrayList<>();
 	private String data = "";

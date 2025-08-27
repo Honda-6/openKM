@@ -43,7 +43,7 @@ public class DatabaseMetadataMap {
 	 * getDoubleValue
 	 */
 	public static Double getDoubleValue(String value) {
-		return (value != null) ? new Double(value) : null;
+		return (value != null) ? Double.valueOf(value) : null;
 	}
 
 	/**
@@ -57,7 +57,7 @@ public class DatabaseMetadataMap {
 	 * getIntValue
 	 */
 	public static Integer getIntegerValue(String value) {
-		return (value != null) ? new Integer(value) : null;
+		return (value != null) ? Integer.valueOf(value) : null;
 	}
 
 	/**

@@ -25,7 +25,7 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.KeyValue;
 import com.openkm.util.DatabaseMetadataUtils;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,9 +49,9 @@ public class KeyValueDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(query);
+			Query<Object[]> q = session.createQuery(query, Object[].class);
 
-			for (Object obj : q.list()) {
+			for (Object obj : q.getResultList()) {
 				if (obj instanceof Object[]) {
 					Object[] ao = (Object[]) obj;
 					KeyValue kv = new KeyValue();

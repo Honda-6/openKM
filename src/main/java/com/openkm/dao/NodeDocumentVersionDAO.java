@@ -34,7 +34,7 @@ import com.openkm.vernum.VersionNumerationFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -59,7 +59,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 	/**
 	 * Find by parent
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public List<NodeDocumentVersion> findByParent(String docUuid) throws PathNotFoundException, DatabaseException {
 		log.debug("findByParent({})", docUuid);
 		String qs = "from NodeDocumentVersion ndv where ndv.parent=:parent order by ndv.created";
@@ -71,12 +71,12 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			List<NodeDocumentVersion> ret = q.list();
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			List<NodeDocumentVersion> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findByParent: {}", ret);
 			return ret;
@@ -105,13 +105,13 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setString("name", name);
-			NodeDocumentVersion nDocVer = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("name", name);
+			NodeDocumentVersion nDocVer = q.setMaxResults(1).uniqueResult();
 
 			HibernateUtil.commit(tx);
 			log.debug("findVersion: {}", nDocVer);
@@ -140,7 +140,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 
 			NodeDocumentVersion currentVersion = findCurrentVersion(session, docUuid);
@@ -173,7 +173,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 
 			NodeDocumentVersion currentVersion = findCurrentVersion(session, docUuid);
@@ -210,13 +210,13 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setString("name", name);
-			NodeDocumentVersion nDocVer = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("name", name);
+			NodeDocumentVersion nDocVer = q.setMaxResults(1).uniqueResult();
 			ret = nDocVer.getChecksum();
 
 			HibernateUtil.commit(tx);
@@ -239,10 +239,10 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 	public NodeDocumentVersion findCurrentVersion(Session session, String docUuid) throws HibernateException {
 		log.debug("findCurrentVersion({})", docUuid);
 		String qs = "from NodeDocumentVersion ndv where ndv.parent=:parent and ndv.current=:current";
-		Query q = session.createQuery(qs).setCacheable(true);
-		q.setString("parent", docUuid);
-		q.setBoolean("current", true);
-		NodeDocumentVersion currentVersion = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+		Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class).setCacheable(true);
+		q.setParameter("parent", docUuid);
+		q.setParameter("current", true);
+		NodeDocumentVersion currentVersion = q.setMaxResults(1).uniqueResult();
 		return currentVersion;
 	}
 
@@ -266,7 +266,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 
 			if (extendedSecurity) {
@@ -275,10 +275,10 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 				}
 			}
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setBoolean("current", true);
-			NodeDocumentVersion nDocVer = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("current", true);
+			NodeDocumentVersion nDocVer = q.setMaxResults(1).uniqueResult();
 
 			if (nDocVer != null) {
 				if (FsDataStore.DATASTORE_BACKEND_FS.equals(Config.REPOSITORY_DATASTORE_BACKEND)) {
@@ -320,13 +320,13 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setString("name", name);
-			NodeDocumentVersion nDocVer = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("name", name);
+			NodeDocumentVersion nDocVer = q.setMaxResults(1).uniqueResult();
 
 			if (FsDataStore.DATASTORE_BACKEND_FS.equals(Config.REPOSITORY_DATASTORE_BACKEND)) {
 				ret = FsDataStore.read(nDocVer.getUuid());
@@ -364,23 +364,23 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 			SecurityHelper.checkWrite(nDoc);
 
 			// Lock Check
 			LockHelper.checkWriteLock(user, nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setBoolean("current", true);
-			NodeDocumentVersion curDocVersion = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("current", true);
+			NodeDocumentVersion curDocVersion = q.setMaxResults(1).uniqueResult();
 			VersionNumerationAdapter verNumAdapter = VersionNumerationFactory.getVersionNumerationAdapter();
 			String nextVersionNumber = verNumAdapter.getNextVersionNumber(session, nDoc, curDocVersion, increment);
 
 			// Make current version obsolete
 			curDocVersion.setCurrent(false);
-			session.update(curDocVersion);
+			session.merge(curDocVersion);
 
 			// New document version
 			newDocVersion.setUuid(UUID.randomUUID().toString());
@@ -397,7 +397,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			// Persist file in datastore
 			FsDataStore.persist(newDocVersion, is);
 
-			session.save(newDocVersion);
+			session.persist(newDocVersion);
 
 			// Set document checkout status to false
 			nDoc.setLastModified(newDocVersion.getCreated());
@@ -410,7 +410,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			// Remove lock
 			NodeDocumentDAO.getInstance().unlock(user, nDoc, false);
 
-			session.update(nDoc);
+			session.merge(nDoc);
 			HibernateUtil.commit(tx);
 
 			log.debug("checkin: {}", newDocVersion);
@@ -444,27 +444,27 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 			SecurityHelper.checkWrite(nDoc);
 
 			// Lock Check
 			LockHelper.checkWriteLock(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setBoolean("current", true);
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("current", true);
 
 			// Text extraction
 			nDoc.setText("");
 			nDoc.setTextExtracted(false);
-			session.update(nDoc);
+			session.merge(nDoc);
 
 			// Update version content
-			NodeDocumentVersion curDocVersion = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			NodeDocumentVersion curDocVersion = q.setMaxResults(1).uniqueResult();
 			curDocVersion.setText("");
 			curDocVersion.setSize(size);
-			session.update(curDocVersion);
+			session.merge(curDocVersion);
 
 			// Persist file in datastore
 			FsDataStore.persist(curDocVersion, is);
@@ -498,7 +498,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 			SecurityHelper.checkWrite(nDoc);
 
@@ -509,25 +509,25 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			// Lock Check
 			LockHelper.checkWriteLock(nDoc);
 
-			Query qCurrent = session.createQuery(qsCurrent);
-			qCurrent.setString("parent", docUuid);
-			qCurrent.setBoolean("current", true);
+			Query<NodeDocumentVersion> qCurrent = session.createQuery(qsCurrent, NodeDocumentVersion.class);
+			qCurrent.setParameter("parent", docUuid);
+			qCurrent.setParameter("current", true);
 
-			Query qName = session.createQuery(qsName);
-			qName.setString("parent", docUuid);
-			qName.setString("name", versionId);
+			Query<NodeDocumentVersion> qName = session.createQuery(qsName, NodeDocumentVersion.class);
+			qName.setParameter("parent", docUuid);
+			qName.setParameter("name", versionId);
 
 			// Update current version
-			NodeDocumentVersion curDocVersion = (NodeDocumentVersion) qCurrent.setMaxResults(1).uniqueResult();
-			NodeDocumentVersion namDocVersion = (NodeDocumentVersion) qName.setMaxResults(1).uniqueResult();
+			NodeDocumentVersion curDocVersion = qCurrent.setMaxResults(1).uniqueResult();
+			NodeDocumentVersion namDocVersion = qName.setMaxResults(1).uniqueResult();
 			curDocVersion.setCurrent(false);
 			namDocVersion.setCurrent(true);
-			session.update(namDocVersion);
-			session.update(curDocVersion);
+			session.merge(namDocVersion);
+			session.merge(curDocVersion);
 
 			// Text extraction
 			nDoc.setText(namDocVersion.getText());
-			session.update(nDoc);
+			session.merge(nDoc);
 
 			HibernateUtil.commit(tx);
 			log.debug("restoreVersion: void");
@@ -545,7 +545,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 	/**
 	 * Purge all non-current document version history nodes
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public void purgeVersionHistory(String docUuid) throws PathNotFoundException, AccessDeniedException, LockException, IOException,
 			DatabaseException {
 		log.debug("purgeVersionHistory({})", docUuid);
@@ -558,7 +558,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 			SecurityHelper.checkWrite(nDoc);
 
@@ -569,12 +569,12 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			// Lock Check
 			LockHelper.checkWriteLock(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setBoolean("current", false);
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("current", false);
 
 			// Remove non-current version nodes
-			for (NodeDocumentVersion nDocVer : (List<NodeDocumentVersion>) q.list()) {
+			for (NodeDocumentVersion nDocVer : q.getResultList()) {
 				String author = nDocVer.getAuthor();
 				long size = nDocVer.getSize();
 
@@ -583,7 +583,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 				}
 
 				// And delete version
-				session.delete(nDocVer);
+				session.remove(nDocVer);
 
 				// Update user items size
 				if (Config.USER_ITEM_CACHE) {
@@ -610,12 +610,12 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 	/**
 	 * Purge in depth helper
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public void purgeHelper(Session session, String parentUuid) throws HibernateException, IOException {
 		String qs = "from NodeDocumentVersion ndv where ndv.parent=:parent";
-		Query q = session.createQuery(qs);
-		q.setString("parent", parentUuid);
-		List<NodeDocumentVersion> listDocVersions = q.list();
+		Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+		q.setParameter("parent", parentUuid);
+		List<NodeDocumentVersion> listDocVersions = q.getResultList();
 
 		for (NodeDocumentVersion nDocVer : listDocVersions) {
 			String author = nDocVer.getAuthor();
@@ -625,7 +625,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 				FsDataStore.delete(nDocVer.getUuid());
 			}
 
-			session.delete(nDocVer);
+			session.remove(nDocVer);
 
 			// Update user items size
 			if (Config.USER_ITEM_CACHE) {
@@ -655,19 +655,19 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 			SecurityHelper.checkWrite(nDoc);
 
 			// Lock Check
 			LockHelper.checkWriteLock(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setBoolean("current", true);
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("current", true);
 
 			// Persist temporal version content
-			NodeDocumentVersion curDocVersion = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			NodeDocumentVersion curDocVersion = q.setMaxResults(1).uniqueResult();
 			FsDataStore.save(curDocVersion.getUuid() + ".tmp", is);
 
 			HibernateUtil.commit(tx);
@@ -701,23 +701,23 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeDocument nDoc = (NodeDocument) session.load(NodeDocument.class, docUuid);
+			NodeDocument nDoc = session.get(NodeDocument.class, docUuid);
 			SecurityHelper.checkRead(nDoc);
 			SecurityHelper.checkWrite(nDoc);
 
 			// Lock Check
 			LockHelper.checkWriteLock(nDoc);
 
-			Query q = session.createQuery(qs);
-			q.setString("parent", docUuid);
-			q.setBoolean("current", true);
-			NodeDocumentVersion curDocVersion = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
+			q.setParameter("parent", docUuid);
+			q.setParameter("current", true);
+			NodeDocumentVersion curDocVersion = q.setMaxResults(1).uniqueResult();
 			VersionNumerationAdapter verNumAdapter = VersionNumerationFactory.getVersionNumerationAdapter();
 			String nextVersionNumber = verNumAdapter.getNextVersionNumber(session, nDoc, curDocVersion, increment);
 
 			// Make current version obsolete
 			curDocVersion.setCurrent(false);
-			session.update(curDocVersion);
+			session.merge(curDocVersion);
 
 			// New document version
 			newDocVersion.setUuid(UUID.randomUUID().toString());
@@ -745,7 +745,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 				FsDataStore.copy(curDocVersion, newDocVersion);
 			}
 
-			session.save(newDocVersion);
+			session.persist(newDocVersion);
 
 			// Set document checkout status to false
 			nDoc.setLastModified(newDocVersion.getCreated());
@@ -758,7 +758,7 @@ public class NodeDocumentVersionDAO extends GenericDAO<NodeDocumentVersion, Stri
 			// Remove lock
 			NodeDocumentDAO.getInstance().unlock(user, nDoc, false);
 
-			session.update(nDoc);
+			session.merge(nDoc);
 			HibernateUtil.commit(tx);
 
 			log.debug("liveEditCheckin: {}", newDocVersion);

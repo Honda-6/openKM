@@ -25,7 +25,8 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.HibernateUtil;
 import com.openkm.extension.dao.bean.WikiPage;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -56,7 +57,8 @@ public class WikiPageDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(wkp);
+			Long id = (Long) wkp.getId();
+			session.persist(wkp);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}", id);
 			return id;
@@ -79,7 +81,7 @@ public class WikiPageDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(wkp);
+			session.merge(wkp);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -94,7 +96,7 @@ public class WikiPageDAO {
 	/**
 	 * Find all wiki pages
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<WikiPage> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "select wkp from WikiPage wkp where wkp.deleted=false order by wkp.date desc";
@@ -102,8 +104,8 @@ public class WikiPageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<WikiPage> ret = q.list();
+			Query<WikiPage> q = session.createQuery(qs, WikiPage.class);
+			List<WikiPage> ret = q.getResultList();
 
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -117,7 +119,7 @@ public class WikiPageDAO {
 	/**
 	 * Find all wiki pages by title
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<WikiPage> findAllByTitle(String title) throws DatabaseException {
 		log.debug("findAllByTitle({})", title);
 		String qs = "select wkp from WikiPage wkp where wkp.title=:title and wkp.deleted=false order by wkp.date desc";
@@ -125,9 +127,9 @@ public class WikiPageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("title", title);
-			List<WikiPage> ret = q.list();
+			Query<WikiPage> q = session.createQuery(qs, WikiPage.class);
+			q.setParameter("title", title);
+			List<WikiPage> ret = q.getResultList();
 
 			log.debug("findAllByTitle: {}", ret);
 			return ret;
@@ -141,7 +143,7 @@ public class WikiPageDAO {
 	/**
 	 * Find all wiki pages by title
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<WikiPage> findAllHistoricByTitle(String title) throws DatabaseException {
 		log.debug("findAllHistoricByTitle({})", title);
 		String qs = "select wkp from WikiPage wkp where wkp.title=:title order by wkp.date desc";
@@ -149,9 +151,9 @@ public class WikiPageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("title", title);
-			List<WikiPage> ret = q.list();
+			Query<WikiPage> q = session.createQuery(qs, WikiPage.class);
+			q.setParameter("title", title);
+			List<WikiPage> ret = q.getResultList();
 
 			log.debug("findAllHistoricByTitle: {}", ret);
 			return ret;
@@ -165,7 +167,7 @@ public class WikiPageDAO {
 	/**
 	 * Find all latest by title filtered
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<String> findAllLatestByTitleFiltered(String filter) throws DatabaseException {
 		log.debug("findAllLatestByTitleFiltered({})", filter);
 		String qs = "select distinct(wp.title) from WikiPage wp where wp.title like '%' || :filter || '%' and wp.deleted=false";
@@ -173,9 +175,9 @@ public class WikiPageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("filter", filter);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("filter", filter);
+			List<String> ret = q.getResultList();
 			log.debug("findLatestByTitle: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -195,9 +197,9 @@ public class WikiPageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("title", title);
-			WikiPage ret = (WikiPage) q.setMaxResults(1).uniqueResult();
+			Query<WikiPage> q = session.createQuery(qs, WikiPage.class);
+			q.setParameter("title", title);
+			WikiPage ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findLatestByTitle: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -217,9 +219,9 @@ public class WikiPageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("uuid", uuid);
-			WikiPage ret = (WikiPage) q.setMaxResults(1).uniqueResult();
+			Query<WikiPage> q = session.createQuery(qs, WikiPage.class);
+			q.setParameter("uuid", uuid);
+			WikiPage ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findLatestByNode: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -239,9 +241,9 @@ public class WikiPageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", id);
-			WikiPage ret = (WikiPage) q.setMaxResults(1).uniqueResult();
+			Query<WikiPage> q = session.createQuery(qs, WikiPage.class);
+			q.setParameter("id", id);
+			WikiPage ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -381,8 +383,8 @@ public class WikiPageDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
 
-			Query q = session.createQuery(qs);
-			q.setString("uuid", nodeUuid);
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("uuid", nodeUuid);
 			q.executeUpdate();
 
 			HibernateUtil.commit(tx);

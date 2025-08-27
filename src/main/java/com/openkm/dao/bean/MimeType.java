@@ -23,9 +23,8 @@ package com.openkm.dao.bean;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,14 +48,12 @@ public class MimeType implements Serializable {
 
 	@Column(name = "MT_IMAGE_CONTENT")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String imageContent;
 
 	@Column(name = "MT_IMAGE_MIME", length = 32)
 	private String imageMime;
 
 	@Column(name = "MT_SEARCH", nullable = false)
-	@Type(type = "true_false")
 	private boolean search = false;
 
 	@ElementCollection(fetch = FetchType.EAGER)

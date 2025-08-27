@@ -257,7 +257,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		}
 
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), gwtQueryResult);
+		data.put(Integer.valueOf(dataIndexValue), gwtQueryResult);
 
 		// Score is always visible
 		dataTable.setHTML(rows, col++, score.getHTML());
@@ -380,7 +380,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		final GWTFolder folder = gwtQueryResult.getFolder();
 
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), gwtQueryResult);
+		data.put(Integer.valueOf(dataIndexValue), gwtQueryResult);
 
 		// Score is always visible
 		dataTable.setHTML(rows, col, score.getHTML());
@@ -505,7 +505,7 @@ public class ExtendedScrollTable extends ScrollTable {
 		final GWTMail mail = gwtQueryResult.getMail();
 
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), gwtQueryResult);
+		data.put(Integer.valueOf(dataIndexValue), gwtQueryResult);
 
 		// Score is always visible
 		dataTable.setHTML(rows, col, score.getHTML());

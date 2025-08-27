@@ -21,21 +21,15 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Index;
-import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Calendar;
 
 @Entity
-@Table(name = "OKM_PENDING_TASK")
-@org.hibernate.annotations.Table(appliesTo = "OKM_PENDING_TASK",
-		indexes = {
-				// CREATE INDEX IDX_PENDING_NODETASK ON OKM_PENDING_TASK(PTK_NODE, PTK_TASK);
-				@Index(name = "IDX_PENDING_NODETASK", columnNames = {"PTK_NODE", "PTK_TASK"})
-		}
-)
+@Table(name = "OKM_PENDING_TASK",
+	indexes = {
+		@Index(name = "IDX_PENDING_NODETASK", columnList = "PTK_NODE, PTK_TASK")
+	})
 public class PendingTask implements Serializable {
 	private static final long serialVersionUID = 1L;
 	public static final String TASK_TEXT_EXTRACTION = "text_extraction";
@@ -61,7 +55,6 @@ public class PendingTask implements Serializable {
 
 	@Column(name = "PTK_STATUS")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String status;
 
 	public long getId() {

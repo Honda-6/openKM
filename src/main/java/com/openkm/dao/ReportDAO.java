@@ -27,7 +27,7 @@ import com.openkm.dao.bean.Report;
 import com.openkm.util.SecureStore;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -55,7 +55,8 @@ public class ReportDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(rp);
+			Long id = (Long) rp.getId();
+			session.persist(rp);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}", id);
 			return id;
@@ -89,7 +90,8 @@ public class ReportDAO {
 			rp.setFileContent(SecureStore.b64Encode(IOUtils.toByteArray(fis)));
 			rp.setActive(active);
 
-			Long id = (Long) session.save(rp);
+			Long id = (Long) rp.getId();
+			session.persist(rp);
 			HibernateUtil.commit(tx);
 			log.debug("createFromFile: {}", id);
 			return id;
@@ -119,15 +121,15 @@ public class ReportDAO {
 			tx = session.beginTransaction();
 
 			if (rp.getFileContent() == null || rp.getFileContent().length() == 0) {
-				Query q = session.createQuery(qs);
+				Query<Object[]> q = session.createQuery(qs, Object[].class);
 				q.setParameter("id", rp.getId());
-				Object[] data = (Object[]) q.setMaxResults(1).uniqueResult();
+				Object[] data = q.setMaxResults(1).uniqueResult();
 				rp.setFileContent((String) data[0]);
 				rp.setFileName((String) data[1]);
 				rp.setFileMime((String) data[2]);
 			}
 
-			session.update(rp);
+			session.merge(rp);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -150,8 +152,8 @@ public class ReportDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Report rp = (Report) session.load(Report.class, rpId);
-			session.delete(rp);
+			Report rp = session.get(Report.class, rpId);
+			session.remove(rp);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -173,9 +175,9 @@ public class ReportDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", rpId);
-			Report ret = (Report) q.setMaxResults(1).uniqueResult();
+			Query<Report> q = session.createQuery(qs, Report.class);
+			q.setParameter("id", rpId);
+			Report ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -188,7 +190,6 @@ public class ReportDAO {
 	/**
 	 * Find by pk
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Report> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from Report rp order by rp.name";
@@ -196,8 +197,8 @@ public class ReportDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<Report> ret = q.list();
+			Query<Report> q = session.createQuery(qs, Report.class);
+			List<Report> ret = q.getResultList();
 			log.debug("findAll: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

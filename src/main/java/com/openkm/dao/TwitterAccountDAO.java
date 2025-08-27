@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.TwitterAccount;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -49,7 +49,7 @@ public class TwitterAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(ta);
+			session.persist(ta);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -72,7 +72,7 @@ public class TwitterAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(ta);
+			session.merge(ta);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -95,8 +95,8 @@ public class TwitterAccountDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			TwitterAccount ta = (TwitterAccount) session.load(TwitterAccount.class, taId);
-			session.delete(ta);
+			TwitterAccount ta = session.get(TwitterAccount.class, taId);
+			session.remove(ta);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -111,7 +111,6 @@ public class TwitterAccountDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<TwitterAccount> findByUser(String user, boolean filterByActive) throws
 			DatabaseException {
 		log.debug("findByUser({})", user);
@@ -121,14 +120,14 @@ public class TwitterAccountDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
+			Query<TwitterAccount> q = session.createQuery(qs, TwitterAccount.class);
+			q.setParameter("user", user);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<TwitterAccount> ret = q.list();
+			List<TwitterAccount> ret = q.getResultList();
 			log.debug("findByUser: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -141,7 +140,6 @@ public class TwitterAccountDAO {
 	/**
 	 * Find all twitter accounts
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<TwitterAccount> findAll(boolean filterByActive) throws
 			DatabaseException {
 		log.debug("findAll()");
@@ -151,13 +149,13 @@ public class TwitterAccountDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
+			Query<TwitterAccount> q = session.createQuery(qs, TwitterAccount.class);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<TwitterAccount> ret = q.list();
+			List<TwitterAccount> ret = q.getResultList();
 			log.debug("findAll: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -177,9 +175,9 @@ public class TwitterAccountDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", taId);
-			TwitterAccount ret = (TwitterAccount) q.setMaxResults(1).uniqueResult();
+			Query<TwitterAccount> q = session.createQuery(qs, TwitterAccount.class);
+			q.setParameter("id", taId);
+			TwitterAccount ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

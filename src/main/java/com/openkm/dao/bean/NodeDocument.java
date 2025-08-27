@@ -23,10 +23,9 @@ package com.openkm.dao.bean;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Type;
-import org.hibernate.search.annotations.*;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Calendar;
 
 @Entity
@@ -38,56 +37,49 @@ public class NodeDocument extends NodeBase {
 	public static final String TEXT_FIELD = "text";
 
 	@Column(name = "NDC_LAST_MODIFIED")
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
-	@CalendarBridge(resolution = Resolution.DAY)
+	@GenericField
 	private Calendar lastModified;
 
 	@Column(name = "NDC_LANGUAGE", length = 8)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private String language;
 
 	@Column(name = "NDC_TITLE", length = 256)
-	@Field(index = Index.TOKENIZED, store = Store.YES)
+	@FullTextField
 	private String title;
 
 	@Column(name = "NDC_DESCRIPTION", length = 2048)
-	@Field(index = Index.TOKENIZED, store = Store.YES)
+	@FullTextField
 	private String description;
 
 	@Column(name = "NDC_MIME_TYPE", length = 128)
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private String mimeType;
 
 	@Column(name = "NDC_TEXT")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
-	@Field(index = Index.TOKENIZED, store = Store.NO)
+	@FullTextField
 	private String text;
 
 	@Column(name = "NDC_CHECKED_OUT", nullable = false)
-	@Type(type = "true_false")
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private boolean checkedOut;
 
 	@Column(name = "NDC_ENCRYPTION", nullable = false)
-	@Type(type = "true_false")
 	private boolean encryption;
 
 	@Column(name = "NDC_CIPHER_NAME")
 	private String cipherName;
 
 	@Column(name = "NDC_SIGNED", nullable = false)
-	@Type(type = "true_false")
 	private boolean signed;
 
 	@Column(name = "NDC_TEXT_EXTRACTED", nullable = false)
-	@Type(type = "true_false")
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private boolean textExtracted;
 
 	@Column(name = "NDC_LOCKED", nullable = false)
-	@Type(type = "true_false")
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
+	@GenericField
 	private boolean locked;
 
 	@Embedded

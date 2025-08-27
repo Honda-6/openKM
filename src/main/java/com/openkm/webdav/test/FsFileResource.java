@@ -17,8 +17,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
-public class FsFileResource extends FsResource implements CopyableResource, DeletableResource, GetableResource,
-		MoveableResource, PropFindableResource, PropPatchableResource {
+public class FsFileResource extends FsResource implements DeletableResource, GetableResource, PropFindableResource, PropPatchableResource {
 
 	private static final Logger log = LoggerFactory.getLogger(FsFileResource.class);
 

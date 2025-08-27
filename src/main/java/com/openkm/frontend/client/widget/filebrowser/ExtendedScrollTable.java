@@ -178,13 +178,13 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 		int col = 0;
 		final int row = (update) ? getSelectedRow() : dataTable.getRowCount();
 		if (update) {
-			data.put(new Integer(dataTable.getText(row, colDataIndex)), folder);
+			data.put(Integer.valueOf(dataTable.getText(row, colDataIndex)), folder);
 		} else {
 			dataTable.insertRow(row);
 		}
 
 		// Sets folder object
-		data.put(new Integer(dataIndexValue), folder);
+		data.put(Integer.valueOf(dataIndexValue), folder);
 
 		// Subscribed is a special case, must add icon with others
 		if (profileFileBrowser.isStatusVisible()) {
@@ -210,9 +210,9 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 					oldMassiveSelected = massiveSelected.size();
 
 					if (checkBox.getValue()) {
-						massiveSelected.add(new Integer(dataTable.getText(row, colDataIndex)));
+						massiveSelected.add(Integer.valueOf(dataTable.getText(row, colDataIndex)));
 					} else {
-						massiveSelected.remove(new Integer(dataTable.getText(row, colDataIndex)));
+						massiveSelected.remove(Integer.valueOf(dataTable.getText(row, colDataIndex)));
 					}
 				}
 			});
@@ -380,13 +380,13 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 		final int row = (update) ? getSelectedRow() : dataTable.getRowCount();
 
 		if (update) {
-			data.put(new Integer(dataTable.getText(row, colDataIndex)), doc);
+			data.put(Integer.valueOf(dataTable.getText(row, colDataIndex)), doc);
 		} else {
 			dataTable.insertRow(row);
 		}
 
 		// Sets document object
-		data.put(new Integer(dataIndexValue), doc);
+		data.put(Integer.valueOf(dataIndexValue), doc);
 
 		if (profileFileBrowser.isStatusVisible()) {
 			if (doc.isCheckedOut()) {
@@ -433,9 +433,9 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 					oldMassiveSelected = massiveSelected.size();
 
 					if (checkBox.getValue()) {
-						massiveSelected.add(new Integer(dataTable.getText(row, colDataIndex)));
+						massiveSelected.add(Integer.valueOf(dataTable.getText(row, colDataIndex)));
 					} else {
-						massiveSelected.remove(new Integer(dataTable.getText(row, colDataIndex)));
+						massiveSelected.remove(Integer.valueOf(dataTable.getText(row, colDataIndex)));
 					}
 					evaluateMergePdf(); // Only when document checkbox is changed ( only document can be merged )
 				}
@@ -556,13 +556,13 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 		final int row = (update) ? getSelectedRow() : dataTable.getRowCount();
 
 		if (update) {
-			data.put(new Integer(dataTable.getText(row, colDataIndex)), mail);
+			data.put(Integer.valueOf(dataTable.getText(row, colDataIndex)), mail);
 		} else {
 			dataTable.insertRow(row);
 		}
 
 		// Sets document object
-		data.put(new Integer(dataIndexValue), mail);
+		data.put(Integer.valueOf(dataIndexValue), mail);
 
 		if (profileFileBrowser.isStatusVisible()) {
 			// Mail is never checkout or subscribed ( because can not be changed )
@@ -584,9 +584,9 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 					oldMassiveSelected = massiveSelected.size();
 
 					if (checkBox.getValue()) {
-						massiveSelected.add(new Integer(dataTable.getText(row, colDataIndex)));
+						massiveSelected.add(Integer.valueOf(dataTable.getText(row, colDataIndex)));
 					} else {
-						massiveSelected.remove(new Integer(dataTable.getText(row, colDataIndex)));
+						massiveSelected.remove(Integer.valueOf(dataTable.getText(row, colDataIndex)));
 					}
 				}
 			});

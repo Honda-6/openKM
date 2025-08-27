@@ -254,7 +254,7 @@ public class ProposedSubscriptionReceivedStack extends Composite {
 		String user = getSelectedUser();
 		if (userSeen.containsKey(user)) {
 			Long pendingSeen = userSeen.get(user);
-			userSeen.put(user, new Long(pendingSeen.intValue() - 1));
+			userSeen.put(user, Long.valueOf(pendingSeen.intValue() - 1));
 			if ((pendingSeen.intValue() - 1) == 0) {
 				table.markActualRowAsSeen();
 			}

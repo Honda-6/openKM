@@ -26,7 +26,8 @@ import com.openkm.dao.bean.DatabaseMetadataSequence;
 import com.openkm.dao.bean.DatabaseMetadataType;
 import com.openkm.dao.bean.DatabaseMetadataValue;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -57,10 +58,10 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(dmv);
+			session.persist(dmv);
 			HibernateUtil.commit(tx);
-			log.debug("createValue: {}", id);
-			return id;
+			log.debug("createValue: {}", dmv.getId());
+			return dmv.getId();
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
 			throw new DatabaseException(e.getMessage(), e);
@@ -80,7 +81,7 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(dmv);
+			session.merge(dmv);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -103,8 +104,8 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			DatabaseMetadataValue dmv = (DatabaseMetadataValue) session.load(DatabaseMetadataValue.class, dmvId);
-			session.delete(dmv);
+			DatabaseMetadataValue dmv = session.get(DatabaseMetadataValue.class, dmvId);
+			session.remove(dmv);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -119,7 +120,7 @@ public class DatabaseMetadataDAO {
 	/**
 	 * Find all wiki pages
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<DatabaseMetadataValue> findAllValues(String table) throws DatabaseException {
 		log.debug("findAllValues({})", table);
 		String qs = "from DatabaseMetadataValue dmv where dmv.table=:table order by dmv.id asc";
@@ -129,9 +130,9 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("table", table);
-			List<DatabaseMetadataValue> ret = q.list();
+			Query<DatabaseMetadataValue> q = session.createQuery(qs, DatabaseMetadataValue.class);
+			q.setParameter("table", table);
+			List<DatabaseMetadataValue> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findAllValues: {}", ret);
 			return ret;
@@ -153,10 +154,10 @@ public class DatabaseMetadataDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("table", table);
-			q.setLong("id", id);
-			DatabaseMetadataValue ret = (DatabaseMetadataValue) q.setMaxResults(1).uniqueResult();
+			Query<DatabaseMetadataValue> q = session.createQuery(qs, DatabaseMetadataValue.class);
+			q.setParameter("table", table);
+			q.setParameter("id", id);
+			DatabaseMetadataValue ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findValueByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -177,7 +178,7 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(query);
+			MutationQuery q = session.createMutationQuery(query);
 			int ret = q.executeUpdate();
 			HibernateUtil.commit(tx);
 			log.debug("executeValueUpdate: {}", ret);
@@ -193,7 +194,6 @@ public class DatabaseMetadataDAO {
 	/**
 	 * Execute query
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<DatabaseMetadataValue> executeValueQuery(String query) throws DatabaseException {
 		log.debug("executeValueQuery({})", query);
 		Session session = null;
@@ -202,8 +202,8 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(query);
-			List<DatabaseMetadataValue> ret = q.list();
+			Query<DatabaseMetadataValue> q = session.createQuery(query, DatabaseMetadataValue.class);
+			List<DatabaseMetadataValue> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("executeValueQuery: {}", ret);
 			return ret;
@@ -226,8 +226,8 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(query);
-			DatabaseMetadataValue ret = (DatabaseMetadataValue) q.uniqueResult();
+			Query<DatabaseMetadataValue> q = session.createQuery(query, DatabaseMetadataValue.class);
+			DatabaseMetadataValue ret = q.uniqueResult();
 			HibernateUtil.commit(tx);
 			log.debug("executeValueQueryUnique: {}", ret);
 			return ret;
@@ -251,9 +251,9 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(query);
+			Query<DatabaseMetadataValue[]> q = session.createQuery(query, DatabaseMetadataValue[].class);
 
-			for (Object obj : q.list()) {
+			for (Object obj : q.getResultList()) {
 				if (obj instanceof Object[]) {
 					Object[] objAry = (Object[]) obj;
 					DatabaseMetadataValue[] tmp = new DatabaseMetadataValue[objAry.length];
@@ -286,7 +286,6 @@ public class DatabaseMetadataDAO {
 	/**
 	 * Find all wiki pages
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<DatabaseMetadataType> findAllTypes(String table) throws DatabaseException {
 		log.debug("findAllTypes({})", table);
 		String qs = "from DatabaseMetadataType dmt where dmt.table=:table order by dmt.id asc";
@@ -296,9 +295,9 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("table", table);
-			List<DatabaseMetadataType> ret = q.list();
+			Query<DatabaseMetadataType> q = session.createQuery(qs, DatabaseMetadataType.class);
+			q.setParameter("table", table);
+			List<DatabaseMetadataType> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findAllTypes: {}", ret);
 			return ret;
@@ -322,22 +321,22 @@ public class DatabaseMetadataDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("table", table);
-			q.setString("column", column);
-			DatabaseMetadataSequence dms = (DatabaseMetadataSequence) q.setMaxResults(1).uniqueResult();
+			Query<DatabaseMetadataSequence> q = session.createQuery(qs, DatabaseMetadataSequence.class);
+			q.setParameter("table", table);
+			q.setParameter("column", column);
+			DatabaseMetadataSequence dms = q.setMaxResults(1).uniqueResult();
 
 			if (dms != null) {
 				// Update already created sequence
 				dms.setValue(dms.getValue() + 1);
-				session.update(dms);
+				session.merge(dms);
 			} else {
 				// First sequence use: starts with 1
 				dms = new DatabaseMetadataSequence();
 				dms.setTable(table);
 				dms.setColumn(column);
 				dms.setValue(1);
-				session.save(dms);
+				session.persist(dms);
 			}
 
 			HibernateUtil.commit(tx);

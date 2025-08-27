@@ -31,6 +31,8 @@ import com.openkm.spring.PrincipalUtils;
 import com.openkm.util.KeycloakUtils;
 import com.openkm.util.SecureStore;
 import org.hibernate.*;
+import org.hibernate.query.Query;
+import org.hibernate.query.MutationQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +65,7 @@ public class AuthDAO {
 			KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
 			keycloakUtils.createUser(user);
 			user.setPassword(SecureStore.md5Encode(user.getPassword().getBytes()));
-			session.save(user);
+			session.persist(user);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException | NoSuchAlgorithmException | IOException e) {
 			HibernateUtil.rollback(tx);
@@ -91,13 +93,13 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
+			Query<String> q = session.createQuery(qs, String.class);
 			q.setParameter("id", user.getId());
 			KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
 			keycloakUtils.updateUserData(user);
-			String password = (String) q.setMaxResults(1).uniqueResult();
+			String password = q.setMaxResults(1).uniqueResult();
 			user.setPassword(password);
-			session.update(user);
+			session.merge(user);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException | IOException e) {
 			HibernateUtil.rollback(tx);
@@ -125,9 +127,9 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setBoolean("active", active);
-			q.setString("id", usrId);
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("active", active);
+			q.setParameter("id", usrId);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -158,9 +160,9 @@ public class AuthDAO {
 				KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
 				keycloakUtils.updatePassword(usrId,usrPassword);
 				tx = session.beginTransaction();
-				Query q = session.createQuery(qs);
-				q.setString("password", SecureStore.md5Encode(usrPassword.getBytes()));
-				q.setString("id", usrId);
+				MutationQuery q = session.createMutationQuery(qs);
+				q.setParameter("password", SecureStore.md5Encode(usrPassword.getBytes()));
+				q.setParameter("id", usrId);
 				q.executeUpdate();
 				HibernateUtil.commit(tx);
 			}
@@ -191,9 +193,9 @@ public class AuthDAO {
 			if (usrEmail != null && usrEmail.trim().length() > 0) {
 				session = HibernateUtil.getSessionFactory().openSession();
 				tx = session.beginTransaction();
-				Query q = session.createQuery(qs);
-				q.setString("email", usrEmail);
-				q.setString("id", usrId);
+				MutationQuery q = session.createMutationQuery(qs);
+				q.setParameter("email", usrEmail);
+				q.setParameter("id", usrId);
 				q.executeUpdate();
 				KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
 				keycloakUtils.updateEmail(usrId,usrEmail);
@@ -213,7 +215,6 @@ public class AuthDAO {
 	/**
 	 * Delete user from database
 	 */
-	@SuppressWarnings("unchecked")
 	public static void deleteUser(String usrId) throws DatabaseException, AccessDeniedException {
 		log.debug("deleteUser({})", usrId);
 		// Check if user has enought grants for the action
@@ -231,34 +232,34 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			User user = (User) session.load(User.class, usrId);
-			session.delete(user);
+			User user = session.get(User.class, usrId);
+			session.remove(user);
 
-			Query qMail = session.createQuery(qsMail);
-			qMail.setString("user", usrId);
+			MutationQuery qMail = session.createMutationQuery(qsMail);
+			qMail.setParameter("user", usrId);
 			qMail.executeUpdate();
 
-			Query qTwitter = session.createQuery(qsTwitter);
-			qTwitter.setString("user", usrId);
+			MutationQuery qTwitter = session.createMutationQuery(qsTwitter);
+			qTwitter.setParameter("user", usrId);
 			qTwitter.executeUpdate();
 
-			Query qBookmark = session.createQuery(qsBookmark);
-			qBookmark.setString("user", usrId);
+			MutationQuery qBookmark = session.createMutationQuery(qsBookmark);
+			qBookmark.setParameter("user", usrId);
 			qBookmark.executeUpdate();
 
-			Query qConfig = session.createQuery(qsConfig);
-			qConfig.setString("user", usrId);
+			MutationQuery qConfig = session.createMutationQuery(qsConfig);
+			qConfig.setParameter("user", usrId);
 			qConfig.executeUpdate();
 
-			Query qItems = session.createQuery(qsItems);
-			qItems.setString("user", usrId);
+			MutationQuery qItems = session.createMutationQuery(qsItems);
+			qItems.setParameter("user", usrId);
 			qItems.executeUpdate();
 
-			Query qSharedQuery = session.createQuery(qsSharedQuery);
-			qSharedQuery.setString("user", usrId);
-			for (QueryParams qp : (List<QueryParams>) qSharedQuery.list()) {
+			Query<QueryParams> qSharedQuery = session.createQuery(qsSharedQuery, QueryParams.class);
+			qSharedQuery.setParameter("user", usrId);
+			for (QueryParams qp : qSharedQuery.getResultList()) {
 				qp.getShared().remove(usrId);
-				session.update(qp);
+				session.merge(qp);
 			}
 			KeycloakUtils keycloakUtils = KeycloakUtils.getInstance();
 			keycloakUtils.deleteUser(user);
@@ -280,7 +281,6 @@ public class AuthDAO {
 	 *
 	 * @param filterByActive If only active user2 should be included.
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<User> findAllUsers(boolean filterByActive) throws DatabaseException {
 		log.debug("findAllUsers({})", filterByActive);
 		String qs = "from User u " + (filterByActive ? "where u.active=:active" : "") + " order by u.id";
@@ -288,13 +288,13 @@ public class AuthDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
+			Query<User> q = session.createQuery(qs, User.class);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<User> ret = q.list();
+			List<User> ret = q.getResultList();
 			log.debug("findAllUsers: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -307,7 +307,6 @@ public class AuthDAO {
 	/**
 	 * Get all users within a role
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<User> findUsersByRole(String rolId, boolean filterByActive) throws DatabaseException {
 		log.debug("findUsersByRole({}, {})", rolId, filterByActive);
 		String qs = "select u from User u, Role r where r.id=:rolId and r in elements(u.roles) "
@@ -316,14 +315,14 @@ public class AuthDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("rolId", rolId);
+			Query<User> q = session.createQuery(qs, User.class);
+			q.setParameter("rolId", rolId);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<User> ret = q.list();
+			List<User> ret = q.getResultList();
 			log.debug("findUsersByRole: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -336,7 +335,6 @@ public class AuthDAO {
 	/**
 	 * Get all users within a role
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Role> findRolesByUser(String usrId, boolean filterByActive) throws DatabaseException {
 		log.debug("findRolesByUser({}, {})", usrId, filterByActive);
 		String qs = "select r from User u, Role r where u.id=:usrId and r in elements(u.roles) "
@@ -345,14 +343,14 @@ public class AuthDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("usrId", usrId);
+			Query<Role> q = session.createQuery(qs, Role.class);
+			q.setParameter("usrId", usrId);
 
 			if (filterByActive) {
-				q.setBoolean("active", true);
+				q.setParameter("active", true);
 			}
 
-			List<Role> ret = q.list();
+			List<Role> ret = q.getResultList();
 			log.debug("findRolesByUser: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -372,9 +370,9 @@ public class AuthDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("id", usrId);
-			User ret = (User) q.setMaxResults(1).uniqueResult();
+			Query<User> q = session.createQuery(qs, User.class);
+			q.setParameter("id", usrId);
+			User ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findUserByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -398,7 +396,7 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(role);
+			session.persist(role);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -424,7 +422,7 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(role);
+			session.merge(role);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -451,9 +449,9 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setBoolean("active", active);
-			q.setString("id", rolId);
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("active", active);
+			q.setParameter("id", rolId);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -481,12 +479,12 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Role role = (Role) session.load(Role.class, rolId);
-			session.delete(role);
+			Role role = session.get(Role.class, rolId);
+			session.remove(role);
 
 			// TODO: Make Hibernate handle this relation.
-			SQLQuery q = session.createSQLQuery(qs);
-			q.setString("rolId", rolId);
+			MutationQuery q = session.createNativeMutationQuery(qs);
+			q.setParameter("rolId", rolId);
 			q.executeUpdate();
 
 			HibernateUtil.commit(tx);
@@ -503,7 +501,6 @@ public class AuthDAO {
 	/**
 	 * Get all roles in database
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Role> findAllRoles() throws DatabaseException {
 		log.debug("findAllRoles()");
 		String qs = "from Role r order by r.id";
@@ -511,8 +508,8 @@ public class AuthDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<Role> ret = q.list();
+			Query<Role> q = session.createQuery(qs, Role.class);
+			List<Role> ret = q.getResultList();
 			log.debug("findAllRoles: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -532,9 +529,9 @@ public class AuthDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("id", rolId);
-			Role ret = (Role) q.setMaxResults(1).uniqueResult();
+			Query<Role> q = session.createQuery(qs, Role.class);
+			q.setParameter("id", rolId);
+			Role ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findRoleByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -558,10 +555,10 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			User user = (User) session.load(User.class, usrId);
-			Role role = (Role) session.load(Role.class, rolId);
+			User user = session.get(User.class, usrId);
+			Role role = session.get(Role.class, rolId);
 			user.getRoles().add(role);
-			session.update(user);
+			session.merge(user);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -576,7 +573,7 @@ public class AuthDAO {
 	/**
 	 * Revoke role from user
 	 */
-	public void revokeRole(String usrId, String rolId) throws DatabaseException, AccessDeniedException {
+	public static void revokeRole(String usrId, String rolId) throws DatabaseException, AccessDeniedException {
 		log.debug("revokeRole({}, {})", usrId, rolId);
 		// Check if user has enought grants for the action
 		checkAccessGrants(null);
@@ -587,10 +584,10 @@ public class AuthDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			User user = (User) session.load(User.class, usrId);
-			Role role = (Role) session.load(Role.class, rolId);
+			User user = session.get(User.class, usrId);
+			Role role = session.get(Role.class, rolId);
 			user.getRoles().remove(role);
-			session.update(user);
+			session.merge(user);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);

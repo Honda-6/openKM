@@ -31,7 +31,7 @@ import java.util.List;
 public class ExtraTabWorkspace {
 	private static final String UUID = "c20c69a8-7d6b-4539-9e6b-6f2c11e84168";
 	public static final String KEY = "extension.extra.tab.workspace";
-	private static ExtraTabWorkspace singleton;
+	//private static ExtraTabWorkspace singleton;
 	private TabWorkspace tabWorkspace;
 
 	/**

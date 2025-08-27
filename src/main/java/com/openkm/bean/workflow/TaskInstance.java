@@ -21,7 +21,7 @@
 
 package com.openkm.bean.workflow;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.List;
@@ -175,7 +175,7 @@ public class TaskInstance implements Serializable, Comparable<TaskInstance> {
 	}
 
 	public int compareTo(TaskInstance arg0) {
-		return new Long(this.id).compareTo(arg0.id);
+		return Long.compare(this.id, arg0.id);
 	}
 
 	public Token getToken() {

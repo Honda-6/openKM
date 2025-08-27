@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.QueryParams;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -50,8 +50,9 @@ public class QueryParamsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(qp);
-			QueryParams qpTmp = (QueryParams) session.load(QueryParams.class, id);
+			Long id = (Long) qp.getId();
+			session.persist(qp);
+			QueryParams qpTmp = session.get(QueryParams.class, id);
 
 			for (String keyword : qp.getKeywords()) {
 				qpTmp.getKeywords().add(keyword);
@@ -87,7 +88,7 @@ public class QueryParamsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(qp);
+			session.merge(qp);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -110,8 +111,8 @@ public class QueryParamsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			QueryParams qp = (QueryParams) session.load(QueryParams.class, qpId);
-			session.delete(qp);
+			QueryParams qp = session.get(QueryParams.class, qpId);
+			session.remove(qp);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -133,9 +134,9 @@ public class QueryParamsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", qpId);
-			QueryParams ret = (QueryParams) q.setMaxResults(1).uniqueResult();
+			Query<QueryParams> q = session.createQuery(qs, QueryParams.class);
+			q.setParameter("id", qpId);
+			QueryParams ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -148,7 +149,6 @@ public class QueryParamsDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<QueryParams> findByUser(String user) throws DatabaseException {
 		log.debug("findByUser({})", user);
 		String qs = "from QueryParams qp where qp.user=:user";
@@ -157,9 +157,9 @@ public class QueryParamsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			List<QueryParams> ret = q.list();
+			Query<QueryParams> q = session.createQuery(qs, QueryParams.class);
+			q.setParameter("user", user);
+			List<QueryParams> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findByUser: {}", ret);
 			return ret;
@@ -182,9 +182,9 @@ public class QueryParamsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			QueryParams qp = (QueryParams) session.load(QueryParams.class, qpId);
+			QueryParams qp = session.get(QueryParams.class, qpId);
 			qp.getShared().add(user);
-			session.update(qp);
+			session.merge(qp);
 			HibernateUtil.commit(tx);
 			log.debug("share: void");
 		} catch (HibernateException e) {
@@ -206,9 +206,9 @@ public class QueryParamsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			QueryParams qp = (QueryParams) session.load(QueryParams.class, qpId);
+			QueryParams qp = session.get(QueryParams.class, qpId);
 			qp.getShared().remove(user);
-			session.update(qp);
+			session.merge(qp);
 			HibernateUtil.commit(tx);
 			log.debug("share: void");
 		} catch (HibernateException e) {
@@ -222,7 +222,6 @@ public class QueryParamsDAO {
 	/**
 	 * Find shared
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<QueryParams> findShared(String user) throws DatabaseException {
 		log.debug("findShared({})", user);
 		String qs = "from QueryParams qp where :user in elements(qp.shared)";
@@ -230,9 +229,9 @@ public class QueryParamsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			List<QueryParams> ret = q.list();
+			Query<QueryParams> q = session.createQuery(qs, QueryParams.class);
+			q.setParameter("user", user);
+			List<QueryParams> ret = q.getResultList();
 			log.debug("findShared: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -245,7 +244,6 @@ public class QueryParamsDAO {
 	/**
 	 * Find all proposed received from some user
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<QueryParams> findProposedQueryByMeFromUser(String me, String user) throws DatabaseException {
 		log.debug("findProposedQueryByMeFromUser({}, {})", me);
 		String qs = "select qp from QueryParams qp, ProposedQueryReceived pr where pr.user=:me and pr.from=:user and pr in elements(qp.proposedReceived)";
@@ -254,10 +252,10 @@ public class QueryParamsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			q.setString("user", user);
-			List<QueryParams> ret = q.list();
+			Query<QueryParams> q = session.createQuery(qs, QueryParams.class);
+			q.setParameter("me", me);
+			q.setParameter("user", user);
+			List<QueryParams> ret = q.getResultList();
 
 			log.debug("findProposedQueryByMeFromUser: {}", ret);
 			return ret;
@@ -272,7 +270,6 @@ public class QueryParamsDAO {
 	/**
 	 * Find all proposed
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<QueryParams> findProposedQueryFromMeToUser(String me, String user) throws DatabaseException {
 		log.debug("findProposedQueryFromMeToUser({}, {})", me);
 		String qs = "select qp from QueryParams qp, ProposedQuerySent pr where pr.user=:user and pr.from=:me and pr in elements(qp.proposedSent)";
@@ -281,10 +278,10 @@ public class QueryParamsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			q.setString("user", user);
-			List<QueryParams> ret = q.list();
+			Query<QueryParams> q = session.createQuery(qs, QueryParams.class);
+			q.setParameter("me", me);
+			q.setParameter("user", user);
+			List<QueryParams> ret = q.getResultList();
 
 			log.debug("findProposedQueryFromMeToUser: {}", ret);
 			return ret;

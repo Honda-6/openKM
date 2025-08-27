@@ -24,6 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.MimeType;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,16 +47,16 @@ public class MimeTypeDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(mt);
-			MimeType mtTmp = (MimeType) session.load(MimeType.class, id);
+			session.persist(mt);
+			MimeType mtTmp = session.get(MimeType.class, mt.getId());
 
 			for (String extensions : mt.getExtensions()) {
 				mtTmp.getExtensions().add(extensions);
 			}
 
 			HibernateUtil.commit(tx);
-			log.debug("create: {}", id);
-			return id;
+			log.debug("create: {}", mt.getId());
+			return mt.getId();
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
 			throw new DatabaseException(e.getMessage(), e);
@@ -78,14 +79,14 @@ public class MimeTypeDAO {
 			tx = session.beginTransaction();
 
 			if (mt.getImageContent() == null || mt.getImageContent().length() == 0) {
-				Query q = session.createQuery(qs);
+				Query<Object[]> q = session.createQuery(qs, Object[].class);
 				q.setParameter("id", mt.getId());
-				Object[] data = (Object[]) q.setMaxResults(1).uniqueResult();
+				Object[] data = q.setMaxResults(1).uniqueResult();
 				mt.setImageContent((String) data[0]);
 				mt.setImageMime((String) data[1]);
 			}
 
-			session.update(mt);
+			session.merge(mt);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -108,8 +109,8 @@ public class MimeTypeDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			MimeType mt = (MimeType) session.load(MimeType.class, mtId);
-			session.delete(mt);
+			MimeType mt = session.get(MimeType.class, mtId);
+			session.remove(mt);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -124,7 +125,6 @@ public class MimeTypeDAO {
 	/**
 	 * Delete all
 	 */
-	@SuppressWarnings("unchecked")
 	public static void deleteAll() throws DatabaseException {
 		log.debug("deleteAll()");
 		String qs = "from MimeType";
@@ -134,10 +134,10 @@ public class MimeTypeDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			List<MimeType> ret = session.createQuery(qs).list();
+			List<MimeType> ret = session.createQuery(qs, MimeType.class).getResultList();
 
 			for (MimeType mt : ret) {
-				session.delete(mt);
+				session.remove(mt);
 			}
 
 			HibernateUtil.commit(tx);
@@ -162,7 +162,7 @@ public class MimeTypeDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			MimeType ret = (MimeType) session.load(MimeType.class, mtId);
+			MimeType ret = session.get(MimeType.class, mtId);
 			Hibernate.initialize(ret);
 			HibernateUtil.commit(tx);
 			log.debug("findByPk: {}", ret);
@@ -180,7 +180,6 @@ public class MimeTypeDAO {
 	 *
 	 * @param sort Can be "mt.id" or "mt.name".
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<MimeType> findAll(String sort) throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from MimeType mt order by " + sort;
@@ -190,8 +189,8 @@ public class MimeTypeDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs).setCacheable(true);
-			List<MimeType> ret = q.list();
+			Query<MimeType> q = session.createQuery(qs, MimeType.class).setCacheable(true);
+			List<MimeType> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -206,7 +205,6 @@ public class MimeTypeDAO {
 	/**
 	 * Find by search.
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<MimeType> findBySearch() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from MimeType mt where mt.search=:search order by mt.description";
@@ -216,9 +214,9 @@ public class MimeTypeDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs).setCacheable(true);
-			q.setBoolean("search", true);
-			List<MimeType> ret = q.list();
+			Query<MimeType> q = session.createQuery(qs, MimeType.class).setCacheable(true);
+			q.setParameter("search", true);
+			List<MimeType> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -242,9 +240,9 @@ public class MimeTypeDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("name", name);
-			MimeType ret = (MimeType) q.setMaxResults(1).uniqueResult();
+			Query<MimeType> q = session.createQuery(qs, MimeType.class);
+			q.setParameter("name", name);
+			MimeType ret = q.setMaxResults(1).uniqueResult();
 			HibernateUtil.commit(tx);
 			log.debug("findByName: {}", ret);
 			return ret;

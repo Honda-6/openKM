@@ -49,6 +49,7 @@ import org.springframework.security.core.Authentication;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -641,7 +642,7 @@ public class DbPropertyGroupModule implements PropertyGroupModule {
 
 					if (sel.getSuggestion() != null && !sel.getSuggestion().isEmpty()) {
 						try {
-							Object obj = Class.forName(sel.getSuggestion()).newInstance();
+							Object obj = Class.forName(sel.getSuggestion()).getDeclaredConstructor().newInstance();
 							list = ((Suggestion) obj).getSuggestions(nodeUuid, nodePath, sel);
 						} catch (ClassNotFoundException e) {
 							log.warn("ClassNotFoundException: " + sel.getSuggestion(), e);
@@ -659,6 +660,10 @@ public class DbPropertyGroupModule implements PropertyGroupModule {
 			}
 		} catch (DatabaseException e) {
 			throw e;
+		} catch (NoSuchMethodException e) {
+			log.error("Unexpected error", e);
+		} catch (InvocationTargetException e) {
+			log.error("Unexpected error", e);
 		} finally {
 			if (token != null) {
 				PrincipalUtils.setAuthentication(oldAuth);

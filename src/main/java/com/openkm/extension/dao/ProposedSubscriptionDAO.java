@@ -27,7 +27,8 @@ import com.openkm.dao.HibernateUtil;
 import com.openkm.extension.dao.bean.ProposedSubscriptionReceived;
 import com.openkm.extension.dao.bean.ProposedSubscriptionSent;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public class ProposedSubscriptionDAO {
 			psSent.setType(type);
 			psSent.setComment(comment);
 			psSent.setSentDate(Calendar.getInstance());
-			session.save(psSent);
+			session.persist(psSent);
 
 			ProposedSubscriptionReceived psReceived = new ProposedSubscriptionReceived();
 			psReceived.setFrom(from);
@@ -75,7 +76,7 @@ public class ProposedSubscriptionDAO {
 			psReceived.setType(type);
 			psReceived.setComment(comment);
 			psReceived.setSentDate(Calendar.getInstance());
-			session.save(psReceived);
+			session.persist(psReceived);
 
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -99,8 +100,8 @@ public class ProposedSubscriptionDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			ProposedSubscriptionSent ps = (ProposedSubscriptionSent) session.load(ProposedSubscriptionSent.class, psId);
-			session.delete(ps);
+			ProposedSubscriptionSent ps = session.get(ProposedSubscriptionSent.class, psId);
+			session.remove(ps);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -123,8 +124,8 @@ public class ProposedSubscriptionDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			ProposedSubscriptionReceived ps = (ProposedSubscriptionReceived) session.load(ProposedSubscriptionReceived.class, psId);
-			session.delete(ps);
+			ProposedSubscriptionReceived ps = session.get(ProposedSubscriptionReceived.class, psId);
+			session.remove(ps);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -139,7 +140,6 @@ public class ProposedSubscriptionDAO {
 	/**
 	 * Find sent from me to user
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<ProposedSubscriptionSent> findSentProposedSubscriptionFromMeToUser(String me, String user)
 			throws DatabaseException, RepositoryException {
 		log.debug("findSentProposedSubscriptionFromMeToUser({}, {})", me, user);
@@ -150,10 +150,10 @@ public class ProposedSubscriptionDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			q.setString("user", user);
-			List<ProposedSubscriptionSent> ret = q.list();
+			Query<ProposedSubscriptionSent> q = session.createQuery(qs, ProposedSubscriptionSent.class);
+			q.setParameter("me", me);
+			q.setParameter("user", user);
+			List<ProposedSubscriptionSent> ret = q.getResultList();
 			log.debug("findSentProposedSubscriptionFromMeToUser: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -167,7 +167,6 @@ public class ProposedSubscriptionDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<String> findProposedSubscriptionsUsersFrom(String me) throws DatabaseException {
 		log.debug("findProposedSubscriptionsUsersFrom({})", me);
 		String qs = "select distinct(ps.from) from ProposedSubscriptionReceived ps where ps.user=:me order by ps.from";
@@ -175,9 +174,9 @@ public class ProposedSubscriptionDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("me", me);
+			List<String> ret = q.getResultList();
 			log.debug("findProposedSubscriptionsUsersFrom: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -190,7 +189,7 @@ public class ProposedSubscriptionDAO {
 	/**
 	 * Return a map users and number of unread proposed queries from them
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static Map<String, Long> findProposedSubscriptionsUsersFromUnread(String me) throws
 			DatabaseException {
 		log.debug("findProposedSubscriptionsUsersFromUnread({})", me);
@@ -200,9 +199,9 @@ public class ProposedSubscriptionDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			List<Object[]> list = q.list();
+			Query<Object[]> q = session.createQuery(qs, Object[].class);
+			q.setParameter("me", me);
+			List<Object[]> list = q.getResultList();
 			Map<String, Long> ret = new HashMap<>();
 
 			for (Object[] item : list) {
@@ -221,7 +220,7 @@ public class ProposedSubscriptionDAO {
 	/**
 	 * Find received by user
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<ProposedSubscriptionReceived> findProposedSubscriptionByMeFromUser(String me, String user)
 			throws DatabaseException, RepositoryException {
 		log.debug("findProposedSubscriptionByMeFromUser({}, {})", me, user);
@@ -232,10 +231,10 @@ public class ProposedSubscriptionDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			q.setString("user", user);
-			List<ProposedSubscriptionReceived> ret = q.list();
+			Query<ProposedSubscriptionReceived> q = session.createQuery(qs, ProposedSubscriptionReceived.class);
+			q.setParameter("me", me);
+			q.setParameter("user", user);
+			List<ProposedSubscriptionReceived> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findProposedSubscriptionByMeFromUser: {}", ret);
 			return ret;
@@ -250,7 +249,7 @@ public class ProposedSubscriptionDAO {
 	/**
 	 * Find users whom sent an proposed query
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<String> findProposedSubscriptionSentUsersTo(String me) throws DatabaseException {
 		log.debug("findProposedSubscriptionSentUsersTo({})", me);
 		String qs = "select distinct(ps.user) from ProposedSubscriptionSent ps where ps.from=:me order by ps.user";
@@ -258,9 +257,9 @@ public class ProposedSubscriptionDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("me", me);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("me", me);
+			List<String> ret = q.getResultList();
 			log.debug("findProposedSubscriptionSentUsersTo: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -280,9 +279,9 @@ public class ProposedSubscriptionDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setInteger("id", psId);
-			q.setCalendar("seenDate", Calendar.getInstance());
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("id", psId);
+			q.setParameter("seenDate", Calendar.getInstance());
 			q.executeUpdate();
 			log.debug("markSeen: void");
 		} catch (HibernateException e) {
@@ -302,9 +301,9 @@ public class ProposedSubscriptionDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setInteger("id", psId);
-			q.setBoolean("accepted", true);
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("id", psId);
+			q.setParameter("accepted", true);
 			q.executeUpdate();
 			log.debug("markAccepted: void");
 		} catch (HibernateException e) {

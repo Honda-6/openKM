@@ -21,12 +21,11 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class GWTTextArea extends GWTFormElement implements IsSerializable {
+public class GWTTextArea extends GWTFormElement {
 	private List<GWTValidator> validators = new ArrayList<>();
 	private String value = "";
 	private String data = "";

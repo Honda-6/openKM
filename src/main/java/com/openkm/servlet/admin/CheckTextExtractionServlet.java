@@ -28,22 +28,27 @@ import com.openkm.core.*;
 import com.openkm.extractor.RegisteredExtractors;
 import com.openkm.extractor.TextExtractor;
 import com.openkm.util.PathUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -76,10 +81,10 @@ public class CheckTextExtractionServlet extends BaseServlet {
 		InputStream is = null;
 
 		try {
-			if (ServletFileUpload.isMultipartContent(request)) {
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				List<FileItem> items = upload.parseRequest(request);
+			if (JakartaServletFileUpload.isMultipartContent(request)) {
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				List<DiskFileItem> items = upload.parseRequest(request);
 				String docUuid = null;
 				String repoPath = null;
 				String text = null;
@@ -87,12 +92,12 @@ public class CheckTextExtractionServlet extends BaseServlet {
 				String mimeType = null;
 				String extractor = null;
 
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("docUuid")) {
-							docUuid = item.getString("UTF-8");
+							docUuid = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("repoPath")) {
-							repoPath = item.getString("UTF-8");
+							repoPath = item.getString(StandardCharsets.UTF_8);
 						}
 					} else {
 						is = item.getInputStream();
@@ -102,7 +107,7 @@ public class CheckTextExtractionServlet extends BaseServlet {
 						if (!name.isEmpty() && item.getSize() > 0) {
 							docUuid = null;
 							repoPath = null;
-						} else if (docUuid.isEmpty() && repoPath.isEmpty()) {
+						} else if (docUuid != null && docUuid.isEmpty() && repoPath != null && !repoPath.isEmpty()) {
 							mimeType = null;
 						}
 					}
@@ -124,7 +129,7 @@ public class CheckTextExtractionServlet extends BaseServlet {
 					if (!MimeTypeConfig.MIME_UNDEFINED.equals(mimeType)) {
 						try {
 							if (extractor != null && !extractor.isEmpty()) {
-								TextExtractor extClass = (TextExtractor) Class.forName(extractor).newInstance();
+								TextExtractor extClass = (TextExtractor) Class.forName(extractor).getDeclaredConstructor().newInstance();
 								text = extClass.extractText(is, mimeType, null);
 							} else {
 								TextExtractor extClass = RegisteredExtractors.getTextExtractor(mimeType);

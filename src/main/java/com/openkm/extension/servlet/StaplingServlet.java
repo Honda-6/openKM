@@ -84,7 +84,7 @@ public class StaplingServlet extends OKMRemoteServiceServlet implements OKMStapl
 		log.debug("add({}, {})", id, nodeUuid);
 		updateSessionManager();
 		try {
-			StapleGroup stapleGroup = StapleGroupDAO.findByPk(new Long(id));
+			StapleGroup stapleGroup = StapleGroupDAO.findByPk(Long.valueOf(id));
 			boolean found = false;
 
 			for (Staple st : stapleGroup.getStaples()) {
@@ -179,7 +179,7 @@ public class StaplingServlet extends OKMRemoteServiceServlet implements OKMStapl
 		log.debug("remove({})", id);
 		updateSessionManager();
 		try {
-			StapleGroupDAO.delete(new Long(id));
+			StapleGroupDAO.delete(Long.valueOf(id));
 		} catch (NumberFormatException e) {
 			log.error(e.getMessage(), e);
 			throw new OKMException(ErrorCode.get(ErrorCode.ORIGIN_OKMStaplingService, ErrorCode.CAUSE_NumberFormat), e.getMessage());
@@ -194,7 +194,7 @@ public class StaplingServlet extends OKMRemoteServiceServlet implements OKMStapl
 		log.debug("removeStaple({})", id);
 		updateSessionManager();
 		try {
-			StapleGroupDAO.deleteStaple(new Long(id));
+			StapleGroupDAO.deleteStaple(Long.valueOf(id));
 		} catch (NumberFormatException e) {
 			log.error(e.getMessage(), e);
 			throw new OKMException(ErrorCode.get(ErrorCode.ORIGIN_OKMStaplingService, ErrorCode.CAUSE_NumberFormat), e.getMessage());

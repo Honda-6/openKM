@@ -36,7 +36,7 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -89,7 +89,7 @@ public class Config {
 	// General configuration
 	public static String EXPORT_METADATA_EXT = ".okm";
 	public static String ROOT_NODE_UUID = "cafebabe-cafe-babe-cafe-babecafebabe";
-	public static Version LUCENE_VERSION = Version.LUCENE_31;
+	public static Version LUCENE_VERSION = Version.LUCENE_8_11_3;
 	public static String DEFAULT_CRONTAB_MAIL = "none@nomail.com";
 
 	// Preview cache

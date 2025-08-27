@@ -21,7 +21,6 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +32,7 @@ import java.util.List;
  * @author jllort
  *
  */
-public class GWTSelect extends GWTFormElement implements IsSerializable {
+public class GWTSelect extends GWTFormElement {
 	public static final String TYPE_SIMPLE = "simple";
 	public static final String TYPE_MULTIPLE = "multiple";
 	private Collection<GWTOption> options = new ArrayList<>();

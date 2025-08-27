@@ -139,7 +139,7 @@ public class SearchSaved extends Composite {
 		public void onSuccess(Object result) {
 			table.removeRow(getSelectedRow());
 			table.selectPrevRow();
-			data.remove(new Long(searchIdToDelete));
+			data.remove(Long.valueOf(searchIdToDelete));
 			status.unsetFlag_deleteSearch();
 		}
 
@@ -166,7 +166,7 @@ public class SearchSaved extends Composite {
 	private void addRow(GWTQueryParams search) {
 		int rows = table.getRowCount();
 
-		data.put(new Long(dataIndexValue), search);
+		data.put(Long.valueOf(dataIndexValue), search);
 
 		if (!search.isShared()) {
 			table.setHTML(rows, 0, "&nbsp;");

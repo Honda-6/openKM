@@ -33,19 +33,19 @@ import com.openkm.principal.PrincipalAdapterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
-import javax.jws.WebService;
-import javax.xml.bind.annotation.XmlMimeType;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.jws.WebMethod;
+import jakarta.jws.WebParam;
+import jakarta.jws.WebService;
+import jakarta.xml.bind.annotation.XmlMimeType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
 @WebService(name = "OKMDocument", serviceName = "OKMDocument", targetNamespace = "http://ws.openkm.com")
-// @BindingType(javax.xml.ws.soap.SOAPBinding.SOAP11HTTP_MTOM_BINDING)
+// @BindingType(jakarta.xml.ws.soap.SOAPBinding.SOAP11HTTP_MTOM_BINDING)
 public class DocumentService {
 	private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
 

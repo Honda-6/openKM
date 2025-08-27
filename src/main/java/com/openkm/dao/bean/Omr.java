@@ -1,13 +1,8 @@
 package com.openkm.dao.bean;
 
-import com.openkm.module.db.stuff.SetFieldBridge;
-import org.hibernate.annotations.Type;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.FieldBridge;
-import org.hibernate.search.annotations.Index;
-import org.hibernate.search.annotations.Store;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -68,12 +63,10 @@ public class Omr implements Serializable {
 	@ElementCollection
 	@Column(name = "OMP_PROPERTY")
 	@CollectionTable(name = "OKM_OMR_PROPERTY", joinColumns = { @JoinColumn(name = "OMP_OMR") })
-	@Field(index = Index.UN_TOKENIZED, store = Store.YES)
-	@FieldBridge(impl = SetFieldBridge.class)
+	@GenericField
 	protected Set<String> properties = new HashSet<>();
 
 	@Column(name = "OMR_ACTIVE", nullable = false)
-	@Type(type = "true_false")
 	private boolean active;
 
 	public long getId() {

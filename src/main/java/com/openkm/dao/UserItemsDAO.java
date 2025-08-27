@@ -24,7 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.cache.UserItems;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -49,8 +49,8 @@ public class UserItemsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			UserItems ui = (UserItems) session.load(UserItems.class, user);
-			session.delete(ui);
+			UserItems ui = session.get(UserItems.class, user);
+			session.remove(ui);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -73,7 +73,7 @@ public class UserItemsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.saveOrUpdate(ui);
+			session.merge(ui);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -95,9 +95,9 @@ public class UserItemsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			UserItems ui = (UserItems) q.setMaxResults(1).uniqueResult();
+			Query<UserItems> q = session.createQuery(qs, UserItems.class);
+			q.setParameter("user", user);
+			UserItems ui = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ui);
 			return ui;
 		} catch (HibernateException e) {
@@ -110,7 +110,6 @@ public class UserItemsDAO {
 	/**
 	 * Find all
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<UserItems> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from UserItems";
@@ -118,8 +117,8 @@ public class UserItemsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<UserItems> ret = q.list();
+			Query<UserItems> q = session.createQuery(qs, UserItems.class);
+			List<UserItems> ret = q.getResultList();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

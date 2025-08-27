@@ -23,13 +23,30 @@ package com.openkm.dao.bean;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Index;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "OKM_DB_METADATA_VALUE")
+@Table(name = "OKM_DB_METADATA_VALUE", 
+	indexes = {
+		@Index(name = "IDX_DB_MD_VAL_TABLE", columnList = "DMV_TABLE"),
+		@Index(name = "IDX_DB_MD_VAL_COL00", columnList = "DMV_COL00"),
+		@Index(name = "IDX_DB_MD_VAL_COL01", columnList = "DMV_COL01"),
+		@Index(name = "IDX_DB_MD_VAL_COL02", columnList = "DMV_COL02"),
+		@Index(name = "IDX_DB_MD_VAL_COL03", columnList = "DMV_COL03"),
+		@Index(name = "IDX_DB_MD_VAL_COL04", columnList = "DMV_COL04"),
+		@Index(name = "IDX_DB_MD_VAL_COL05", columnList = "DMV_COL05"),
+		@Index(name = "IDX_DB_MD_VAL_COL06", columnList = "DMV_COL06"),
+		@Index(name = "IDX_DB_MD_VAL_COL07", columnList = "DMV_COL07"),
+		@Index(name = "IDX_DB_MD_VAL_COL08", columnList = "DMV_COL08"),
+		@Index(name = "IDX_DB_MD_VAL_COL09", columnList = "DMV_COL09"),
+		@Index(name = "IDX_DB_MD_VAL_COL10", columnList = "DMV_COL10"),
+		@Index(name = "IDX_DB_MD_VAL_COL11", columnList = "DMV_COL11"),
+		@Index(name = "IDX_DB_MD_VAL_COL12", columnList = "DMV_COL12"),
+		@Index(name = "IDX_DB_MD_VAL_COL13", columnList = "DMV_COL13"),
+		@Index(name = "IDX_DB_MD_VAL_COL14", columnList = "DMV_COL14")
+	})
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class DatabaseMetadataValue implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -40,67 +57,51 @@ public class DatabaseMetadataValue implements Serializable {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
 
-	@Index(name = "IDX_DB_MD_VAL_TABLE")
 	@Column(name = "DMV_TABLE", length = 32)
 	private String table;
 
-	@Index(name = "IDX_DB_MD_VAL_COL00")
 	@Column(name = "DMV_COL00", length = MAX_LENGTH)
 	private String col00;
 
-	@Index(name = "IDX_DB_MD_VAL_COL01")
 	@Column(name = "DMV_COL01", length = MAX_LENGTH)
 	private String col01;
 
-	@Index(name = "IDX_DB_MD_VAL_COL02")
 	@Column(name = "DMV_COL02", length = MAX_LENGTH)
 	private String col02;
 
-	@Index(name = "IDX_DB_MD_VAL_COL03")
 	@Column(name = "DMV_COL03", length = MAX_LENGTH)
 	private String col03;
 
-	@Index(name = "IDX_DB_MD_VAL_COL04")
 	@Column(name = "DMV_COL04", length = MAX_LENGTH)
 	private String col04;
 
-	@Index(name = "IDX_DB_MD_VAL_COL05")
 	@Column(name = "DMV_COL05", length = MAX_LENGTH)
 	private String col05;
 
-	@Index(name = "IDX_DB_MD_VAL_COL06")
 	@Column(name = "DMV_COL06", length = MAX_LENGTH)
 	private String col06;
 
-	@Index(name = "IDX_DB_MD_VAL_COL07")
 	@Column(name = "DMV_COL07", length = MAX_LENGTH)
 	private String col07;
 
-	@Index(name = "IDX_DB_MD_VAL_COL08")
 	@Column(name = "DMV_COL08", length = MAX_LENGTH)
 	private String col08;
 
-	@Index(name = "IDX_DB_MD_VAL_COL09")
 	@Column(name = "DMV_COL09", length = MAX_LENGTH)
 	private String col09;
 
-	@Index(name = "IDX_DB_MD_VAL_COL10")
 	@Column(name = "DMV_COL10", length = MAX_LENGTH)
 	private String col10;
 
-	@Index(name = "IDX_DB_MD_VAL_COL11")
 	@Column(name = "DMV_COL11", length = MAX_LENGTH)
 	private String col11;
 
-	@Index(name = "IDX_DB_MD_VAL_COL12")
 	@Column(name = "DMV_COL12", length = MAX_LENGTH)
 	private String col12;
 
-	@Index(name = "IDX_DB_MD_VAL_COL13")
 	@Column(name = "DMV_COL13", length = MAX_LENGTH)
 	private String col13;
 
-	@Index(name = "IDX_DB_MD_VAL_COL14")
 	@Column(name = "DMV_COL14", length = MAX_LENGTH)
 	private String col14;
 

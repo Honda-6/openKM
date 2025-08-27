@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class FsDirectoryResource extends FsResource implements MakeCollectionableResource, PutableResource,
-		CopyableResource, DeletableResource, MoveableResource, PropFindableResource, LockingCollectionResource,
+		DeletableResource, PropFindableResource, LockingCollectionResource,
 		GetableResource {
 	private static final Logger log = LoggerFactory.getLogger(FsDirectoryResource.class);
 

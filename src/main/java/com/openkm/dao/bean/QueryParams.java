@@ -3,7 +3,7 @@ package com.openkm.dao.bean;
 import com.openkm.extension.dao.bean.ProposedQueryReceived;
 import com.openkm.extension.dao.bean.ProposedQuerySent;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.*;
 

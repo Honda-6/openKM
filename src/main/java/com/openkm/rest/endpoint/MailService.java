@@ -40,9 +40,9 @@ import org.apache.cxf.jaxrs.ext.multipart.Attachment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.MessagingException;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
+import jakarta.mail.MessagingException;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -282,7 +282,7 @@ public class MailService {
 	// The "dstId" and "content" parameters comes in the POST request body.
 	public Mail importEml(List<Attachment> atts) throws RepositoryException, AccessDeniedException, PathNotFoundException,
 			DatabaseException, IOException, AutomationException, UserQuotaExceededException, FileSizeExceededException,
-			ExtensionException, UnsupportedMimeTypeException, ItemExistsException, VirusDetectedException, MessagingException {
+			ExtensionException, UnsupportedMimeTypeException, ItemExistsException, VirusDetectedException, MessagingException, jakarta.mail.MessagingException {
 		log.debug("importEml({})", atts);
 		InputStream is = null;
 		String dstPath = null;
@@ -301,7 +301,6 @@ public class MailService {
 					is = att.getDataHandler().getInputStream();
 				}
 			}
-
 			Mail newMail = OKMMail.getInstance().importEml(dstPath, is);
 			log.debug("importEml: {}", newMail);
 			return newMail;

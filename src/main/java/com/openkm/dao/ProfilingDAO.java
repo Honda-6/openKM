@@ -25,7 +25,8 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.Profiling;
 import com.openkm.dao.bean.ProfilingStats;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
+import org.hibernate.query.MutationQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class ProfilingDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(profiling);
+			session.persist(profiling);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -71,7 +72,7 @@ public class ProfilingDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
+			MutationQuery q = session.createMutationQuery(qs);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -85,7 +86,6 @@ public class ProfilingDAO {
 	/**
 	 * Get statistics
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<ProfilingStats> getStatistics() throws DatabaseException {
 		log.debug("getStatistics()");
 		String qsClazzes = "select distinct prl.clazz, prl.method from Profiling prl order by prl.clazz, prl.method";
@@ -98,12 +98,12 @@ public class ProfilingDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query qClazzes = session.createQuery(qsClazzes);
+			Query<Object[]> qClazzes = session.createQuery(qsClazzes, Object[].class);
 
-			for (Object[] result : (List<Object[]>) qClazzes.list()) {
-				Query qStats = session.createQuery(qsStats);
-				qStats.setString("clazz", (String) result[0]);
-				qStats.setString("method", (String) result[1]);
+			for (Object[] result : qClazzes.getResultList()) {
+				Query<Object[]> qStats = session.createQuery(qsStats, Object[].class);
+				qStats.setParameter("clazz", (String) result[0]);
+				qStats.setParameter("method", (String) result[1]);
 				Object[] stats = (Object[]) qStats.setMaxResults(1).uniqueResult();
 
 				ProfilingStats ps = new ProfilingStats();
@@ -132,7 +132,6 @@ public class ProfilingDAO {
 	/**
 	 * Find by class and method
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Profiling> findByClazzMethod(String clazz, String method) throws DatabaseException {
 		log.debug("findByClazzMethod()");
 		String qs = "from Profiling prl where prl.clazz=:clazz and prl.method=:method";
@@ -142,10 +141,10 @@ public class ProfilingDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("clazz", clazz);
-			q.setString("method", method);
-			List<Profiling> ret = q.list();
+			Query<Profiling> q = session.createQuery(qs, Profiling.class);
+			q.setParameter("clazz", clazz);
+			q.setParameter("method", method);
+			List<Profiling> ret = q.getResultList();
 
 			HibernateUtil.commit(tx);
 			log.debug("findByClazzMethod: {}", ret);

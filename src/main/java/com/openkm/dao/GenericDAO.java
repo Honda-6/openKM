@@ -23,6 +23,7 @@ package com.openkm.dao;
 
 import com.openkm.core.DatabaseException;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +73,9 @@ public abstract class GenericDAO<T, ID extends Serializable> {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			ID id = (ID) session.save(t);
+			session.persist(t);
+			// In Hibernate 6, persist() returns void, so we need to get the ID after persist
+			ID id = (ID) session.getIdentifier(t);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}", id);
 			return id;
@@ -95,7 +98,7 @@ public abstract class GenericDAO<T, ID extends Serializable> {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(t);
+			session.merge(t);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -110,7 +113,6 @@ public abstract class GenericDAO<T, ID extends Serializable> {
 	/**
 	 * Delete
 	 */
-	@SuppressWarnings("unchecked")
 	public void delete(ID id) throws DatabaseException {
 		log.debug("delete({})", id);
 		Session session = null;
@@ -119,8 +121,8 @@ public abstract class GenericDAO<T, ID extends Serializable> {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			T t = (T) session.load(persistentClass, id);
-			session.delete(t);
+			T t = session.get(persistentClass, id);
+			session.remove(t);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -135,14 +137,13 @@ public abstract class GenericDAO<T, ID extends Serializable> {
 	/**
 	 * Find by primary key
 	 */
-	@SuppressWarnings("unchecked")
 	public T findByPk(ID id) throws DatabaseException {
 		log.debug("findByPk({})", id);
 		Session session = null;
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			T ret = (T) session.load(persistentClass, id);
+			T ret = session.get(persistentClass, id);
 			Hibernate.initialize(ret);
 			log.debug("findByPk: {}", ret);
 			return ret;
@@ -156,15 +157,14 @@ public abstract class GenericDAO<T, ID extends Serializable> {
 	/**
 	 * Find by primary key
 	 */
-	@SuppressWarnings("unchecked")
 	public List<T> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		Session session = null;
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery("from " + persistentClass.getName() + " x");
-			List<T> ret = q.list();
+			Query<T> q = session.createQuery("from " + persistentClass.getName() + " x", persistentClass);
+			List<T> ret = q.getResultList();
 			log.debug("findAll: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

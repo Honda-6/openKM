@@ -27,19 +27,23 @@ import com.openkm.dao.CssDAO;
 import com.openkm.dao.bean.Css;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WebUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -103,27 +107,27 @@ public class CssServlet extends BaseServlet {
 		updateSessionManager(request);
 
 		try {
-			if (ServletFileUpload.isMultipartContent(request)) {
-				FileItemFactory factory = new DiskFileItemFactory();
-				ServletFileUpload upload = new ServletFileUpload(factory);
-				List<FileItem> items = upload.parseRequest(request);
+			if (JakartaServletFileUpload.isMultipartContent(request)) {
+				var factory = DiskFileItemFactory.builder().get();
+				var upload = new JakartaServletFileUpload<>(factory);
+				List<DiskFileItem> items = upload.parseRequest(request);
 				Css css = new Css();
 				css.setActive(false);
 
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("action")) {
-							action = item.getString("UTF-8");
+							action = item.getString(StandardCharsets.UTF_8);
 						} else if (item.getFieldName().equals("css_id")) {
-							if (!item.getString("UTF-8").isEmpty()) {
-								css.setId(new Long(item.getString("UTF-8")));
+							if (!item.getString(StandardCharsets.UTF_8).isEmpty()) {
+								css.setId(Long.valueOf(item.getString(StandardCharsets.UTF_8)));
 							}
 						} else if (item.getFieldName().equals("css_name")) {
-							css.setName(item.getString("UTF-8"));
+							css.setName(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("css_context")) {
-							css.setContext(item.getString("UTF-8"));
+							css.setContext(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("css_content")) {
-							css.setContent(item.getString("UTF-8"));
+							css.setContent(item.getString(StandardCharsets.UTF_8));
 						} else if (item.getFieldName().equals("css_active")) {
 							css.setActive(true);
 						}

@@ -23,14 +23,11 @@ package com.openkm.dao.bean;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
 @Indexed
@@ -40,7 +37,7 @@ public class NodeFolder extends NodeBase {
 	private static final long serialVersionUID = 1L;
 
 	@Column(name = "NFL_DESCRIPTION", length = 2048)
-	@Field(index = Index.TOKENIZED, store = Store.YES)
+	@FullTextField
 	private String description;
 
 	public String getDescription() {

@@ -21,7 +21,7 @@
 
 package com.openkm.bean;
 
-import javax.xml.bind.annotation.XmlSeeAlso;
+import jakarta.xml.bind.annotation.XmlSeeAlso;
 import java.io.Serializable;
 import java.util.*;
 

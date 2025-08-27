@@ -21,7 +21,6 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.List;
  * @author jllort
  *
  */
-public class GWTUpload extends GWTFormElement implements IsSerializable {
+public class GWTUpload extends GWTFormElement {
 	public static final String TYPE_CREATE = "create";
 	public static final String TYPE_UPDATE = "update";
 	private List<GWTValidator> validators = new ArrayList<>();

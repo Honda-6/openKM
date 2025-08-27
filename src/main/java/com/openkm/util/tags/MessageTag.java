@@ -25,8 +25,8 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.LanguageDAO;
 import com.openkm.dao.bean.Language;
 
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 import java.io.IOException;
 import java.util.Locale;
 

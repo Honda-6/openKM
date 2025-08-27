@@ -171,7 +171,7 @@ public class WorkflowTable extends Composite {
 		showImage.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				controller.findLogsByProcessInstance(new Double(processInstance.getId()).intValue());
+				controller.findLogsByProcessInstance(Double.valueOf(processInstance.getId()).intValue());
 			}
 		});
 		hPanel.add(showImage);
@@ -182,7 +182,7 @@ public class WorkflowTable extends Composite {
 		showDiagram.addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				controller.showGraph(new Double(processInstance.getProcessDefinition().getId()).intValue(),
+				controller.showGraph(Double.valueOf(processInstance.getProcessDefinition().getId()).intValue(),
 						processInstance.getRootToken().getNode());
 
 			}

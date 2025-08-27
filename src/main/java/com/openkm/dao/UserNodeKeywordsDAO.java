@@ -24,6 +24,7 @@ package com.openkm.dao;
 import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.cache.UserNodeKeywords;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,8 +47,8 @@ public class UserNodeKeywordsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			UserNodeKeywords unk = (UserNodeKeywords) session.load(UserNodeKeywords.class, id);
-			session.delete(unk);
+			UserNodeKeywords unk = session.get(UserNodeKeywords.class, id);
+			session.remove(unk);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -70,7 +71,7 @@ public class UserNodeKeywordsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(unk);
+			session.persist(unk);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -85,7 +86,7 @@ public class UserNodeKeywordsDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<UserNodeKeywords> findByUser(String user) throws DatabaseException {
 		log.debug("findByUser({})", user);
 		String qs = "from UserNodeKeywords unk where unk.user=:user";
@@ -93,9 +94,9 @@ public class UserNodeKeywordsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("user", user);
-			List<UserNodeKeywords> ret = q.list();
+			Query<UserNodeKeywords> q = session.createQuery(qs, UserNodeKeywords.class);
+			q.setParameter("user", user);
+			List<UserNodeKeywords> ret = q.getResultList();
 
 			for (UserNodeKeywords unk : ret) {
 				Hibernate.initialize(unk.getKeywords());
@@ -113,7 +114,7 @@ public class UserNodeKeywordsDAO {
 	/**
 	 * Find users
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<String> findUsers() throws DatabaseException {
 		log.debug("findUsers()");
 		String qs = "select distinct unk.user from UserNodeKeywords unk";
@@ -121,8 +122,8 @@ public class UserNodeKeywordsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			List<String> ret = q.getResultList();
 			log.debug("findUsers: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -135,7 +136,7 @@ public class UserNodeKeywordsDAO {
 	/**
 	 * Find all
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<UserNodeKeywords> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from UserNodeKeywords";
@@ -143,8 +144,8 @@ public class UserNodeKeywordsDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<UserNodeKeywords> ret = q.list();
+			Query<UserNodeKeywords> q = session.createQuery(qs, UserNodeKeywords.class);
+			List<UserNodeKeywords> ret = q.getResultList();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -157,7 +158,7 @@ public class UserNodeKeywordsDAO {
 	/**
 	 * Empty database
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static void clean() throws DatabaseException {
 		log.debug("clean()");
 		String qs = "from UserNodeKeywords";
@@ -167,9 +168,9 @@ public class UserNodeKeywordsDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			List<UserNodeKeywords> ret = session.createQuery(qs).list();
+			List<UserNodeKeywords> ret = session.createQuery(qs, UserNodeKeywords.class).getResultList();
 			for (UserNodeKeywords unk : ret) {
-				session.delete(unk);
+				session.remove(unk);
 			}
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {

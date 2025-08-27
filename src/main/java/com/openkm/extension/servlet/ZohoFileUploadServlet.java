@@ -29,20 +29,26 @@ import com.openkm.extension.dao.bean.ZohoToken;
 import com.openkm.module.db.DbDocumentModule;
 import com.openkm.module.db.stuff.DbSessionManager;
 import com.openkm.servlet.frontend.OKMHttpServlet;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -58,26 +64,27 @@ public class ZohoFileUploadServlet extends OKMHttpServlet {
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException {
 		log.info("service({}, {})", request, response);
-		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+		boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
 		InputStream is = null;
 		String id = "";
 
 		if (isMultipart) {
-			FileItemFactory factory = new DiskFileItemFactory();
-			ServletFileUpload upload = new ServletFileUpload(factory);
-			upload.setHeaderEncoding("UTF-8");
+			var factory = DiskFileItemFactory.builder().get();
+			var upload = new JakartaServletFileUpload<>(factory);
+			//upload.setHeaderEncoding("UTF-8");
+			upload.setHeaderCharset(StandardCharsets.UTF_8);
 
 			// Parse the request and get all parameters and the uploaded file
-			List<FileItem> items;
+			List<DiskFileItem> items;
 
 			try {
 				items = upload.parseRequest(request);
-				for (FileItem item : items) {
+				for (DiskFileItem item : items) {
 					if (item.isFormField()) {
 						// if (item.getFieldName().equals("format")) { format =
 						// item.getString("UTF-8"); }
 						if (item.getFieldName().equals("id")) {
-							id = item.getString("UTF-8");
+							id = item.getString(StandardCharsets.UTF_8);
 						}
 						// if (item.getFieldName().equals("filename")) {
 						// filename = item.getString("UTF-8"); }

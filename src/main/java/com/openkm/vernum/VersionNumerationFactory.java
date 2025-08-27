@@ -22,6 +22,9 @@
 package com.openkm.vernum;
 
 import com.openkm.core.Config;
+
+import java.lang.reflect.InvocationTargetException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +39,7 @@ public class VersionNumerationFactory {
 		if (verNumAdapter == null) {
 			try {
 				log.info("VersionNumerationAdapter: {}", Config.VERSION_NUMERATION_ADAPTER);
-				Object object = Class.forName(Config.VERSION_NUMERATION_ADAPTER).newInstance();
+				Object object = Class.forName(Config.VERSION_NUMERATION_ADAPTER).getDeclaredConstructor().newInstance();
 				verNumAdapter = (VersionNumerationAdapter) object;
 			} catch (ClassNotFoundException e) {
 				log.warn("ClassNotFoundException: " + Config.VERSION_NUMERATION_ADAPTER, e);
@@ -44,7 +47,15 @@ public class VersionNumerationFactory {
 				log.warn("InstantiationException: " + Config.VERSION_NUMERATION_ADAPTER, e);
 			} catch (IllegalAccessException e) {
 				log.warn("IllegalAccessException: " + Config.VERSION_NUMERATION_ADAPTER, e);
+			} catch (IllegalArgumentException e) {
+				log.warn("IllegalArgumentException: " + Config.VERSION_NUMERATION_ADAPTER, e);
 			}
+			catch (InvocationTargetException e) {
+				log.warn("InvocationTargetException: " + Config.VERSION_NUMERATION_ADAPTER, e);
+			}
+			catch(NoSuchMethodException e) {
+				log.warn("NoSuchMethodException: " + Config.VERSION_NUMERATION_ADAPTER, e);
+			}	
 		}
 
 		return verNumAdapter;

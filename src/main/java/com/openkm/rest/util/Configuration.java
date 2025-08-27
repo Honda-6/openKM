@@ -23,7 +23,7 @@ package com.openkm.rest.util;
 
 import com.openkm.dao.bean.Config;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
 @XmlRootElement(name = "configuration")

@@ -1,6 +1,6 @@
 package com.openkm.dao.bean.cache;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;

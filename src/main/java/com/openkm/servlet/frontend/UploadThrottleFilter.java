@@ -23,9 +23,9 @@ package com.openkm.servlet.frontend;
 
 import com.openkm.core.Config;
 
-import javax.servlet.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import java.io.IOException;
 
 /**
@@ -85,6 +85,24 @@ public class UploadThrottleFilter implements Filter {
 			}
 
 			return chr;
+		}
+
+		@Override
+		public boolean isFinished() {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("Unimplemented method 'isFinished'");
+		}
+
+		@Override
+		public boolean isReady() {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("Unimplemented method 'isReady'");
+		}
+
+		@Override
+		public void setReadListener(ReadListener readListener) {
+			// TODO Auto-generated method stub
+			throw new UnsupportedOperationException("Unimplemented method 'setReadListener'");
 		}
 	}
 }

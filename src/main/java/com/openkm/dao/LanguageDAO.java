@@ -26,6 +26,7 @@ import com.openkm.dao.bean.Language;
 import com.openkm.dao.bean.Translation;
 import com.openkm.util.SystemProfiling;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class LanguageDAO {
 		try {
 			long begin = System.currentTimeMillis();
 			session = HibernateUtil.getSessionFactory().openSession();
-			Language ret = (Language) session.load(Language.class, id);
+			Language ret = session.get(Language.class, id);
 			Hibernate.initialize(ret);
 			SystemProfiling.log(id, System.currentTimeMillis() - begin);
 			log.trace("findByPk.Time: {}", System.currentTimeMillis() - begin);
@@ -86,7 +87,6 @@ public class LanguageDAO {
 	 *
 	 * @param cacheMode Execute language query with the designed cache mode.
 	 */
-	@SuppressWarnings("unchecked")
 	private static List<Language> findAll(CacheMode cacheMode) throws DatabaseException {
 		log.debug("findAll({})", cacheMode);
 		String qs = "from Language lg order by lg.name asc";
@@ -96,8 +96,8 @@ public class LanguageDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			session.setCacheMode(cacheMode);
-			Query q = session.createQuery(qs).setCacheable(true);
-			List<Language> ret = q.list();
+			Query<Language> q = session.createQuery(qs,Language.class).setCacheable(true);
+			List<Language> ret = q.getResultList();
 			log.debug("findAll: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -119,8 +119,8 @@ public class LanguageDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Language lang = (Language) session.load(Language.class, id);
-			session.delete(lang);
+			Language lang = session.get(Language.class, id);
+			session.remove(lang);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -146,14 +146,14 @@ public class LanguageDAO {
 			tx = session.beginTransaction();
 
 			if (lang.getImageContent() == null || lang.getImageContent().length() == 0) {
-				Query q = session.createQuery(qs);
+				Query<Object[]> q = session.createQuery(qs, Object[].class);
 				q.setParameter("id", lang.getId());
-				Object[] data = (Object[]) q.setMaxResults(1).uniqueResult();
+				Object[] data = q.setMaxResults(1).uniqueResult();
 				lang.setImageContent((String) data[0]);
 				lang.setImageMime((String) data[1]);
 			}
 
-			session.update(lang);
+			session.merge(lang);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -175,7 +175,7 @@ public class LanguageDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(lang);
+			session.persist(lang);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -195,7 +195,7 @@ public class LanguageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Language lang = (Language) session.load(Language.class, langId);
+			Language lang = session.get(Language.class, langId);
 			Set<Translation> trans = lang.getTranslations();
 			log.debug("findTransAll: {}", trans);
 			return trans;
@@ -217,11 +217,11 @@ public class LanguageDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("key", key);
-			q.setString("module", module);
-			q.setString("lang", lang);
-			String ret = (String) q.setMaxResults(1).uniqueResult();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("key", key);
+			q.setParameter("module", module);
+			q.setParameter("lang", lang);
+			String ret = q.setMaxResults(1).uniqueResult();
 
 			log.debug("getTranslation: {}", ret);
 			return ret;
@@ -249,13 +249,13 @@ public class LanguageDAO {
 			tx = session.beginTransaction();
 
 			// Get deprecated translation (in new language but not in english)
-			Query qDeprecated = session.createQuery(qs);
-			qDeprecated.setString("langDef", language.getId());
-			qDeprecated.setString("lang", Language.DEFAULT);
-			List<Translation> retDeprecated = qDeprecated.list();
+			Query<Translation> qDeprecated = session.createQuery(qs, Translation.class);
+			qDeprecated.setParameter("langDef", language.getId());
+			qDeprecated.setParameter("lang", Language.DEFAULT);
+			List<Translation> retDeprecated = qDeprecated.getResultList();
 
 			for (Translation translation : retDeprecated) {
-				session.delete(translation);
+				session.remove(translation);
 			}
 
 			HibernateUtil.commit(tx);

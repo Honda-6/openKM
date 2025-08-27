@@ -32,10 +32,11 @@ import com.openkm.util.PathUtils;
 import com.openkm.util.SecureStore;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class ConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(cfg);
+			session.persist(cfg);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -79,7 +80,7 @@ public class ConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(cfg);
+			session.merge(cfg);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -102,8 +103,8 @@ public class ConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Config mt = (Config) session.load(Config.class, key);
-			session.delete(mt);
+			Config mt = session.get(Config.class, key);
+			session.remove(mt);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -126,7 +127,7 @@ public class ConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Config ret = (Config) session.load(Config.class, key);
+			Config ret = session.get(Config.class, key);
 			Hibernate.initialize(ret);
 			HibernateUtil.commit(tx);
 			log.debug("findByPk: {}", ret);
@@ -150,14 +151,14 @@ public class ConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Config ret = (Config) session.get(Config.class, key);
+			Config ret = session.get(Config.class, key);
 
 			if (ret == null) {
 				ret = new Config();
 				ret.setKey(key);
 				ret.setType(type);
 				ret.setValue(defaultValue);
-				session.save(ret);
+				session.persist(ret);
 			} else if (ret.getValue() == null) {
 				// For Oracle '' are like NULL
 				ret.setValue("");
@@ -352,7 +353,6 @@ public class ConfigDAO {
 	/**
 	 * Find by pk
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Config> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from Config cfg order by cfg.key";
@@ -362,8 +362,8 @@ public class ConfigDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			List<Config> ret = q.list();
+			Query<Config> q = session.createQuery(qs, Config.class);
+			List<Config> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findAll: {}", ret);
 			return ret;

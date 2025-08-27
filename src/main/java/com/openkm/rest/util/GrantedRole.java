@@ -21,7 +21,7 @@
 
 package com.openkm.rest.util;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "grantedRole")
 public class GrantedRole {

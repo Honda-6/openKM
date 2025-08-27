@@ -21,7 +21,7 @@
 
 package com.openkm.bean.workflow;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
 /**
@@ -69,7 +69,7 @@ public class Transition implements Serializable, Comparable<Transition> {
 	}
 
 	public int compareTo(Transition arg0) {
-		return new Long(this.id).compareTo(arg0.id);
+		return Long.compare(this.id, arg0.id);
 	}
 
 	public String toString() {

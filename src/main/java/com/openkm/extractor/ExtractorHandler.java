@@ -42,7 +42,7 @@ import java.io.Writer;
  *
  * @see XMLTextExtractor
  */
-class ExtractorHandler extends DefaultHandler implements ErrorHandler {
+class ExtractorHandler extends DefaultHandler {
 
 	/**
 	 * Separator that is written between consecutive text and attribute values.

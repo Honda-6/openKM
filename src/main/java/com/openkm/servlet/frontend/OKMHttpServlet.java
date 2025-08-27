@@ -23,8 +23,8 @@ package com.openkm.servlet.frontend;
 
 import com.openkm.core.HttpSessionManager;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * @author jllort

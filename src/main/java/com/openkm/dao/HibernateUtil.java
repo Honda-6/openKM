@@ -38,12 +38,13 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.engine.SessionFactoryImplementor;
-import org.hibernate.hql.QueryTranslator;
-import org.hibernate.hql.QueryTranslatorFactory;
-import org.hibernate.hql.ast.ASTQueryTranslatorFactory;
 import org.hibernate.jdbc.Work;
+import org.hibernate.tool.schema.TargetType;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,6 @@ import java.net.URISyntaxException;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -291,7 +291,7 @@ public class HibernateUtil {
 	 * Commit transaction
 	 */
 	public static void commit(Transaction tx) {
-		if (tx != null && !tx.wasCommitted() && !tx.wasRolledBack()) {
+		if (tx != null && tx.isActive()) {
 			tx.commit();
 		}
 	}
@@ -300,7 +300,7 @@ public class HibernateUtil {
 	 * Rollback transaction
 	 */
 	public static void rollback(Transaction tx) {
-		if (tx != null && !tx.wasCommitted() && !tx.wasRolledBack()) {
+		if (tx != null && tx.isActive()) {
 			tx.rollback();
 		}
 	}
@@ -335,16 +335,16 @@ public class HibernateUtil {
 
 	/**
 	 * HQL to SQL translator
+	 * Note: In Hibernate 6, the QueryTranslator API has been removed.
+	 * This method now returns the HQL as-is for logging/debugging purposes.
 	 */
 	public static String toSql(String hql) {
 		if (hql != null && hql.trim().length() > 0) {
-			final QueryTranslatorFactory qtf = new ASTQueryTranslatorFactory();
-			final SessionFactoryImplementor sfi = (SessionFactoryImplementor) sessionFactory;
-			final QueryTranslator translator = qtf.createQueryTranslator(hql, hql, Collections.EMPTY_MAP, sfi);
-			translator.compile(Collections.EMPTY_MAP, false);
-			return translator.getSQLString();
+			// In Hibernate 6, the QueryTranslator API has been removed
+			// Return HQL for debugging purposes
+			log.debug("HQL Query: {}", hql);
+			return hql;
 		}
-
 		return null;
 	}
 
@@ -389,14 +389,31 @@ public class HibernateUtil {
 		// Configure Hibernate
 		log.info("Exporting Database Schema...");
 		String dbSchema = EnvironmentDetector.getUserHome() + "/schema.sql";
-		Configuration cfg = getConfiguration().configure();
-		cfg.setProperty("hibernate.dialect", dialect);
-		SchemaExport se = new SchemaExport(cfg);
-		se.setOutputFile(dbSchema);
-		se.setDelimiter(";");
-		se.setFormat(false);
-		se.create(false, false);
-		log.info("Database Schema exported to {}", dbSchema);
+		
+		// Create service registry
+		StandardServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
+				.applySetting("hibernate.dialect", dialect)
+				.build();
+		
+		try {
+			// Create metadata sources and add annotated classes
+			MetadataSources metadataSources = new MetadataSources(serviceRegistry);
+			addAnnotatedClasses(metadataSources);
+			
+			// Build metadata
+			Metadata metadata = metadataSources.buildMetadata();
+			
+			// Create schema export
+			SchemaExport schemaExport = new SchemaExport();
+			schemaExport.setOutputFile(dbSchema);
+			schemaExport.setDelimiter(";");
+			schemaExport.setFormat(false);
+			schemaExport.create(java.util.EnumSet.of(TargetType.SCRIPT), metadata);
+			
+			log.info("Database Schema exported to {}", dbSchema);
+		} finally {
+			StandardServiceRegistryBuilder.destroy(serviceRegistry);
+		}
 
 		String initialData = new File("").getAbsolutePath() + "/src/main/resources/default.sql";
 		log.info("Exporting Initial Data from '{}'...", initialData);
@@ -409,11 +426,55 @@ public class HibernateUtil {
 		fw.close();
 		log.info("Initial Data exported to {}", initData);
 	}
+	
+	/**
+	 * Helper method to add annotated classes to MetadataSources
+	 */
+	private static void addAnnotatedClasses(MetadataSources metadataSources) {
+		// Add annotated beans
+		metadataSources.addAnnotatedClass(Activity.class);
+		metadataSources.addAnnotatedClass(Bookmark.class);
+		metadataSources.addAnnotatedClass(MimeType.class);
+		metadataSources.addAnnotatedClass(DatabaseMetadataType.class);
+		metadataSources.addAnnotatedClass(DatabaseMetadataValue.class);
+		metadataSources.addAnnotatedClass(DatabaseMetadataSequence.class);
+		metadataSources.addAnnotatedClass(WikiPage.class);
+		metadataSources.addAnnotatedClass(ZohoToken.class);
+		metadataSources.addAnnotatedClass(com.openkm.dao.bean.Config.class);
+		metadataSources.addAnnotatedClass(Profiling.class);
+		metadataSources.addAnnotatedClass(DashboardActivity.class);
+		metadataSources.addAnnotatedClass(Css.class);
+		metadataSources.addAnnotatedClass(Omr.class);
+		metadataSources.addAnnotatedClass(PendingTask.class);
+
+		// Cache
+		metadataSources.addAnnotatedClass(UserItems.class);
+		metadataSources.addAnnotatedClass(UserNodeKeywords.class);
+
+		// Automation
+		metadataSources.addAnnotatedClass(AutomationRule.class);
+		metadataSources.addAnnotatedClass(AutomationValidation.class);
+		metadataSources.addAnnotatedClass(AutomationAction.class);
+
+		// New Persistence Model
+		metadataSources.addAnnotatedClass(NodeBase.class);
+		metadataSources.addAnnotatedClass(NodeDocument.class);
+		metadataSources.addAnnotatedClass(NodeDocumentVersion.class);
+		metadataSources.addAnnotatedClass(NodeFolder.class);
+		metadataSources.addAnnotatedClass(NodeMail.class);
+		metadataSources.addAnnotatedClass(NodeNote.class);
+		metadataSources.addAnnotatedClass(NodeLock.class);
+		metadataSources.addAnnotatedClass(NodeProperty.class);
+		metadataSources.addAnnotatedClass(RegisteredPropertyGroup.class);
+
+		//..
+		metadataSources.addAnnotatedClass(MailImportError.class);
+		metadataSources.addAnnotatedClass(Plugin.class);
+	}
 
 	/**
 	 * Replace "create" or "update" by "none" to prevent repository reset on restart
 	 */
-	@SuppressWarnings("unchecked")
 	public static void hibernateCreateAutofix(String configFile) throws IOException {
 		FileReader fr = null;
 		FileWriter fw = null;

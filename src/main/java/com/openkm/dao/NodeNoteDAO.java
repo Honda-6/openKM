@@ -29,6 +29,7 @@ import com.openkm.dao.bean.NodeNote;
 import com.openkm.module.db.stuff.SecurityHelper;
 import com.openkm.util.SystemProfiling;
 import org.hibernate.*;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ public class NodeNoteDAO {
 	/**
 	 * Find by parent
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public List<NodeNote> findByParent(String parentUuid) throws PathNotFoundException, DatabaseException {
 		log.debug("findByParent({})", parentUuid);
 		String qs = "from NodeNote nn where nn.parent=:parent order by nn.created";
@@ -60,12 +61,12 @@ public class NodeNoteDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase parentNode = (NodeBase) session.load(NodeBase.class, parentUuid);
+			NodeBase parentNode = session.get(NodeBase.class, parentUuid);
 			SecurityHelper.checkRead(parentNode);
 
-			Query q = session.createQuery(qs).setCacheable(true);
-			q.setString("parent", parentUuid);
-			List<NodeNote> ret = q.list();
+			Query<NodeNote> q = session.createQuery(qs, NodeNote.class).setCacheable(true);
+			q.setParameter("parent", parentUuid);
+			List<NodeNote> ret = q.getResultList();
 			initialize(ret);
 			HibernateUtil.commit(tx);
 			log.debug("findByParent: {}", ret);
@@ -97,7 +98,7 @@ public class NodeNoteDAO {
 			NodeBase parentNode = getParentNode(session, uuid);
 			SecurityHelper.checkRead(parentNode);
 
-			NodeNote ret = (NodeNote) session.load(NodeNote.class, uuid);
+			NodeNote ret = session.get(NodeNote.class, uuid);
 			initialize(ret);
 			HibernateUtil.commit(tx);
 			log.debug("findByPk: {}", ret);
@@ -126,11 +127,11 @@ public class NodeNoteDAO {
 			tx = session.beginTransaction();
 
 			// Security Check
-			NodeBase parentNode = (NodeBase) session.load(NodeBase.class, nNote.getParent());
+			NodeBase parentNode = session.get(NodeBase.class, nNote.getParent());
 			SecurityHelper.checkRead(parentNode);
 			SecurityHelper.checkWrite(parentNode);
 
-			session.save(nNote);
+			session.persist(nNote);
 			HibernateUtil.commit(tx);
 			log.debug("create: void");
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
@@ -161,8 +162,8 @@ public class NodeNoteDAO {
 			SecurityHelper.checkRead(parentNode);
 			SecurityHelper.checkWrite(parentNode);
 
-			NodeNote nNote = (NodeNote) session.load(NodeNote.class, uuid);
-			session.delete(nNote);
+			NodeNote nNote = session.get(NodeNote.class, uuid);
+			session.remove(nNote);
 			HibernateUtil.commit(tx);
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
 			HibernateUtil.rollback(tx);
@@ -194,7 +195,7 @@ public class NodeNoteDAO {
 			SecurityHelper.checkRead(parentNode);
 			SecurityHelper.checkWrite(parentNode);
 
-			session.update(nNote);
+			session.merge(nNote);
 			HibernateUtil.commit(tx);
 		} catch (PathNotFoundException | AccessDeniedException | DatabaseException e) {
 			HibernateUtil.rollback(tx);
@@ -212,16 +213,16 @@ public class NodeNoteDAO {
 	/**
 	 * Purge in depth helper
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public void purgeHelper(Session session, String parentUuid) throws HibernateException {
 		String qs = "from NodeNote nn where nn.parent=:parent";
 		long begin = System.currentTimeMillis();
-		Query q = session.createQuery(qs);
-		q.setString("parent", parentUuid);
-		List<NodeNote> listNotes = q.list();
+		Query<NodeNote> q = session.createQuery(qs, NodeNote.class);
+		q.setParameter("parent", parentUuid);
+		List<NodeNote> listNotes = q.getResultList();
 
 		for (NodeNote nNote : listNotes) {
-			session.delete(nNote);
+			session.remove(nNote);
 		}
 
 		SystemProfiling.log(parentUuid, System.currentTimeMillis() - begin);
@@ -254,10 +255,10 @@ public class NodeNoteDAO {
 	private NodeBase getParentNode(Session session, String uuid) throws HibernateException {
 		log.debug("getParentNode({}, {})", session, uuid);
 		String qs = "select nn.parent from NodeNote nn where nn.uuid=:uuid";
-		Query q = session.createQuery(qs);
-		q.setString("uuid", uuid);
-		String parentUuid = (String) q.setMaxResults(1).uniqueResult();
-		NodeBase parentNode = (NodeBase) session.load(NodeBase.class, parentUuid);
+		Query<String> q = session.createQuery(qs, String.class);
+		q.setParameter("uuid", uuid);
+		String parentUuid = q.setMaxResults(1).uniqueResult();
+		NodeBase parentNode = session.get(NodeBase.class, parentUuid);
 		log.debug("getParentNode: {}", parentNode);
 		return parentNode;
 	}

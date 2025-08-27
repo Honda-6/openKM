@@ -21,13 +21,12 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
  * @author jllort
  *
  */
-public class GWTSeparator extends GWTFormElement implements IsSerializable {
+public class GWTSeparator extends GWTFormElement {
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");

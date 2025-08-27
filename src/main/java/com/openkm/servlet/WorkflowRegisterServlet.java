@@ -25,11 +25,15 @@ import com.openkm.core.Config;
 import com.openkm.spring.PrincipalUtils;
 import com.openkm.util.FormUtils;
 import com.openkm.util.JBPMUtils;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+// import org.apache.commons.fileupload.FileItem;
+// import org.apache.commons.fileupload.FileItemFactory;
+// import org.apache.commons.fileupload.FileUploadException;
+// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+// import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.IOUtils;
 import org.jbpm.JbpmContext;
 import org.jbpm.file.def.FileDefinition;
@@ -37,10 +41,10 @@ import org.jbpm.graph.def.ProcessDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -92,17 +96,17 @@ public class WorkflowRegisterServlet extends HttpServlet {
 	private String handleRequest(HttpServletRequest request) throws Exception {
 		log.debug("handleRequest({})", request);
 
-		if (ServletFileUpload.isMultipartContent(request)) {
-			FileItemFactory factory = new DiskFileItemFactory();
-			ServletFileUpload upload = new ServletFileUpload(factory);
-			List<FileItem> items = upload.parseRequest(request);
+		if (JakartaServletFileUpload.isMultipartContent(request)) {
+			DiskFileItemFactory factory = DiskFileItemFactory.builder().get();
+			var upload = new JakartaServletFileUpload<>(factory);
+			List<DiskFileItem> items = upload.parseRequest(request);
 
 			if (items.isEmpty()) {
 				String msg = "No process file in the request";
 				log.warn(msg);
 				return msg;
 			} else {
-				FileItem fileItem = (FileItem) items.get(0);
+				DiskFileItem fileItem = items.get(0);
 
 				if (fileItem.getContentType().indexOf("application/x-zip-compressed") == -1) {
 					String msg = "Not a process archive";

@@ -25,7 +25,7 @@ import java.util.List;
 
 import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -56,7 +56,8 @@ public class OmrDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(om);
+			Long id = (Long) om.getId();
+			session.persist(om);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}", id);
 			return id;
@@ -85,9 +86,9 @@ public class OmrDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
 
-			Query q = session.createQuery(qs);
+			Query<Object[]> q = session.createQuery(qs, Object[].class);
 			q.setParameter("id", om.getId());
-			Object[] data = (Object[]) q.setMaxResults(1).uniqueResult();
+			Object[] data = q.setMaxResults(1).uniqueResult();
 
 			if (om.getTemplateFileContent() == null || om.getTemplateFileContent().length == 0) {
 				om.setTemplateFilContent((byte[]) data[0]);
@@ -113,7 +114,7 @@ public class OmrDAO {
 				om.setFieldsFileMime((String) data[11]);
 			}
 
-			session.update(om);
+			session.merge(om);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -136,7 +137,7 @@ public class OmrDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(om);
+			session.merge(om);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -159,8 +160,8 @@ public class OmrDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Omr om = (Omr) session.load(Omr.class, omId);
-			session.delete(om);
+			Omr om = session.get(Omr.class, omId);
+			session.remove(om);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -182,9 +183,9 @@ public class OmrDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", omId);
-			Omr ret = (Omr) q.setMaxResults(1).uniqueResult();
+			Query<Omr> q = session.createQuery(qs, Omr.class);
+			q.setParameter("id", omId);
+			Omr ret = q.setMaxResults(1).uniqueResult();
 			initializeOMR(ret);
 			log.debug("findByPk: {}", ret);
 			return ret;
@@ -198,7 +199,6 @@ public class OmrDAO {
 	/**
 	 * Find by pk
 	 */
-	@SuppressWarnings("unchecked")
 	public List<Omr> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from Omr om order by om.name";
@@ -206,8 +206,8 @@ public class OmrDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<Omr> ret = q.list();
+			Query<Omr> q = session.createQuery(qs, Omr.class);
+			List<Omr> ret = q.getResultList();
 			initializeOMR(ret);
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -221,7 +221,6 @@ public class OmrDAO {
 	/**
 	 * Find all active
 	 */
-	@SuppressWarnings("unchecked")
 	public List<Omr> findAllActive() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from Omr om where om.active=:active order by om.name";
@@ -231,9 +230,9 @@ public class OmrDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs).setCacheable(true);
-			q.setBoolean("active", true);
-			List<Omr> ret = q.list();
+			Query<Omr> q = session.createQuery(qs, Omr.class).setCacheable(true);
+			q.setParameter("active", true);
+			List<Omr> ret = q.getResultList();
 			HibernateUtil.commit(tx);
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -248,16 +247,15 @@ public class OmrDAO {
 	/**
 	 * getProperties
 	 */
-	@SuppressWarnings("unchecked")
 	public List<String> getProperties(long omId) throws DatabaseException {
 		log.debug("getProperties({})", omId);
 		String qs = "select om.properties from Omr om where om.id=:id";
 		Session session = null;
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", omId);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			q.setParameter("id", omId);
+			List<String> ret = q.getResultList();
 			log.debug("getProperties: {}", ret);
 			return ret;
 		} catch (HibernateException e) {

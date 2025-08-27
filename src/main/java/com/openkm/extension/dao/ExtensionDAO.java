@@ -25,7 +25,7 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.HibernateUtil;
 import com.openkm.extension.dao.bean.Extension;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public class ExtensionDAO {
 	/**
 	 * Find all extensions
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<Extension> findAll() throws DatabaseException {
 		log.debug("findAll({})");
 		String qs = "select ex from Extension ex order by ex.name asc";
@@ -56,8 +56,8 @@ public class ExtensionDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<Extension> ret = q.list();
+			Query<Extension> q = session.createQuery(qs, Extension.class);
+			List<Extension> ret = q.getResultList();
 
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -72,7 +72,7 @@ public class ExtensionDAO {
 	/**
 	 * Find all extensions uuid
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<String> findAllUuids() throws DatabaseException {
 		log.debug("findAllUuids({})");
 		String qs = "select ex.uuid from Extension ex order by ex.name asc";
@@ -81,8 +81,8 @@ public class ExtensionDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<String> ret = q.list();
+			Query<String> q = session.createQuery(qs, String.class);
+			List<String> ret = q.getResultList();
 
 			log.debug("findAllUuids: {}", ret);
 			return ret;

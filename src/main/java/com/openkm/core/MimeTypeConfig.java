@@ -26,7 +26,7 @@ import com.openkm.dao.bean.MimeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.activation.MimetypesFileTypeMap;
+import jakarta.activation.MimetypesFileTypeMap;
 import java.util.List;
 
 public class MimeTypeConfig {

@@ -32,8 +32,8 @@ import com.openkm.principal.PrincipalAdapterException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
 import java.util.ArrayList;
 import java.util.List;
 

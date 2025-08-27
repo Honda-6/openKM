@@ -23,9 +23,8 @@ package com.openkm.dao.bean;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Calendar;
 
@@ -50,7 +49,6 @@ public class NodeNote implements Serializable {
 
 	@Column(name = "NNT_TEXT")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String text;
 
 	public String getUuid() {

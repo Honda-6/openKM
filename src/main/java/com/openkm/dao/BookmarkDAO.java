@@ -29,7 +29,8 @@ import com.openkm.core.RepositoryException;
 import com.openkm.dao.bean.Bookmark;
 import com.openkm.dao.bean.NodeBase;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
+import org.hibernate.query.MutationQuery;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class BookmarkDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(bm);
+			session.persist(bm);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -77,7 +78,7 @@ public class BookmarkDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(bm);
+			session.merge(bm);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -100,8 +101,8 @@ public class BookmarkDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Bookmark bm = (Bookmark) session.load(Bookmark.class, bmId);
-			session.delete(bm);
+			Bookmark bm = session.get(Bookmark.class, bmId);
+			session.remove(bm);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -116,7 +117,6 @@ public class BookmarkDAO {
 	/**
 	 * Find by user
 	 */
-	@SuppressWarnings("unchecked")
 	public static List<Bookmark> findByUser(String usrId) throws DatabaseException, RepositoryException {
 		log.debug("findByUser({})", usrId);
 		String qs = "from Bookmark bm where bm.user=:user order by bm.id";
@@ -126,20 +126,20 @@ public class BookmarkDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setString("user", usrId);
-			List<Bookmark> ret = q.list();
+			Query<Bookmark> q = session.createQuery(qs, Bookmark.class);
+			q.setParameter("user", usrId);
+			List<Bookmark> ret = q.getResultList();
 
 			for (Bookmark bm : ret) {
 				// If user bookmark is missing, set a default
-				NodeBase nBase = (NodeBase) session.get(NodeBase.class, bm.getNode());
+				NodeBase nBase = session.get(NodeBase.class, bm.getNode());
 
 				if (nBase == null) {
 					String rootPath = "/" + Repository.ROOT;
 					String rootUuid = NodeBaseDAO.getInstance().getUuidFromPath(session, rootPath);
 					bm.setNode(rootUuid);
 					bm.setType(Folder.TYPE);
-					session.save(bm);
+					session.persist(bm);
 				}
 			}
 
@@ -169,20 +169,20 @@ public class BookmarkDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Query q = session.createQuery(qs);
-			q.setLong("id", bmId);
-			Bookmark ret = (Bookmark) q.setMaxResults(1).uniqueResult();
+			Query<Bookmark> q = session.createQuery(qs, Bookmark.class);
+			q.setParameter("id", bmId);
+			Bookmark ret = q.setMaxResults(1).uniqueResult();
 
 			if (ret != null) {
 				// If user bookmark is missing, set a default
-				NodeBase nBase = (NodeBase) session.get(NodeBase.class, ret.getNode());
+				NodeBase nBase = session.get(NodeBase.class, ret.getNode());
 
 				if (nBase == null) {
 					String rootPath = "/" + Repository.ROOT;
 					String rootUuid = NodeBaseDAO.getInstance().getUuidFromPath(session, rootPath);
 					ret.setNode(rootUuid);
 					ret.setType(Folder.TYPE);
-					session.save(ret);
+					session.persist(ret);
 				}
 			}
 
@@ -213,8 +213,8 @@ public class BookmarkDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
 
-			Query q = session.createQuery(qs);
-			q.setString("uuid", nodeUuid);
+			MutationQuery q = session.createMutationQuery(qs);
+			q.setParameter("uuid", nodeUuid);
 			q.executeUpdate();
 
 			HibernateUtil.commit(tx);

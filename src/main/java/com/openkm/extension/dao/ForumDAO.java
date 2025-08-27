@@ -27,7 +27,7 @@ import com.openkm.extension.dao.bean.Forum;
 import com.openkm.extension.dao.bean.ForumPost;
 import com.openkm.extension.dao.bean.ForumTopic;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -57,7 +57,8 @@ public class ForumDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Long id = (Long) session.save(frm);
+			Long id = (Long) frm.getId();
+			session.persist(frm);
 			HibernateUtil.commit(tx);
 			log.debug("create: {}" + id);
 			return id;
@@ -80,7 +81,7 @@ public class ForumDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(frm);
+			session.merge(frm);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -103,7 +104,7 @@ public class ForumDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(topic);
+			session.merge(topic);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -126,7 +127,7 @@ public class ForumDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.update(post);
+			session.merge(post);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -149,8 +150,8 @@ public class ForumDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Forum frm = (Forum) session.load(Forum.class, frmId);
-			session.delete(frm);
+			Forum frm = (Forum) session.get(Forum.class, frmId);
+			session.remove(frm);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -172,9 +173,9 @@ public class ForumDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setLong("id", id);
-			Forum ret = (Forum) q.setMaxResults(1).uniqueResult();
+			Query<Forum> q = session.createQuery(qs, Forum.class);
+			q.setParameter("id", id);
+			Forum ret = q.setMaxResults(1).uniqueResult();
 			log.debug("findByPk: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -225,7 +226,7 @@ public class ForumDAO {
 	/**
 	 * Find all forums
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<Forum> findAll() throws DatabaseException {
 		log.debug("findAll()");
 		String qs = "from Forum frm order by frm.date asc";
@@ -233,8 +234,8 @@ public class ForumDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			List<Forum> ret = q.list();
+			Query<Forum> q = session.createQuery(qs, Forum.class);
+			List<Forum> ret = q.getResultList();
 
 			log.debug("findAll: {}", ret);
 			return ret;
@@ -248,7 +249,7 @@ public class ForumDAO {
 	/**
 	 * Find all topics by node
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static List<ForumTopic> findAllTopicsByNode(String uuid) throws DatabaseException {
 		log.debug("findAllTopicsByNode({})", uuid);
 		String qs = "from ForumTopic ft where ft.node=:uuid order by ft.lastPostDate desc";
@@ -256,9 +257,9 @@ public class ForumDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("uuid", uuid);
-			List<ForumTopic> ret = q.list();
+			Query<ForumTopic> q = session.createQuery(qs, ForumTopic.class);
+			q.setParameter("uuid", uuid);
+			List<ForumTopic> ret = q.getResultList();
 			log.debug("findAllTopicsByNode: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -271,7 +272,7 @@ public class ForumDAO {
 	/**
 	 * Remove forum topics by parent node
 	 */
-	@SuppressWarnings("unchecked")
+	
 	public static void purgeTopicsByNode(String nodeUuid) throws DatabaseException {
 		log.debug("purgeTopicsByNode({})", nodeUuid);
 		String qs = "from ForumTopic ft where ft.node=:uuid";
@@ -282,11 +283,11 @@ public class ForumDAO {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
 
-			Query q = session.createQuery(qs);
-			q.setString("uuid", nodeUuid);
+			Query<ForumTopic> q = session.createQuery(qs, ForumTopic.class);
+			q.setParameter("uuid", nodeUuid);
 
-			for (ForumTopic ft : (List<ForumTopic>) q.list()) {
-				session.delete(ft);
+			for (ForumTopic ft : q.getResultList()) {
+				session.remove(ft);
 			}
 
 			HibernateUtil.commit(tx);

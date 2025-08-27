@@ -21,13 +21,11 @@
 
 package com.openkm.frontend.client.bean.form;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-
 /**
  * @author jllort
  *
  */
-public class GWTText extends GWTFormElement implements IsSerializable {
+public class GWTText extends GWTFormElement{
 	private String data = "";
 
 	public String getData() {

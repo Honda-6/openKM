@@ -358,7 +358,6 @@ public class CommonWorkflowModule {
 	/**
 	 * Find Process Instance
 	 */
-	@SuppressWarnings("rawtypes")
 	public static List<ProcessInstance> findProcessInstances(long processDefinitionId) throws WorkflowException {
 		log.debug("findProcessInstances({})", processDefinitionId);
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();
@@ -384,7 +383,7 @@ public class CommonWorkflowModule {
 	/**
 	 * Find All Process Definition
 	 */
-	@SuppressWarnings("rawtypes")
+	
 	public static List<ProcessDefinition> findAllProcessDefinitions() throws WorkflowException {
 		log.debug("findAllProcessDefinitions()");
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();
@@ -410,7 +409,7 @@ public class CommonWorkflowModule {
 	/**
 	 * Find Latest Process Definitions
 	 */
-	@SuppressWarnings("rawtypes")
+	
 	public static List<ProcessDefinition> findLatestProcessDefinitions() throws WorkflowException {
 		log.debug("findLatestProcessDefinitions()");
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();
@@ -433,7 +432,7 @@ public class CommonWorkflowModule {
 		return al;
 	}
 
-	@SuppressWarnings("rawtypes")
+	
 	public static ProcessDefinition findLastProcessDefinition(String name) throws WorkflowException {
 		log.debug("findLastProcessDefinition()");
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();
@@ -462,7 +461,7 @@ public class CommonWorkflowModule {
 	/**
 	 * Find All Process Definition Versions
 	 */
-	@SuppressWarnings("rawtypes")
+	
 	public static List<ProcessDefinition> findAllProcessDefinitionVersions(String name) throws WorkflowException {
 		log.debug("findAllProcessDefinitionVersions({})", name);
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();
@@ -582,7 +581,7 @@ public class CommonWorkflowModule {
 	/**
 	 * Find User Task Instances
 	 */
-	@SuppressWarnings("rawtypes")
+	
 	public static List<TaskInstance> findUserTaskInstances(String user) throws WorkflowException {
 		log.debug("findUserTaskInstances({})", user);
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();
@@ -611,7 +610,7 @@ public class CommonWorkflowModule {
 	/**
 	 * Find Pooled Task Instances
 	 */
-	@SuppressWarnings("rawtypes")
+	
 	public static List<TaskInstance> findPooledTaskInstances(String user) throws WorkflowException {
 		log.debug("findPooledTaskInstances({})", user);
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();
@@ -640,7 +639,7 @@ public class CommonWorkflowModule {
 	/**
 	 * Find Task Instances
 	 */
-	@SuppressWarnings("rawtypes")
+	
 	public static List<TaskInstance> findTaskInstances(long processInstanceId) throws WorkflowException {
 		log.debug("findTaskInstances({})", processInstanceId);
 		JbpmContext jbpmContext = JBPMUtils.getConfig().createJbpmContext();

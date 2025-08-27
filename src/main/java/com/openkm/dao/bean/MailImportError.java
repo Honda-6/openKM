@@ -21,9 +21,8 @@
 
 package com.openkm.dao.bean;
 
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Calendar;
 
@@ -51,7 +50,6 @@ public class MailImportError implements Serializable {
 
 	@Column(name = "MIE_ERROR_MESSAGE")
 	@Lob
-	@Type(type = "org.hibernate.type.StringClobType")
 	private String errorMessage;
 
 	@Column(name = "MIE_IMPORT_DATE")

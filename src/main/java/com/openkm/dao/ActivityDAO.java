@@ -25,7 +25,8 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.bean.Activity;
 import com.openkm.dao.bean.ActivityFilter;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+// import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -50,7 +51,8 @@ public class ActivityDAO {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			session.save(activity);
+			//session.persist(activity);
+			session.persist(activity);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			HibernateUtil.rollback(tx);
@@ -63,7 +65,7 @@ public class ActivityDAO {
 	/**
 	 * Find by filter
 	 */
-	@SuppressWarnings("unchecked")
+	//@SuppressWarnings("unchecked")
 	public static List<Activity> findByFilter(ActivityFilter filter) throws DatabaseException {
 		log.debug("findByFilter({})", filter);
 		String qs = "from Activity a where a.date between :begin and :end ";
@@ -81,18 +83,19 @@ public class ActivityDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setCalendar("begin", filter.getBegin());
-			q.setCalendar("end", filter.getEnd());
+			//Query q = session.createQuery(qs);
+			Query<Activity> q = session.createQuery(qs,Activity.class);
+			q.setParameter("begin", filter.getBegin());
+			q.setParameter("end", filter.getEnd());
 
 			if (filter.getUser() != null && !filter.getUser().equals(""))
-				q.setString("user", filter.getUser());
+				q.setParameter("user", filter.getUser());
 			if (filter.getAction() != null && !filter.getAction().equals(""))
-				q.setString("action", filter.getAction());
+				q.setParameter("action", filter.getAction());
 			if (filter.getItem() != null && !filter.getItem().equals(""))
-				q.setString("item", filter.getItem());
+				q.setParameter("item", filter.getItem());
 
-			List<Activity> ret = q.list();
+			List<Activity> ret = q.getResultList();
 			log.debug("findByFilter: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -105,7 +108,7 @@ public class ActivityDAO {
 	/**
 	 * Find by filter
 	 */
-	@SuppressWarnings("unchecked")
+	//@SuppressWarnings("unchecked")
 	public static List<Activity> findByFilterByItem(ActivityFilter filter) throws DatabaseException {
 		log.debug("findByFilter({})", filter);
 		String qs = "from Activity a where a.item=:item ";
@@ -115,12 +118,12 @@ public class ActivityDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
-			q.setString("item", filter.getItem());
+			Query<Activity> q = session.createQuery(qs,Activity.class);
+			q.setParameter("item", filter.getItem());
 			if (filter.getAction() != null && !filter.getAction().equals(""))
-				q.setString("action", filter.getAction());
+				q.setParameter("action", filter.getAction());
 
-			List<Activity> ret = q.list();
+			List<Activity> ret = q.getResultList();
 			log.debug("findByFilterByItem: {}", ret);
 			return ret;
 		} catch (HibernateException e) {
@@ -144,16 +147,16 @@ public class ActivityDAO {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = null;
+			Query<Calendar> q = null;
 
 			if (action != null) {
-				q = session.createQuery(qsAct);
-				q.setString("user", user);
-				q.setString("action", action);
-				q.setString("item", item);
+				q = session.createQuery(qsAct,Calendar.class);
+				q.setParameter("user", user);
+				q.setParameter("action", action);
+				q.setParameter("item", item);
 			} else {
-				q = session.createQuery(qsNoAct);
-				q.setString("item", item);
+				q = session.createQuery(qsNoAct,Calendar.class);
+				q.setParameter("item", item);
 			}
 
 			Calendar ret = (Calendar) q.setMaxResults(1).uniqueResult();

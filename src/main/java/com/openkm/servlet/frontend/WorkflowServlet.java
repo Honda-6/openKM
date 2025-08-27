@@ -180,7 +180,7 @@ public class WorkflowServlet extends OKMRemoteServiceServlet implements OKMWorkf
 		updateSessionManager();
 
 		try {
-			Map<String, List<FormElement>> list = OKMWorkflow.getInstance().getProcessDefinitionForms(null, new Double(id).longValue());
+			Map<String, List<FormElement>> list = OKMWorkflow.getInstance().getProcessDefinitionForms(null, Double.valueOf(id).longValue());
 
 			for (String key : list.keySet()) {
 				List<FormElement> col = list.get(key);
@@ -266,7 +266,7 @@ public class WorkflowServlet extends OKMRemoteServiceServlet implements OKMWorkf
 				formElementList.add(GWTUtil.copy(formElement));
 			}
 
-			OKMWorkflow.getInstance().setTaskInstanceValues(null, new Double(id).longValue(), transitionName, formElementList);
+			OKMWorkflow.getInstance().setTaskInstanceValues(null, Double.valueOf(id).longValue(), transitionName, formElementList);
 		} catch (RepositoryException e) {
 			log.error(e.getMessage(), e);
 			throw new OKMException(ErrorCode.get(ErrorCode.ORIGIN_OKMWorkflowService, ErrorCode.CAUSE_Repository), e.getMessage());
@@ -290,7 +290,7 @@ public class WorkflowServlet extends OKMRemoteServiceServlet implements OKMWorkf
 		updateSessionManager();
 
 		try {
-			OKMWorkflow.getInstance().addTokenComment(null, new Double(tokenId).longValue(), message);
+			OKMWorkflow.getInstance().addTokenComment(null, Double.valueOf(tokenId).longValue(), message);
 		} catch (RepositoryException e) {
 			log.error(e.getMessage(), e);
 			throw new OKMException(ErrorCode.get(ErrorCode.ORIGIN_OKMWorkflowService, ErrorCode.CAUSE_Repository), e.getMessage());
@@ -314,7 +314,7 @@ public class WorkflowServlet extends OKMRemoteServiceServlet implements OKMWorkf
 		updateSessionManager();
 
 		try {
-			OKMWorkflow.getInstance().setTaskInstanceActorId(null, new Double(id).longValue(), getThreadLocalRequest().getRemoteUser());
+			OKMWorkflow.getInstance().setTaskInstanceActorId(null, Double.valueOf(id).longValue(), getThreadLocalRequest().getRemoteUser());
 		} catch (RepositoryException e) {
 			log.error(e.getMessage(), e);
 			throw new OKMException(ErrorCode.get(ErrorCode.ORIGIN_OKMWorkflowService, ErrorCode.CAUSE_Repository), e.getMessage());
@@ -339,7 +339,7 @@ public class WorkflowServlet extends OKMRemoteServiceServlet implements OKMWorkf
 
 		try {
 			OKMWorkflow okmWorkflow = OKMWorkflow.getInstance();
-			long taskInstanceId = new Double(id).longValue();
+			long taskInstanceId = Double.valueOf(id).longValue();
 			TaskInstance ti = okmWorkflow.getTaskInstance(null, taskInstanceId);
 
 			if (ti.getStart() == null) {
