@@ -79,7 +79,7 @@ public class AuthService {
 			result[i++] = p;
 		}
 
-		log.debug("getGrantedRoles: {}", result);
+		log.debug("getGrantedRoles: {}", (Object []) result);
 		return result;
 	}
 
@@ -101,7 +101,7 @@ public class AuthService {
 			result[i++] = p;
 		}
 
-		log.debug("getGrantedUsers: {}", result);
+		log.debug("getGrantedUsers: {}", (Object []) result);
 		return result;
 	}
 
@@ -111,7 +111,7 @@ public class AuthService {
 		AuthModule am = ModuleManager.getAuthModule();
 		List<String> col = am.getRoles(token);
 		String[] result = col.toArray(new String[col.size()]);
-		log.debug("getRoles: {}", result);
+		log.debug("getRoles: {}", (Object []) result);
 		return result;
 	}
 
@@ -121,7 +121,7 @@ public class AuthService {
 		AuthModule am = ModuleManager.getAuthModule();
 		List<String> col = am.getUsers(token);
 		String[] result = col.toArray(new String[col.size()]);
-		log.debug("getUsers: {]", result);
+		log.debug("getUsers: {]", (Object []) result);
 		return result;
 	}
 
@@ -176,7 +176,7 @@ public class AuthService {
 		AuthModule am = ModuleManager.getAuthModule();
 		List<String> col = am.getUsersByRole(token, role);
 		String[] result = col.toArray(new String[col.size()]);
-		log.debug("getUsersByRole: {}", result);
+		log.debug("getUsersByRole: {}", (Object []) result);
 		return result;
 	}
 
@@ -187,7 +187,7 @@ public class AuthService {
 		AuthModule am = ModuleManager.getAuthModule();
 		List<String> col = am.getRolesByUser(token, user);
 		String[] result = col.toArray(new String[col.size()]);
-		log.debug("getRolesByUser: {}", result);
+		log.debug("getRolesByUser: {}", (Object []) result);
 		return result;
 	}
 

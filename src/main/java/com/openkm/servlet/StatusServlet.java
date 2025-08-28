@@ -88,11 +88,10 @@ public class StatusServlet extends HttpServlet {
 	/**
 	 * Check database connection
 	 */
-	@SuppressWarnings("unchecked")
 	private void checkDatabase(org.hibernate.Session session) throws Exception {
 		String qs = "from Activity where action='MISC_STATUS'";
-		org.hibernate.Query q = session.createQuery(qs);
-		List<Activity> ret = q.list();
+		org.hibernate.query.Query<Activity> q = session.createQuery(qs,Activity.class);
+		List<Activity> ret = q.getResultList();
 
 		for (Activity act : ret) {
 			String txt = act.toString();

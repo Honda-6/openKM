@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 public class HibernateUtil {
 	private static Logger log = LoggerFactory.getLogger(HibernateUtil.class);
 	private static SessionFactory sessionFactory;
-	public static Version LUCENE_VERSION = Version.LUCENE_31;
+	public static Version LUCENE_VERSION = Version.LATEST;
 
 	/**
 	 * Disable constructor to guaranty a single instance
@@ -111,7 +111,7 @@ public class HibernateUtil {
 	 * Commit transaction
 	 */
 	public static void commit(Transaction tx) {
-		if (tx != null && !tx.wasCommitted() && !tx.wasRolledBack()) {
+		if (tx != null && tx.getStatus() == org.hibernate.resource.transaction.spi.TransactionStatus.ACTIVE) {
 			tx.commit();
 		}
 	}
@@ -120,7 +120,7 @@ public class HibernateUtil {
 	 * Rollback transaction
 	 */
 	public static void rollback(Transaction tx) {
-		if (tx != null && !tx.wasCommitted() && !tx.wasRolledBack()) {
+		if (tx != null && tx.getStatus() == org.hibernate.resource.transaction.spi.TransactionStatus.ACTIVE) {
 			tx.rollback();
 		}
 	}

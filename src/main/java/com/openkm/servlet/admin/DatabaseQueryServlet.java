@@ -33,17 +33,12 @@ import com.openkm.util.DatabaseMetadataUtils;
 import com.openkm.util.FormatUtil;
 import com.openkm.util.UserActivity;
 import org.apache.commons.beanutils.BeanUtils;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.FileUploadException;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.jdbc.Work;
 import org.hibernate.type.Type;
@@ -201,7 +196,7 @@ public class DatabaseQueryServlet extends BaseServlet {
 							+ "' and dmv.id=" + id;
 					log.info("HQL: {}", hql);
 					session = HibernateUtil.getSessionFactory().openSession();
-					int rows = session.createQuery(hql).executeUpdate();
+					int rows = session.createMutationQuery(hql).executeUpdate();
 					log.info("Rows affected: {}", rows);
 				}
 			}
@@ -415,7 +410,7 @@ public class DatabaseQueryServlet extends BaseServlet {
 			return gr;
 		} else {
 			DbQueryGlobalResult gr = new DbQueryGlobalResult();
-			int rows = session.createQuery(hql).executeUpdate();
+			int rows = session.createMutationQuery(hql).executeUpdate();
 			gr.setColumns(null);
 			gr.setResults(null);
 			gr.setRows(rows);

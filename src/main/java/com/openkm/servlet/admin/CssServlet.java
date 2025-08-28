@@ -27,11 +27,6 @@ import com.openkm.dao.CssDAO;
 import com.openkm.dao.bean.Css;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WebUtils;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.FileUploadException;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
@@ -98,7 +93,6 @@ public class CssServlet extends BaseServlet {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		log.debug("doPost({}, {})", request, response);
 		request.setCharacterEncoding("UTF-8");

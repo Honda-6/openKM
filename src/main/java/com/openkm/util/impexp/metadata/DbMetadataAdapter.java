@@ -207,8 +207,8 @@ public class DbMetadataAdapter extends MetadataAdapter {
 			FsDataStore.persist(nDocVer, is);
 
 			// Persist
-			session.save(nDoc);
-			session.save(nDocVer);
+			session.persist(nDoc);
+			session.persist(nDocVer);
 
 			// Notes
 			if (!dmd.getNotes().isEmpty()) {
@@ -219,7 +219,7 @@ public class DbMetadataAdapter extends MetadataAdapter {
 					nNote.setAuthor(nmd.getUser());
 					nNote.setCreated(nmd.getDate());
 					nNote.setText(nmd.getText());
-					session.save(nNote);
+					session.persist(nNote);
 				}
 			}
 
@@ -261,7 +261,7 @@ public class DbMetadataAdapter extends MetadataAdapter {
 
 			String user = PrincipalUtils.getUser();
 			String parentUuid = NodeBaseDAO.getInstance().getUuidFromPath(session, parentPath);
-			NodeDocument parentNode = (NodeDocument) session.load(NodeDocument.class, parentUuid);
+			NodeDocument parentNode = session.get(NodeDocument.class, parentUuid);
 
 			nDocVer.setParent(parentUuid);
 			nDocVer.setUuid(UUID.randomUUID().toString());
@@ -311,8 +311,8 @@ public class DbMetadataAdapter extends MetadataAdapter {
 			FsDataStore.persist(nDocVer, is);
 
 			// Persist
-			session.save(nDocVer);
-			session.save(prevDocVer);
+			session.persist(nDocVer);
+			session.persist(prevDocVer);
 
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -414,7 +414,7 @@ public class DbMetadataAdapter extends MetadataAdapter {
 			}
 
 			// Persist
-			session.save(nFld);
+			session.persist(nFld);
 
 			// Notes
 			if (!fmd.getNotes().isEmpty()) {
@@ -425,7 +425,7 @@ public class DbMetadataAdapter extends MetadataAdapter {
 					nNote.setAuthor(nmd.getUser());
 					nNote.setCreated(nmd.getDate());
 					nNote.setText(nmd.getText());
-					session.save(nNote);
+					session.persist(nNote);
 				}
 			}
 
@@ -539,7 +539,7 @@ public class DbMetadataAdapter extends MetadataAdapter {
 			}
 
 			// Persist
-			session.save(nMail);
+			session.persist(nMail);
 
 			// Notes
 			if (!mmd.getNotes().isEmpty()) {
@@ -550,7 +550,7 @@ public class DbMetadataAdapter extends MetadataAdapter {
 					nNote.setAuthor(nmd.getUser());
 					nNote.setCreated(nmd.getDate());
 					nNote.setText(nmd.getText());
-					session.save(nNote);
+					session.persist(nNote);
 				}
 			}
 

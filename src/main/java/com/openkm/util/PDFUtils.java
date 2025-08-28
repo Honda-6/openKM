@@ -49,7 +49,6 @@ public class PDFUtils {
 	/**
 	 * Fill PDF form
 	 */
-	@SuppressWarnings("rawtypes")
 	public static void fillForm(InputStream input, Map<String, Object> values, OutputStream output) throws
 			DocumentException, TemplateException, IOException {
 		log.debug("fillForm({}, {}, {})", input, values, output);

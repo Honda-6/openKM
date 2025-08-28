@@ -29,7 +29,7 @@ import com.openkm.dao.NodeBaseDAO;
 import com.openkm.dao.bean.*;
 import com.openkm.spring.PrincipalUtils;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,11 +78,13 @@ public class PendingTaskProcessor {
 			// Remove completed pending task
 			log.info("Auth: {}, Task: {}", PrincipalUtils.getUser(), pt);
 			PendingTaskExecutor.removeRunningTask(pt.getId());
-			session.delete(pt);
+			session.remove(pt);
 
 			HibernateUtil.commit(session.getTransaction());
 		} catch (HibernateException e) {
-			HibernateUtil.rollback(session.getTransaction());
+			if(session != null) {
+				HibernateUtil.rollback(session.getTransaction());
+			}
 		} catch (InterruptedException e) {
 			HibernateUtil.commit(session.getTransaction());
 		} finally {
@@ -125,7 +127,6 @@ public class PendingTaskProcessor {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private void processInDepthHelper(Session session, NodeBase parentNode, ProcessInDepthTask task) throws DatabaseException,
 			InterruptedException {
 		log.debug("processInDepthHelper({}, {}, {}", session, parentNode, task);
@@ -138,9 +139,9 @@ public class PendingTaskProcessor {
 		if (matchNodeStatus(parentNode.getUuid(), BEGIN)) {
 			log.debug("** Process DOCS: {}, Status: {}", getPath(session, parentNode.getUuid()), getNodeStatus(parentNode.getUuid()));
 			String qsDoc = "from NodeDocument nd where nd.parent=:parent order by nd.uuid";
-			Query qDoc = session.createQuery(qsDoc);
-			qDoc.setString("parent", parentNode.getUuid());
-			List<NodeDocument> lstDoc = qDoc.list();
+			Query<NodeDocument> qDoc = session.createQuery(qsDoc, NodeDocument.class);
+			qDoc.setParameter("parent", parentNode.getUuid());
+			List<NodeDocument> lstDoc = qDoc.getResultList();
 
 			// Security Check
 			task.securityPruneNodeList(lstDoc);
@@ -150,9 +151,9 @@ public class PendingTaskProcessor {
 			}
 
 			String qsMail = "from NodeMail nm where nm.parent=:parent order by nm.uuid";
-			Query qMail = session.createQuery(qsMail);
-			qMail.setString("parent", parentNode.getUuid());
-			List<NodeMail> lstMail = qMail.list();
+			Query<NodeMail> qMail = session.createQuery(qsMail, NodeMail.class);
+			qMail.setParameter("parent", parentNode.getUuid());
+			List<NodeMail> lstMail = qMail.getResultList();
 
 			// Security Check
 			task.securityPruneNodeList(lstMail);
@@ -174,9 +175,9 @@ public class PendingTaskProcessor {
 
 		log.debug("** Process ITER: {}, Status: {}", getPath(session, parentNode.getUuid()), getNodeStatus(parentNode.getUuid()));
 		String qsFld = "from NodeFolder nf where nf.parent=:parent order by nf.uuid";
-		Query qFld = session.createQuery(qsFld);
-		qFld.setString("parent", parentNode.getUuid());
-		List<NodeFolder> lstFld = qFld.list();
+		Query<NodeFolder> qFld = session.createQuery(qsFld, NodeFolder.class);
+		qFld.setParameter("parent", parentNode.getUuid());
+		List<NodeFolder> lstFld = qFld.getResultList();
 
 		// Security Check
 		task.securityPruneNodeList(lstFld);
@@ -271,7 +272,7 @@ public class PendingTaskProcessor {
 
 		try {
 			pt.setStatus(new Gson().toJson(status, statusObjType));
-			session.update(pt);
+			session.merge(pt);
 
 			// Commit transaction
 			HibernateUtil.commit(session.getTransaction());

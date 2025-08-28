@@ -68,7 +68,7 @@ public class NotificationService {
 		NotificationModule nm = ModuleManager.getNotificationModule();
 		Set<String> col = nm.getSubscriptors(token, nodePath);
 		String[] result = (String[]) col.toArray(new String[col.size()]);
-		log.debug("getSubscriptors: {}", result);
+		log.debug("getSubscriptors: {}", (Object[]) result);
 		return result;
 	}
 

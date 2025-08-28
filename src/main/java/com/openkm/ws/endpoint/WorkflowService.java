@@ -140,7 +140,7 @@ public class WorkflowService {
 		WorkflowModule wm = ModuleManager.getWorkflowModule();
 		List<ProcessInstance> col = wm.findProcessInstances(token, pdId);
 		ProcessInstance[] result = col.toArray(new ProcessInstance[col.size()]);
-		log.debug("findProcessInstances: {}", result);
+		log.debug("findProcessInstances: {}", (Object []) result);
 		return result;
 	}
 
@@ -151,7 +151,7 @@ public class WorkflowService {
 		WorkflowModule wm = ModuleManager.getWorkflowModule();
 		List<ProcessDefinition> col = wm.findAllProcessDefinitions(token);
 		ProcessDefinition[] result = col.toArray(new ProcessDefinition[col.size()]);
-		log.debug("findAllProcessDefinitions: {}", result);
+		log.debug("findAllProcessDefinitions: {}", (Object []) result);
 		return result;
 	}
 
@@ -162,7 +162,7 @@ public class WorkflowService {
 		WorkflowModule wm = ModuleManager.getWorkflowModule();
 		List<ProcessDefinition> col = wm.findLatestProcessDefinitions(token);
 		ProcessDefinition[] result = col.toArray(new ProcessDefinition[col.size()]);
-		log.debug("findLatestProcessDefinitions: {}", result);
+		log.debug("findLatestProcessDefinitions: {}", (Object []) result);
 		return result;
 	}
 
@@ -174,7 +174,7 @@ public class WorkflowService {
 		WorkflowModule wm = ModuleManager.getWorkflowModule();
 		List<ProcessDefinition> col = wm.findAllProcessDefinitionVersions(token, name);
 		ProcessDefinition[] result = col.toArray(new ProcessDefinition[col.size()]);
-		log.debug("findAllProcessDefinitionVersions: {}", result);
+		log.debug("findAllProcessDefinitionVersions: {}", (Object []) result);
 		return result;
 	}
 
@@ -251,7 +251,7 @@ public class WorkflowService {
 		WorkflowModule wm = ModuleManager.getWorkflowModule();
 		List<TaskInstance> col = wm.findUserTaskInstances(token);
 		TaskInstance[] result = col.toArray(new TaskInstance[col.size()]);
-		log.debug("findUserTaskInstances: {}", result);
+		log.debug("findUserTaskInstances: {}", (Object []) result);
 		return result;
 	}
 
@@ -262,7 +262,7 @@ public class WorkflowService {
 		WorkflowModule wm = ModuleManager.getWorkflowModule();
 		List<TaskInstance> col = wm.findPooledTaskInstances(token);
 		TaskInstance[] result = col.toArray(new TaskInstance[col.size()]);
-		log.debug("findPooledTaskInstances: {}", result);
+		log.debug("findPooledTaskInstances: {}", (Object []) result);
 		return result;
 	}
 
@@ -273,7 +273,7 @@ public class WorkflowService {
 		WorkflowModule wm = ModuleManager.getWorkflowModule();
 		List<TaskInstance> col = wm.findTaskInstances(token, piId);
 		TaskInstance[] result = col.toArray(new TaskInstance[col.size()]);
-		log.debug("findTaskInstances: {}", result);
+		log.debug("findTaskInstances: {}", (Object []) result);
 		return result;
 	}
 

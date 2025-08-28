@@ -28,11 +28,6 @@ import com.openkm.core.*;
 import com.openkm.extractor.RegisteredExtractors;
 import com.openkm.extractor.TextExtractor;
 import com.openkm.util.PathUtils;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.FileUploadException;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
@@ -73,7 +68,6 @@ public class CheckTextExtractionServlet extends BaseServlet {
 		sc.getRequestDispatcher("/admin/check_text_extraction.jsp").forward(request, response);
 	}
 
-	@SuppressWarnings("unchecked")
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		log.debug("doPost({}, {})", request, response);
 		request.setCharacterEncoding("UTF-8");

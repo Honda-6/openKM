@@ -31,10 +31,6 @@ import com.openkm.util.FileUtils;
 import com.openkm.util.PropertyGroupUtils;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WebUtils;
-//import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-//import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -95,7 +91,6 @@ public class OmrServlet extends BaseServlet {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		log.debug("doPost({}, {})", request, response);
 		request.setCharacterEncoding("UTF-8");

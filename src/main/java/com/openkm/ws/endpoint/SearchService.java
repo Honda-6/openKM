@@ -49,7 +49,7 @@ public class SearchService {
 		SearchModule sm = ModuleManager.getSearchModule();
 		List<QueryResult> col = sm.findByContent(token, content);
 		QueryResult[] result = col.toArray(new QueryResult[col.size()]);
-		log.debug("findByContent: {}", result);
+		log.debug("findByContent: {}", (Object []) result);
 		return result;
 	}
 
@@ -60,7 +60,7 @@ public class SearchService {
 		SearchModule sm = ModuleManager.getSearchModule();
 		List<QueryResult> col = sm.findByName(token, name);
 		QueryResult[] result = col.toArray(new QueryResult[col.size()]);
-		log.debug("findByName: {}", result);
+		log.debug("findByName: {}", (Object []) result);
 		return result;
 	}
 
@@ -72,7 +72,7 @@ public class SearchService {
 		Set<String> set = new HashSet<>(Arrays.asList(keywords));
 		List<QueryResult> col = sm.findByKeywords(token, set);
 		QueryResult[] result = col.toArray(new QueryResult[col.size()]);
-		log.debug("findByKeywords: {}", result);
+		log.debug("findByKeywords: {}", (Object []) result);
 		return result;
 	}
 
@@ -83,7 +83,7 @@ public class SearchService {
 		SearchModule sm = ModuleManager.getSearchModule();
 		List<QueryResult> col = sm.find(token, params);
 		QueryResult[] result = col.toArray(new QueryResult[col.size()]);
-		log.debug("find: {}", result);
+		log.debug("find: {}", (Object []) result);
 		return result;
 	}
 
@@ -138,7 +138,7 @@ public class SearchService {
 			result[i++] = p;
 		}
 
-		log.debug("getKeywordMap: {}", result);
+		log.debug("getKeywordMap: {}", (Object []) result);
 		return result;
 	}
 
@@ -149,7 +149,7 @@ public class SearchService {
 		SearchModule sm = ModuleManager.getSearchModule();
 		List<Document> col = sm.getCategorizedDocuments(token, categoryId);
 		Document[] result = col.toArray(new Document[col.size()]);
-		log.debug("getCategorizedDocuments: {}", result);
+		log.debug("getCategorizedDocuments: {}", (Object []) result);
 		return result;
 	}
 

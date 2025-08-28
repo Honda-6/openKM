@@ -135,7 +135,7 @@ public class ConfigUtils {
 					result.add(entry);
 				}
 			}
-
+			jar.close();
 			return new ArrayList<>(result);
 		}
 

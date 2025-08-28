@@ -111,7 +111,7 @@ public class FolderService {
 		FolderModule fm = ModuleManager.getFolderModule();
 		List<Folder> col = fm.getChilds(token, fldPath);
 		Folder[] result = col.toArray(new Folder[col.size()]);
-		log.debug("getChilds: {}", result);
+		log.debug("getChilds: {}", (Object []) result);
 		return result;
 	}
 
@@ -122,7 +122,7 @@ public class FolderService {
 		FolderModule fm = ModuleManager.getFolderModule();
 		List<Folder> col = fm.getChildren(token, fldPath);
 		Folder[] result = col.toArray(new Folder[col.size()]);
-		log.debug("getChildren: {}", result);
+		log.debug("getChildren: {}", (Object []) result);
 		return result;
 	}
 

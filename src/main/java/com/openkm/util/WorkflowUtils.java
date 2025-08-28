@@ -247,7 +247,6 @@ public class WorkflowUtils {
 	/**
 	 * Copy process definition
 	 */
-	@SuppressWarnings("rawtypes")
 	public static ProcessDefinition copy(org.jbpm.graph.def.ProcessDefinition pd) {
 		ProcessDefinition vo = new ProcessDefinition();
 
@@ -269,7 +268,7 @@ public class WorkflowUtils {
 	/**
 	 * Copy process instance
 	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
+	@SuppressWarnings("unchecked")
 	public static ProcessInstance copy(org.jbpm.graph.exe.ProcessInstance pi) {
 		ProcessInstance vo = new ProcessInstance();
 
@@ -320,7 +319,7 @@ public class WorkflowUtils {
 	/**
 	 * Copy task instance
 	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
+	@SuppressWarnings("unchecked")
 	public static TaskInstance copy(org.jbpm.taskmgmt.exe.TaskInstance ti) {
 		TaskInstance vo = new TaskInstance();
 
@@ -401,7 +400,6 @@ public class WorkflowUtils {
 	/**
 	 * Copy token
 	 */
-	@SuppressWarnings("rawtypes")
 	public static Token copy(org.jbpm.graph.exe.Token t) {
 		Token vo = null;
 

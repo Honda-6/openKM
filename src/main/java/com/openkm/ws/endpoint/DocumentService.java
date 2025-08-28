@@ -166,7 +166,7 @@ public class DocumentService {
 		DocumentModule dm = ModuleManager.getDocumentModule();
 		List<Document> col = dm.getChilds(token, fldPath);
 		Document[] result = col.toArray(new Document[col.size()]);
-		log.debug("getChilds: {}", result);
+		log.debug("getChilds: {}", (Object []) result);
 		return result;
 	}
 
@@ -177,7 +177,7 @@ public class DocumentService {
 		DocumentModule dm = ModuleManager.getDocumentModule();
 		List<Document> col = dm.getChildren(token, fldPath);
 		Document[] result = col.toArray(new Document[col.size()]);
-		log.debug("getChildren: {}", result);
+		log.debug("getChildren: {}", (Object []) result);
 		return result;
 	}
 
@@ -250,7 +250,7 @@ public class DocumentService {
 		DocumentModule dm = ModuleManager.getDocumentModule();
 		List<Version> col = dm.getVersionHistory(token, docPath);
 		Version[] result = col.toArray(new Version[col.size()]);
-		log.debug("getVersionHistory: {}", result);
+		log.debug("getVersionHistory: {}", (Object []) result);
 		return result;
 	}
 

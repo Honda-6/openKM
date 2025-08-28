@@ -2,7 +2,7 @@ package com.openkm.vernum;
 
 import com.openkm.dao.bean.NodeDocument;
 import com.openkm.dao.bean.NodeDocumentVersion;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 
 public class LetterVersionAdapter implements VersionNumerationAdapter {
@@ -14,14 +14,14 @@ public class LetterVersionAdapter implements VersionNumerationAdapter {
 		String str1 = paramNodeDocumentVersion.getName();
 		String str2 = "";
 		String[] arrayOfString = new String[702];
-		Query localQuery = paramSession.createQuery("from NodeDocumentVersion ndv where ndv.parent=:parent and ndv.name=:name");
+		Query<NodeDocumentVersion> localQuery = paramSession.createQuery("from NodeDocumentVersion ndv where ndv.parent=:parent and ndv.name=:name", NodeDocumentVersion.class);
 		NodeDocumentVersion localNodeDocumentVersion = null;
 		buildR(arrayOfString, 702);
 		str2 = searchArr(arrayOfString, str1);
 		do {
-			localQuery.setString("parent", paramNodeDocument.getUuid());
-			localQuery.setString("name", str2);
-			localNodeDocumentVersion = (NodeDocumentVersion) localQuery.setMaxResults(1).uniqueResult();
+			localQuery.setParameter("parent", paramNodeDocument.getUuid());
+			localQuery.setParameter("name", str2);
+			localNodeDocumentVersion = localQuery.setMaxResults(1).uniqueResult();
 		} while (localNodeDocumentVersion != null);
 
 		return str2;

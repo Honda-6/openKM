@@ -24,7 +24,7 @@ package com.openkm.cmis;
 import org.apache.chemistry.opencmis.commons.impl.server.AbstractServiceFactory;
 import org.apache.chemistry.opencmis.commons.server.CallContext;
 import org.apache.chemistry.opencmis.commons.server.CmisService;
-import org.apache.chemistry.opencmis.server.support.CmisServiceWrapper;
+import org.apache.chemistry.opencmis.server.support.wrapper.ConformanceCmisServiceWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public class CmisServiceFactory extends AbstractServiceFactory {
 		// add the CMIS service wrapper
 		// (The wrapper catches invalid CMIS requests and sets default values
 		// for parameters that have not been provided by the client.)
-		CmisServiceWrapper<CmisService> wrapperService = new CmisServiceWrapper<>(service, DEFAULT_MAX_ITEMS_TYPES,
+		ConformanceCmisServiceWrapper wrapperService = new ConformanceCmisServiceWrapper(service, DEFAULT_MAX_ITEMS_TYPES,
 				DEFAULT_DEPTH_TYPES, DEFAULT_MAX_ITEMS_OBJECTS, DEFAULT_DEPTH_OBJECTS);
 
 		// hand over the call context to the service object

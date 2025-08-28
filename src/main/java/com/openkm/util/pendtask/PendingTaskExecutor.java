@@ -28,13 +28,12 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.HibernateUtil;
 import com.openkm.dao.bean.PendingTask;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -124,7 +123,6 @@ public class PendingTaskExecutor {
 	/**
 	 * Process pending task queue
 	 */
-	@SuppressWarnings("unchecked")
 	private void processQueue() throws DatabaseException {
 		String qs = "from PendingTask pt order by pt.created";
 		Gson gson = new Gson();
@@ -132,9 +130,9 @@ public class PendingTaskExecutor {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Query q = session.createQuery(qs);
+			Query<PendingTask> q = session.createQuery(qs,PendingTask.class);
 
-			for (PendingTask pt : (List<PendingTask>) q.list()) {
+			for (PendingTask pt : q.getResultList()) {
 				if (!runningTasks.contains(pt.getId())) {
 					log.info("Processing {}", pt);
 

@@ -73,7 +73,7 @@ public class PropertyGroupService {
 		PropertyGroupModule cm = ModuleManager.getPropertyGroupModule();
 		List<PropertyGroup> col = cm.getGroups(token, nodePath);
 		PropertyGroup[] result = col.toArray(new PropertyGroup[col.size()]);
-		log.debug("getGroups: {}", result);
+		log.debug("getGroups: {}", (Object []) result);
 		return result;
 	}
 
@@ -84,7 +84,7 @@ public class PropertyGroupService {
 		PropertyGroupModule cm = ModuleManager.getPropertyGroupModule();
 		List<PropertyGroup> col = cm.getAllGroups(token);
 		PropertyGroup[] result = col.toArray(new PropertyGroup[col.size()]);
-		log.debug("getAllGroups: {} ", result);
+		log.debug("getAllGroups: {} ", (Object []) result);
 		return result;
 	}
 
@@ -101,7 +101,7 @@ public class PropertyGroupService {
 			result[i] = FormElementComplex.toFormElementComplex(col.get(i));
 		}
 
-		log.debug("getProperties: {}", result);
+		log.debug("getProperties: {}", (Object []) result);
 		return result;
 	}
 
@@ -118,7 +118,7 @@ public class PropertyGroupService {
 			result[i] = FormElementComplex.toFormElementComplex(col.get(i));
 		}
 
-		log.debug("getPropertyGroupForm: {}", result);
+		log.debug("getPropertyGroupForm: {}", (Object []) result);
 		return result;
 	}
 

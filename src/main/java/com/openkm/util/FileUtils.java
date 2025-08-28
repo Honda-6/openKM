@@ -116,7 +116,6 @@ public class FileUtils {
 	 *
 	 * @param file File or directory to be listed.
 	 */
-	@SuppressWarnings("unchecked")
 	public static Collection<File> listFiles(File directory, String[] extensions, boolean recursive) {
 		return org.apache.commons.io.FileUtils.listFiles(directory, extensions, recursive);
 	}

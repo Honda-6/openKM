@@ -45,7 +45,7 @@ public class HibernateStatsServlet extends BaseServlet {
 	static Map<String, QueryStatistics> queryStatistics = Collections.synchronizedMap(new TreeMap<>(Collator.getInstance()));
 	static Map<String, EntityStatistics> entityStatistics = Collections.synchronizedMap(new TreeMap<>(Collator.getInstance()));
 	static Map<String, CollectionStatistics> collectionStatistics = Collections.synchronizedMap(new TreeMap<>(Collator.getInstance()));
-	static Map<String, SecondLevelCacheStatistics> secondLevelCacheStatistics = Collections.synchronizedMap(new TreeMap<>(Collator.getInstance()));
+	static Map<String, CacheRegionStatistics> secondLevelCacheStatistics = Collections.synchronizedMap(new TreeMap<>(Collator.getInstance()));
 	static List<Long> generalStatistics = Collections.synchronizedList(new ArrayList<>(18));
 
 	static {
@@ -192,7 +192,7 @@ public class HibernateStatsServlet extends BaseServlet {
 		long totalSizeInMemory = 0;
 		List<Map<String, String>> slcStats = new ArrayList<>();
 		for (String cache : secondLevelCacheStatistics.keySet()) {
-			SecondLevelCacheStatistics cacheStats = secondLevelCacheStatistics.get(cache);
+			CacheRegionStatistics cacheStats = secondLevelCacheStatistics.get(cache);
 			totalSizeInMemory += cacheStats.getSizeInMemory();
 			Map<String, String> stat = new HashMap<>();
 			stat.put("cache", cache);
@@ -267,7 +267,7 @@ public class HibernateStatsServlet extends BaseServlet {
 
 		if (names != null && names.length > 0) {
 			for (String name : names) {
-				secondLevelCacheStatistics.put(name, statistics.getSecondLevelCacheStatistics(name));
+				secondLevelCacheStatistics.put(name, statistics.getCacheRegionStatistics(name));
 			}
 		}
 	}

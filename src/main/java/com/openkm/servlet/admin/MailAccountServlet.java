@@ -363,6 +363,7 @@ public class MailAccountServlet extends BaseServlet {
 	/**
 	 * Edit mail filter
 	 */
+	@SuppressWarnings("null")
 	private void filterEdit(String userId, HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException, PathNotFoundException, DatabaseException {
 		log.debug("filterEdit({}, {}, {})", userId, request, response);
@@ -485,6 +486,7 @@ public class MailAccountServlet extends BaseServlet {
 	/**
 	 * Edit filter rule
 	 */
+	@SuppressWarnings("null")
 	private void ruleEdit(String userId, HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException, DatabaseException {
 		log.debug("ruleEdit({}, {}, {})", userId, request, response);

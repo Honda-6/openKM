@@ -26,6 +26,7 @@ import com.catcode.odf.OpenDocumentMetadata;
 import com.openkm.core.MimeTypeConfig;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.poi.POIOLE2TextExtractor;
 import org.apache.poi.hpsf.SummaryInformation;
 import org.apache.poi.hslf.extractor.PowerPointExtractor;
 import org.apache.poi.hssf.extractor.ExcelExtractor;
@@ -71,13 +72,19 @@ public class MetadataExtractor {
 		POIFSFileSystem fs = new POIFSFileSystem(is);
 		OfficeMetadata md = new OfficeMetadata();
 		SummaryInformation si = null;
-
+		POIOLE2TextExtractor extractor = null;
 		if (MimeTypeConfig.MIME_MS_WORD.equals(mimeType)) {
-			si = new WordExtractor(fs).getSummaryInformation();
+			extractor = new WordExtractor(fs);
+			si = extractor.getSummaryInformation();
+			extractor.close();
 		} else if (MimeTypeConfig.MIME_MS_EXCEL.equals(mimeType)) {
-			si = new ExcelExtractor(fs).getSummaryInformation();
+			extractor = new ExcelExtractor(fs);
+			si = extractor.getSummaryInformation();
+			extractor.close();
 		} else if (MimeTypeConfig.MIME_MS_POWERPOINT.equals(mimeType)) {
-			si = new PowerPointExtractor(fs).getSummaryInformation();
+			extractor = new PowerPointExtractor(fs);
+			si = extractor.getSummaryInformation();
+			extractor.close();
 		}
 
 		if (si != null) {

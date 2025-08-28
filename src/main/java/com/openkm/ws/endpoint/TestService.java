@@ -46,7 +46,7 @@ public class TestService {
 
 	@WebMethod
 	public String[] sort1(@WebParam(name = "array") String[] array) {
-		log.info("sort1({})", array);
+		log.info("sort1({})", (Object []) array);
 
 		if (array != null) {
 			log.info("sort1: a.length={}", array.length);
@@ -58,10 +58,10 @@ public class TestService {
 
 	@WebMethod
 	public String[] sort2(@WebParam(name = "array") String[] array) {
-		log.info("sort2({})", array);
+		log.info("sort2({})", (Object []) array);
 
 		if (array != null) {
-			log.info("sort2: a.value={}", array);
+			log.info("sort2: a.value={}", (Object []) array);
 			log.info("sort2: a.length={}", array.length);
 			Arrays.sort(array);
 		}

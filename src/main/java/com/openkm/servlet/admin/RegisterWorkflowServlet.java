@@ -2,10 +2,6 @@ package com.openkm.servlet.admin;
 
 import com.openkm.api.OKMWorkflow;
 import com.openkm.util.UserActivity;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.DiskFileItem;
@@ -31,7 +27,6 @@ public class RegisterWorkflowServlet extends BaseServlet {
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	@SuppressWarnings("unchecked")
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws
 			ServletException, IOException {
 		String fileName = null;

@@ -84,7 +84,7 @@ public class NoteService {
 		NoteModule nm = ModuleManager.getNoteModule();
 		List<Note> col = nm.list(token, nodePath);
 		Note[] result = col.toArray(new Note[col.size()]);
-		log.debug("list: {}", result);
+		log.debug("list: {}", (Object[]) result);
 		return result;
 	}
 }

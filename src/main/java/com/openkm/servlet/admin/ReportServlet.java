@@ -31,11 +31,6 @@ import com.openkm.dao.ReportDAO;
 import com.openkm.dao.bean.Report;
 import com.openkm.util.*;
 import net.sf.jasperreports.engine.JRException;
-/* import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileItemFactory;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload; */
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
@@ -112,7 +107,6 @@ public class ReportServlet extends BaseServlet {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException,
 			ServletException {
 		log.debug("doPost({}, {})", request, response);

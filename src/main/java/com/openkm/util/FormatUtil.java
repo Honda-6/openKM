@@ -201,6 +201,7 @@ public class FormatUtil {
 	/**
 	 * Parser log file
 	 */
+	@SuppressWarnings("null")
 	public static Collection<LogMessage> parseLog(File flog, int begin, int end, String str) throws IOException {
 		log.debug("parseLog({}, {}, {}, {})", flog, begin, end, str);
 		ArrayList<LogMessage> al = new ArrayList<>();

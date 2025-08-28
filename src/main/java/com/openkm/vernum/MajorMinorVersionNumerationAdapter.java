@@ -23,7 +23,7 @@ package com.openkm.vernum;
 
 import com.openkm.dao.bean.NodeDocument;
 import com.openkm.dao.bean.NodeDocumentVersion;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 
 /**
@@ -42,7 +42,7 @@ public class MajorMinorVersionNumerationAdapter implements VersionNumerationAdap
 		String ver[] = versionNumber.split("\\.");
 		int major = Integer.parseInt(ver[0]);
 		int minor = Integer.parseInt(ver[1]);
-		Query q = session.createQuery(qs);
+		Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
 		NodeDocumentVersion ndv = null;
 
 		do {
@@ -53,9 +53,9 @@ public class MajorMinorVersionNumerationAdapter implements VersionNumerationAdap
 				minor++;
 			}
 
-			q.setString("parent", nDoc.getUuid());
-			q.setString("name", major + "." + minor);
-			ndv = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			q.setParameter("parent", nDoc.getUuid());
+			q.setParameter("name", major + "." + minor);
+			ndv = q.setMaxResults(1).uniqueResult();
 		} while (ndv != null);
 
 		return major + "." + minor;

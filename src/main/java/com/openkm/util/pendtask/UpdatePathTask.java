@@ -37,7 +37,7 @@ public class UpdatePathTask implements ProcessInDepthTask {
 	@Override
 	public Object doTask(Session session, NodeBase parentNode, NodeBase node) throws DatabaseException {
 		node.setPath(parentNode.getPath() + "/" + node.getName());
-		session.update(node);
+		session.merge(node);
 
 		return null;
 	}

@@ -24,7 +24,7 @@ package com.openkm.vernum;
 import com.openkm.core.Config;
 import com.openkm.dao.bean.NodeDocument;
 import com.openkm.dao.bean.NodeDocumentVersion;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 
 /**
@@ -41,14 +41,14 @@ public class PlainVersionNumerationAdapter implements VersionNumerationAdapter {
 	public String getNextVersionNumber(Session session, NodeDocument nDoc, NodeDocumentVersion nDocVer, int increment) {
 		String versionNumber = nDocVer.getName();
 		int nextVerNumber = Integer.parseInt(versionNumber);
-		Query q = session.createQuery(qs);
+		Query<NodeDocumentVersion> q = session.createQuery(qs, NodeDocumentVersion.class);
 		NodeDocumentVersion ndv = null;
 
 		do {
 			nextVerNumber++;
-			q.setString("parent", nDoc.getUuid());
-			q.setString("name", String.valueOf(nextVerNumber));
-			ndv = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			q.setParameter("parent", nDoc.getUuid());
+			q.setParameter("name", String.valueOf(nextVerNumber));
+			ndv = q.setMaxResults(1).uniqueResult();
 		} while (ndv != null);
 
 		return String.format(Config.VERSION_NUMERATION_FORMAT, nextVerNumber);

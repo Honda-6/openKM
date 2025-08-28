@@ -21,7 +21,11 @@
 
 package com.openkm.hibernate.search;
 
-import org.hibernate.search.annotations.*;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.FullTextField;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.GenericField;
+//import org.hibernate.search.annotations.*;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.Indexed;
+import org.hibernate.search.mapper.pojo.mapping.definition.annotation.DocumentId;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -40,14 +44,13 @@ public class Document implements Serializable {
 	protected String uuid;
 
 	@Column(name="NDC_NAME", length=256)
-	@Field(index=Index.UN_TOKENIZED, store=Store.YES)
+	@FullTextField
 	protected String name;
 
 	@ElementCollection
 	@Column(name="NDK_KEYWORD")
 	@CollectionTable(name="OKM_DOCUMENT_KEYWORD", joinColumns = { @JoinColumn( name = "NDK_DOCUMENT" ) })
-	@Field(index=Index.UN_TOKENIZED, store=Store.YES)
-	@FieldBridge(impl=SetFieldBridge.class)
+	@GenericField
 	protected Set<String> keywords = new HashSet<>();
 
 	public String getUuid() {

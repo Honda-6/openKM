@@ -23,7 +23,7 @@ package com.openkm.vernum;
 
 import com.openkm.dao.bean.NodeDocument;
 import com.openkm.dao.bean.NodeDocumentVersion;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 
 /**
@@ -40,14 +40,14 @@ public class BranchVersionNumerationAdapter implements VersionNumerationAdapter 
 	public String getNextVersionNumber(Session session, NodeDocument nDoc, NodeDocumentVersion nDocVer, int increment) {
 		String curVersionName = nDocVer.getName();
 		String nextVersionName = curVersionName;
-		Query q = session.createQuery(qs);
+		Query<NodeDocumentVersion> q = session.createQuery(qs,NodeDocumentVersion.class);
 		NodeDocumentVersion ndv = null;
 
 		do {
 			nextVersionName = buildVersionName(nextVersionName);
-			q.setString("parent", nDoc.getUuid());
-			q.setString("name", nextVersionName);
-			ndv = (NodeDocumentVersion) q.setMaxResults(1).uniqueResult();
+			q.setParameter("parent", nDoc.getUuid());
+			q.setParameter("name", nextVersionName);
+			ndv = q.setMaxResults(1).uniqueResult();
 
 			if (ndv != null) {
 				nextVersionName = curVersionName + ".0";

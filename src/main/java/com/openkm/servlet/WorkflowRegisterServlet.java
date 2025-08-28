@@ -25,11 +25,6 @@ import com.openkm.core.Config;
 import com.openkm.spring.PrincipalUtils;
 import com.openkm.util.FormUtils;
 import com.openkm.util.JBPMUtils;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.FileUploadException;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
@@ -92,7 +87,6 @@ public class WorkflowRegisterServlet extends HttpServlet {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private String handleRequest(HttpServletRequest request) throws Exception {
 		log.debug("handleRequest({})", request);
 

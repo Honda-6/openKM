@@ -129,6 +129,7 @@ public class ExecutionUtils {
 
 				if (mainClass != null) {
 					Class<?> c = jcl.loadClass(mainClass);
+					jcl.close();
 					ret = ClassLoaderUtils.invokeMainMethodFromClass(c, new String[]{});
 				} else {
 					log.error("Main class not defined at: {}", jar.getPath());
@@ -158,6 +159,7 @@ public class ExecutionUtils {
 
 				if (mainClass != null) {
 					Class<?> c = jcl.loadClass(mainClass);
+					jcl.close();
 					ret = ClassLoaderUtils.invokeMethodFromClass(c, methodName);
 				} else {
 					log.error("Main class not defined at: {}", jar.getPath());

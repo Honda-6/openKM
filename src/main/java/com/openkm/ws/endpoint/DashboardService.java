@@ -52,7 +52,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getUserCheckedOutDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getUserCheckedOutDocuments: {}", result);
+		log.debug("getUserCheckedOutDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -63,7 +63,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getUserLastModifiedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getUserLastModifiedDocuments: {}", result);
+		log.debug("getUserLastModifiedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -74,7 +74,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getUserLockedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getUserLockedDocuments: {}", result);
+		log.debug("getUserLockedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -85,7 +85,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getUserSubscribedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getUserSubscribedDocuments: {}", result);
+		log.debug("getUserSubscribedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -96,7 +96,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardFolderResult> col = dm.getUserSubscribedFolders(token);
 		DashboardFolderResult[] result = col.toArray(new DashboardFolderResult[col.size()]);
-		log.debug("getUserSubscribedFolders: {}", result);
+		log.debug("getUserSubscribedFolders: {}", (Object []) result);
 		return result;
 	}
 
@@ -107,7 +107,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getUserLastUploadedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getUserLastUploadedDocuments: {}", result);
+		log.debug("getUserLastUploadedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -118,7 +118,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getUserLastDownloadedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getUserLastDownloadedDocuments: {}", result);
+		log.debug("getUserLastDownloadedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -129,7 +129,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardMailResult> col = dm.getUserLastImportedMails(token);
 		DashboardMailResult[] result = col.toArray(new DashboardMailResult[col.size()]);
-		log.debug("getUserLastImportedMails: {}", result);
+		log.debug("getUserLastImportedMails: {}", (Object []) result);
 		return result;
 	}
 
@@ -140,7 +140,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getUserLastImportedMailAttachments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getUserLastImportedMailAttachments: {}", result);
+		log.debug("getUserLastImportedMailAttachments: {}", (Object []) result);
 		return result;
 	}
 
@@ -161,7 +161,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<QueryParams> col = dm.getUserSearchs(token);
 		QueryParams[] result = col.toArray(new QueryParams[col.size()]);
-		log.debug("getUserSearchs: {}", result);
+		log.debug("getUserSearchs: {}", (Object []) result);
 		return result;
 	}
 
@@ -172,7 +172,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.find(token, qpId);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("find: {}", result);
+		log.debug("find: {}", (Object []) result);
 		return result;
 	}
 
@@ -183,7 +183,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getLastWeekTopDownloadedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getLastWeekTopDownloadedDocuments: {}", result);
+		log.debug("getLastWeekTopDownloadedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -194,7 +194,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getLastMonthTopDownloadedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getLastMonthTopDownloadedDocuments: {}", result);
+		log.debug("getLastMonthTopDownloadedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -205,7 +205,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getLastWeekTopModifiedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getLastWeekTopModifiedDocuments: {}", result);
+		log.debug("getLastWeekTopModifiedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -216,7 +216,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getLastMonthTopModifiedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getLastMonthTopModifiedDocuments: {}", result);
+		log.debug("getLastMonthTopModifiedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -227,7 +227,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getLastModifiedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getLastModifiedDocuments: {}", result);
+		log.debug("getLastModifiedDocuments: {}", (Object []) result);
 		return result;
 	}
 
@@ -238,7 +238,7 @@ public class DashboardService {
 		DashboardModule dm = ModuleManager.getDashboardModule();
 		List<DashboardDocumentResult> col = dm.getLastUploadedDocuments(token);
 		DashboardDocumentResult[] result = col.toArray(new DashboardDocumentResult[col.size()]);
-		log.debug("getLastUploadedDocuments: {}", result);
+		log.debug("getLastUploadedDocuments: {}", (Object []) result);
 		return result;
 	}
 

@@ -97,7 +97,7 @@ public class MailService {
 		MailModule mm = ModuleManager.getMailModule();
 		List<Mail> col = mm.getChilds(token, mailPath);
 		Mail[] result = col.toArray(new Mail[col.size()]);
-		log.debug("getChilds: {}", result);
+		log.debug("getChilds: {}", (Object []) result);
 		return result;
 	}
 
@@ -108,7 +108,7 @@ public class MailService {
 		MailModule mm = ModuleManager.getMailModule();
 		List<Mail> col = mm.getChildren(token, mailPath);
 		Mail[] result = col.toArray(new Mail[col.size()]);
-		log.debug("getChildren: {}", result);
+		log.debug("getChildren: {}", (Object []) result);
 		return result;
 	}
 

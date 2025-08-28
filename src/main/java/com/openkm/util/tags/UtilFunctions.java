@@ -21,7 +21,6 @@
 
 package com.openkm.util.tags;
 
-import org.hibernate.collection.PersistentSet;
 
 import com.openkm.core.Config;
 import com.openkm.spring.PrincipalUtils;
@@ -34,17 +33,12 @@ public class UtilFunctions {
 	 */
 	public static boolean contains(Collection<?> collection, Object obj) {
 		if (collection != null) {
-			if (collection instanceof PersistentSet) {
-				for (Object elto : collection) {
-					if (elto.equals(obj)) {
-						return true;
-					}
+			for (Object elto : collection) {
+				if (elto.equals(obj)) {
+					return true;
 				}
-
-				return false;
-			} else {
-				return collection.contains(obj);
 			}
+			return false;
 		} else {
 			return false;
 		}

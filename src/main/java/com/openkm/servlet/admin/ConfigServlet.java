@@ -122,7 +122,6 @@ public class ConfigServlet extends BaseServlet {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		log.debug("doPost({}, {})", request, response);
 		request.setCharacterEncoding("UTF-8");

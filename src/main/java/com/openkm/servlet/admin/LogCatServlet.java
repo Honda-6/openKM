@@ -124,7 +124,6 @@ public class LogCatServlet extends BaseServlet {
 	/**
 	 * Purge log
 	 */
-	@SuppressWarnings("unchecked")
 	private void purge(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		log.debug("purge({}, {})", request, response);
 		for (File lf : FileUtils.listFiles(logFolder, null, false)) {
