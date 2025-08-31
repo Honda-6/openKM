@@ -24,7 +24,7 @@ package com.openkm.frontend.client.widget.searchuser;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.openkm.frontend.client.Main;
@@ -78,24 +78,24 @@ public class ExtendedFlexTable extends FlexTable {
 		if (selectedRow >= 0) {
 
 			// When de button mouse is released
-			mouseX = DOM.eventGetClientX(event);
-			mouseY = DOM.eventGetClientY(event);
+			mouseX = event.getClientX();
+			mouseY = event.getClientY();
 
 
 			// On double click not sends event to onCellClicked across super.onBrowserEvent();
-			if (DOM.eventGetType(event) == Event.ONDBLCLICK) {
+			if (event.getTypeInt() == Event.ONDBLCLICK) {
 				// Disables the event propagation the sequence is:
 				// Two time entry onCellClicked before entry on onBrowserEvent and disbles the
 				// Tree onCellClicked that produces inconsistence error refreshing
-				DOM.eventCancelBubble(event, true);
+				event.stopPropagation();
 				Main.get().mainPanel.search.historySearch.userNews.getSearch();
 
-			} else if (DOM.eventGetType(event) == Event.ONMOUSEDOWN) {
-				switch (DOM.eventGetButton(event)) {
+			} else if (event.getTypeInt() == Event.ONMOUSEDOWN) {
+				switch (event.getButton()) {
 					case Event.BUTTON_RIGHT:
 						markSelectedRow(selectedRow);
 						Main.get().mainPanel.search.historySearch.userNews.showMenu();
-						DOM.eventPreventDefault(event); // Prevent to fire event to browser
+						event.preventDefault(); // Prevent to fire event to browser
 						break;
 					default:
 						break;
@@ -126,7 +126,7 @@ public class ExtendedFlexTable extends FlexTable {
 	private Element getMouseEventTargetCell(Event event) {
 		Element td = DOM.eventGetTarget(event);
 		//locate enclosing td element
-		while (!DOM.getElementProperty(td, "tagName").equalsIgnoreCase("td")) {
+		while (!td.getTagName().equalsIgnoreCase("td")) {
 			// If we run out of elements, or run into the table itself, then give up.
 			if ((td == null) || td == getElement())
 				return null;

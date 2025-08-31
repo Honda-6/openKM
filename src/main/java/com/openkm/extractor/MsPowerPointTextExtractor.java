@@ -63,7 +63,9 @@ public class MsPowerPointTextExtractor extends AbstractTextExtractor {
 	public String extractText(InputStream stream, String type, String encoding) throws IOException {
 		try {
 			PowerPointExtractor extractor = new PowerPointExtractor(stream);
-			return extractor.getText(true, true);
+			String text = extractor.getText(true, true);
+			extractor.close();
+			return text;
 		} catch (RuntimeException e) {
 			log.warn("Failed to extract PowerPoint text content", e);
 			throw new IOException(e.getMessage(), e);

@@ -29,11 +29,6 @@ import com.openkm.extension.dao.bean.ZohoToken;
 import com.openkm.module.db.DbDocumentModule;
 import com.openkm.module.db.stuff.DbSessionManager;
 import com.openkm.servlet.frontend.OKMHttpServlet;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.FileUploadException;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileUploadException;
@@ -60,7 +55,6 @@ public class ZohoFileUploadServlet extends OKMHttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final Logger log = LoggerFactory.getLogger(ZohoFileUploadServlet.class);
 
-	@SuppressWarnings("unchecked")
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException,
 			IOException {
 		log.info("service({}, {})", request, response);

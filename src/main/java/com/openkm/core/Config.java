@@ -89,7 +89,7 @@ public class Config {
 	// General configuration
 	public static String EXPORT_METADATA_EXT = ".okm";
 	public static String ROOT_NODE_UUID = "cafebabe-cafe-babe-cafe-babecafebabe";
-	public static Version LUCENE_VERSION = Version.LUCENE_8_11_3;
+	public static Version LUCENE_VERSION = Version.LATEST;
 	public static String DEFAULT_CRONTAB_MAIL = "none@nomail.com";
 
 	// Preview cache

@@ -63,7 +63,10 @@ public class MsExcelTextExtractor extends AbstractTextExtractor {
 	public String extractText(InputStream stream, String type, String encoding) throws IOException {
 		try {
 			POIFSFileSystem fs = new POIFSFileSystem(stream);
-			return new ExcelExtractor(fs).getText();
+			ExcelExtractor extractor = new ExcelExtractor(fs);
+			String text = extractor.getText();
+			extractor.close();
+			return text;
 		} catch (RuntimeException e) {
 			log.warn("Failed to extract Excel text content", e);
 			throw new IOException(e.getMessage(), e);

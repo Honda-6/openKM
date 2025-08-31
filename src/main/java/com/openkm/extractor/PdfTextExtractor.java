@@ -74,7 +74,6 @@ public class PdfTextExtractor extends AbstractTextExtractor {
 	/**
 	 * {@inheritDoc}
 	 */
-	@SuppressWarnings("rawtypes")
 	public String extractText(InputStream stream, String type, String encoding) throws IOException {
 		CharArrayWriter writer = null;
 		PDDocument doc = null;

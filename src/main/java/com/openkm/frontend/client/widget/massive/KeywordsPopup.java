@@ -106,7 +106,7 @@ public class KeywordsPopup extends DialogBox {
 				}
 			}
 		});
-		suggestKey.getTextBox().addClickHandler(new ClickHandler() {
+		suggestKey.getValueBox().addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				if (suggestKey.getText().equals(Main.i18n("dashboard.keyword.suggest"))) {
@@ -115,7 +115,7 @@ public class KeywordsPopup extends DialogBox {
 				Main.get().mainPanel.disableKeyShorcuts(); // Disables key shortcuts while updating
 			}
 		});
-		suggestKey.getTextBox().addClickHandler(new ClickHandler() {
+		suggestKey.getValueBox().addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				if (suggestKey.getText().equals(Main.i18n("dashboard.keyword.suggest"))) {
@@ -125,7 +125,7 @@ public class KeywordsPopup extends DialogBox {
 			}
 		});
 
-		suggestKey.getTextBox().addMouseOutHandler(new MouseOutHandler() {
+		suggestKey.getValueBox().addMouseOutHandler(new MouseOutHandler() {
 			@Override
 			public void onMouseOut(MouseOutEvent event) {
 				if (!keyShortcutsEnabled) {

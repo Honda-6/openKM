@@ -24,7 +24,7 @@ package com.openkm.frontend.client.widget.chat;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.openkm.frontend.client.Main;
@@ -88,7 +88,7 @@ public class ExtendedFlexTable extends FlexTable {
 	private Element getMouseEventTargetCell(Event event) {
 		Element td = DOM.eventGetTarget(event);
 		//locate enclosing td element
-		while (!DOM.getElementProperty(td, "tagName").equalsIgnoreCase("td")) {
+		while (!td.getTagName().equalsIgnoreCase("td")) {
 			// If we run out of elements, or run into the table itself, then give up.
 			if ((td == null) || td == getElement())
 				return null;

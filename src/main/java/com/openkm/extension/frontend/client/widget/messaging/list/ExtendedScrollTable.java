@@ -23,6 +23,7 @@ package com.openkm.extension.frontend.client.widget.messaging.list;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.gen2.table.client.FixedWidthFlexTable;
@@ -100,7 +101,7 @@ public class ExtendedScrollTable extends ScrollTable {
 	 */
 	public void onBrowserEvent(Event event) {
 		boolean headerFired = false; // Controls when event is fired by header
-
+		NativeEvent nativeEvent = Event.as(event);
 		// Case targe event is header must disable drag & drop
 		if (headerTable.getEventTargetCell(event) != null) {
 			headerFired = true;
@@ -110,12 +111,12 @@ public class ExtendedScrollTable extends ScrollTable {
 		setSelectedPanel(true);
 
 		// When de button mouse is released
-		mouseX = DOM.eventGetClientX(event);
-		mouseY = DOM.eventGetClientY(event);
+		mouseX = nativeEvent.getClientX();
+		mouseY = nativeEvent.getClientY();
 
 		int type = DOM.eventGetType(event);
 
-		if (type == Event.ONMOUSEDOWN && DOM.eventGetButton(event) == Event.BUTTON_RIGHT) {
+		if (type == Event.ONMOUSEDOWN && nativeEvent.getButton() == Event.BUTTON_RIGHT) {
 			type = EVENT_ONMOUSEDOWN_RIGHT; // Special case, that must be so much similar to click event
 		}
 
@@ -130,7 +131,7 @@ public class ExtendedScrollTable extends ScrollTable {
 					MessagingToolBarBox.get().messageDashboard.messageBrowser.message.menuPopup.setPopupPosition(
 							mouseX, mouseY);
 					MessagingToolBarBox.get().messageDashboard.messageBrowser.message.menuPopup.show();
-					DOM.eventPreventDefault(event); // Prevent to fire event to browser
+					nativeEvent.preventDefault(); // Prevent to fire event to browser
 				}
 
 				if (dataTable.getEventTargetCell(event) != null) {

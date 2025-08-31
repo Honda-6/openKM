@@ -780,6 +780,7 @@ public class FileBrowserController extends Composite {
 		/**
 		 * reset
 		 */
+		@SuppressWarnings("null")
 		public void reset() {
 			validationProcessor = new DefaultValidationProcessor();
 			FocusAction focusAction = new FocusAction();

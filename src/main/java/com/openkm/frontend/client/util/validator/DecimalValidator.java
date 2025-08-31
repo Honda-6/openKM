@@ -49,6 +49,7 @@ public class DecimalValidator extends Validator<DecimalValidator> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (textBox != null) {
 			for (ValidationAction<TextBoxBase> va : this.getFailureActions())

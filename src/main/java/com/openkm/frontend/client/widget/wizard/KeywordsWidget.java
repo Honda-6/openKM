@@ -94,7 +94,7 @@ public class KeywordsWidget extends Composite {
 				}
 			}
 		});
-		suggestKey.getTextBox().addClickHandler(new ClickHandler() {
+		suggestKey.getValueBox().addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				if (suggestKey.getText().equals(Main.i18n("dashboard.keyword.suggest"))) {
@@ -104,7 +104,7 @@ public class KeywordsWidget extends Composite {
 			}
 		});
 
-		suggestKey.getTextBox().addMouseOutHandler(new MouseOutHandler() {
+		suggestKey.getValueBox().addMouseOutHandler(new MouseOutHandler() {
 			@Override
 			public void onMouseOut(MouseOutEvent event) {
 				if (!keyShortcutsEnabled) {
@@ -114,7 +114,7 @@ public class KeywordsWidget extends Composite {
 			}
 		});
 
-		suggestKey.getTextBox().addMouseOverHandler(new MouseOverHandler() {
+		suggestKey.getValueBox().addMouseOverHandler(new MouseOverHandler() {
 			@Override
 			public void onMouseOver(MouseOverEvent event) {
 				if (keyShortcutsEnabled) {

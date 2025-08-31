@@ -725,12 +725,11 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 		}
 
 		// When de button mouse is released
-		mouseX = DOM.eventGetClientX(event);
-		mouseY = DOM.eventGetClientY(event);
+		mouseX = event.getClientX();
+		mouseY = event.getClientY();
+		int type = event.getTypeInt();
 
-		int type = DOM.eventGetType(event);
-
-		if (type == Event.ONMOUSEDOWN && DOM.eventGetButton(event) == Event.BUTTON_RIGHT) {
+		if (type == Event.ONMOUSEDOWN && event.getButton() == Event.BUTTON_RIGHT) {
 			type = EVENT_ONMOUSEDOWN_RIGHT; // Special case, that must be so much similar to click event
 		}
 
@@ -741,7 +740,7 @@ public class ExtendedScrollTable extends ScrollTable implements OriginPanel {
 				// Only for right mouuse button
 				if (!headerFired && type == EVENT_ONMOUSEDOWN_RIGHT) {
 					Main.get().mainPanel.desktop.browser.fileBrowser.showMenu();
-					DOM.eventPreventDefault(event); // Prevent to fire event to browser
+					event.preventDefault(); // Prevent to fire event to browser
 				}
 
 				if (dataTable.getEventTargetCell(event) != null) {

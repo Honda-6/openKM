@@ -23,7 +23,7 @@ package com.openkm.frontend.client.widget;
 
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.InsertPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -53,7 +53,7 @@ public class GroupBoxPanel extends ComplexPanel implements InsertPanel {
 	 * @return
 	 */
 	public String getCaption() {
-		return DOM.getInnerText(this.legend);
+		return this.legend.getInnerText();
 	}
 
 	/**
@@ -62,7 +62,7 @@ public class GroupBoxPanel extends ComplexPanel implements InsertPanel {
 	 * @param caption
 	 */
 	public void setCaption(String caption) {
-		DOM.setInnerText(this.legend, caption);
+		this.legend.setInnerText(caption);
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class GroupBoxPanel extends ComplexPanel implements InsertPanel {
 	 */
 	@Override
 	public void add(Widget w) {
-		add(w, getElement());
+		this.getElement().appendChild(w.getElement());
 	}
 
 	@Override
@@ -94,6 +94,6 @@ public class GroupBoxPanel extends ComplexPanel implements InsertPanel {
 	 *           range
 	 */
 	public void insert(Widget w, int beforeIndex) {
-		insert(w, getElement(), beforeIndex, true);
+		this.getElement().insertBefore(w.getElement(), this.getElement().getChild(beforeIndex));
 	}
 }

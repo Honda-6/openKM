@@ -50,6 +50,7 @@ public class RegularExpressionValidator extends Validator<RegularExpressionValid
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (textBox != null) {
 			for (ValidationAction<TextBoxBase> va : this.getFailureActions())

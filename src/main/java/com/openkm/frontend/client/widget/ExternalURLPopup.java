@@ -24,7 +24,6 @@ package com.openkm.frontend.client.widget;
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.*;
 import com.openkm.frontend.client.Main;
 
@@ -51,9 +50,9 @@ public class ExternalURLPopup extends DialogBox {
 		vPanel = new VerticalPanel();
 
 		iframe = new Frame("about:blank");
-		DOM.setElementProperty(iframe.getElement(), "frameborder", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginwidth", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginheight", "0");
+		iframe.getElement().setPropertyString("frameborder", "0");
+		iframe.getElement().setPropertyString("marginwidth", "0");
+		iframe.getElement().setPropertyString("marginheight", "0");
 		//DOM.setElementProperty(iframe.getElement(), "z-index", "10000");
 		iframe.setStyleName("okm-Popup-text");
 

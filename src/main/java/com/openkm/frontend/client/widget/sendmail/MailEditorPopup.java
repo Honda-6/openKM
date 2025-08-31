@@ -25,7 +25,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.gen2.table.override.client.FlexTable;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import com.openkm.extension.frontend.client.widget.htmleditor.HTMLEditorUtils;
@@ -329,14 +328,14 @@ public class MailEditorPopup extends DialogBox implements CaptionHandler {
 	 */
 	private Frame rebuildFormEditor() {
 		mailEditor = new Frame("about:blank");
-		DOM.setElementProperty(mailEditor.getElement(), "id", "okm_mail_tinymce");
-		DOM.setElementProperty(mailEditor.getElement(), "frameborder", "0");
-		DOM.setElementProperty(mailEditor.getElement(), "marginwidth", "0");
-		DOM.setElementProperty(mailEditor.getElement(), "marginheight", "0");
-		DOM.setElementProperty(mailEditor.getElement(), "scrolling", "no");
+		mailEditor.getElement().setId("okm_mail_tinymce");
+		mailEditor.getElement().setAttribute("frameborder", "0");
+		mailEditor.getElement().setAttribute("marginwidth", "0");
+		mailEditor.getElement().setAttribute("marginheight", "0");
+		mailEditor.getElement().setAttribute("scrolling", "no");
 
 		// Commented because on IE show clear if allowtransparency=true
-		DOM.setElementProperty(mailEditor.getElement(), "allowtransparency", "false");
+		mailEditor.getElement().setAttribute("allowtransparency", "false");
 
 		mailEditor.setUrl(Main.CONTEXT + "/frontend/okm_mail_tinymce4.jsp");
 		mailEditor.setStyleName("okm-Iframe");

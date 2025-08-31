@@ -23,8 +23,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.*;
 import com.openkm.frontend.client.Main;
 
@@ -45,7 +44,7 @@ public class CalendarWidget extends Composite implements ClickHandler, HasChange
 		public boolean clearCell(int row, int column) {
 			boolean retValue = super.clearCell(row, column);
 			Element td = getCellFormatter().getElement(row, column);
-			DOM.setInnerHTML(td, "");
+			td.setInnerHTML("");
 			return retValue;
 		}
 	};

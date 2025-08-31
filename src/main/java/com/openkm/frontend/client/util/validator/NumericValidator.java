@@ -47,6 +47,7 @@ public class NumericValidator extends Validator<NumericValidator> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (textBox != null) {
 			for (ValidationAction<TextBoxBase> va : this.getFailureActions())

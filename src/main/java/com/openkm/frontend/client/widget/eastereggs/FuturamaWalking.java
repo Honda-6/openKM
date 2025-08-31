@@ -21,8 +21,8 @@
 
 package com.openkm.frontend.client.widget.eastereggs;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Image;
@@ -97,7 +97,7 @@ public class FuturamaWalking extends PopupPanel {
 	public void setPopupPosition(int left, int top) {
 		// Removed popup not can has negative position
 		Element elem = getElement();
-		DOM.setStyleAttribute(elem, "left", left + "px");
-		DOM.setStyleAttribute(elem, "top", top + "px");
+		elem.getStyle().setLeft(left, Unit.PX);
+		elem.getStyle().setTop(top, Unit.PX);
 	}
 }

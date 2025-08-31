@@ -71,7 +71,7 @@ public class SearchTest extends TestCase {
 			Document doc = new Document();
 			doc.setUuid(uuid);
 			doc.setName("pruebas.txt");
-			session.save(doc);
+			session.persist(doc);
 
 			Document dbDoc = (Document) session.get(Document.class, uuid);
 			assertNotNull(dbDoc);
@@ -94,12 +94,12 @@ public class SearchTest extends TestCase {
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
 			tx = session.beginTransaction();
-			Document doc = (Document) session.load(Document.class, uuid);
+			Document doc = session.get(Document.class, uuid);
 			assertNotNull(doc);
 
 			doc.getKeywords().add("alfa");
 			doc.getKeywords().add("beta");
-			session.update(doc);
+			session.merge(doc);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
 			log.error(e.getMessage(), e);
@@ -116,7 +116,7 @@ public class SearchTest extends TestCase {
 
 		try {
 			session = HibernateUtil.getSessionFactory().openSession();
-			Document doc = (Document) session.load(Document.class, uuid);
+			Document doc = session.get(Document.class, uuid);
 			assertNotNull(doc);
 			assertEquals(2, doc.getKeywords().size());
 			log.info("Keywords: {}", doc.getKeywords());

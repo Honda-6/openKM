@@ -92,7 +92,7 @@ public class NewsDashboard extends WidgetToFire {
 
 				// if has been removed must remove from list
 				if (!found) {
-					DashboardWidget dashboardWidget = hWidgetSearch.get(key);
+					DashboardWidget dashboardWidget = hWidgetSearch.get(String.valueOf(key));
 					if (dashboardWidget.getParent().equals(vPanelLeft)) {
 						vPanelLeft.remove(dashboardWidget);
 					} else if (dashboardWidget.getParent().equals(vPanelRight)) {

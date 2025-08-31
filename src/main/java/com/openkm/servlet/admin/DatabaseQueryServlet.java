@@ -41,7 +41,6 @@ import org.hibernate.HibernateException;
 import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.jdbc.Work;
-import org.hibernate.type.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +103,6 @@ public class DatabaseQueryServlet extends BaseServlet {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		log.debug("doPost({}, {})", request, response);
 		request.setCharacterEncoding("UTF-8");
@@ -321,23 +319,31 @@ public class DatabaseQueryServlet extends BaseServlet {
 	/**
 	 * Execute hibernate sentence
 	 */
-	@SuppressWarnings("unchecked")
 	private DbQueryGlobalResult executeHQL(Session session, String hql, boolean showSql, List<String> vtables) throws HibernateException,
 			DatabaseException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		long begin = System.currentTimeMillis();
 
 		if (hql.toUpperCase().startsWith("SELECT") || hql.toUpperCase().startsWith("FROM")) {
-			Query q = session.createQuery(hql);
-			List<Object> ret = q.list();
+			Query<Object> q = session.createQuery(hql,Object.class);
+			List<Object> ret = q.getResultList();
 			List<String> columns = new ArrayList<>();
 			List<String> vcolumns = new ArrayList<>();
 			List<List<String>> results = new ArrayList<>();
-			Type[] rt = q.getReturnTypes();
 			int i = 0;
 
 			if (vtables == null) {
-				for (i = 0; i < rt.length; i++) {
-					columns.add(rt[i].getName());
+				// Try to infer column names from the result set
+				List<Object> resultList = q.getResultList();
+				if (!resultList.isEmpty()) {
+					Object firstRow = resultList.get(0);
+					if (firstRow instanceof Object[]) {
+						Object[] arr = (Object[]) firstRow;
+						for (int j = 0; j < arr.length; j++) {
+							columns.add("Column" + (j + 1));
+						}
+					} else {
+						columns.add("Result");
+					}
 				}
 			} else {
 				for (String vtable : vtables) {

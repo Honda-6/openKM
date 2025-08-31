@@ -19,10 +19,6 @@ import com.openkm.util.impexp.RepositoryImporter;
 import com.openkm.util.impexp.TextInfoDecorator;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.io.FilenameUtils;
@@ -54,7 +50,6 @@ public class FileUploadServlet extends OKMHttpServlet {
 	public static final int UPDATE = 1;
 
 	@Override
-	@SuppressWarnings("unchecked")
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		log.debug("doPost({}, {})", request, response);
 		String fileName = null;

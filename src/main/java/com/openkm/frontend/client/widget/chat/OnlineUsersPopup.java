@@ -139,7 +139,7 @@ public class OnlineUsersPopup extends DialogBox {
 				table.getCellFormatter().setVisible(rows, 1, false);
 				table.getRowFormatter().setStyleName(rows, "okm-Table-Row");
 				setRowWordWarp(rows, 1, false);
-			} else if (!user.getId().equals(actualUser) && !usersInChat.contains(user)) {
+			} else if (!user.getId().equals(actualUser) && !usersInChat.contains(user.getId())) {
 				table.setHTML(rows, 0, user.getUsername());
 				table.setHTML(rows, 1, user.getId());
 				table.getCellFormatter().setVisible(rows, 1, false);

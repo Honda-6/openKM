@@ -21,7 +21,6 @@
 
 package com.openkm.extension.frontend.client.widget.extraworkspace;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.TabBar;
@@ -49,7 +48,9 @@ public class TabWorkspace extends TabWorkspaceExtension implements WorkspaceHand
 	private Frame iframe;
 	private String textLabel = "";
 	private String url = "";
+	@SuppressWarnings("unused")
 	private TabBar tabBar;
+	@SuppressWarnings("unused")
 	private int tabIndex = 0;
 
 	/**
@@ -58,14 +59,13 @@ public class TabWorkspace extends TabWorkspaceExtension implements WorkspaceHand
 	public TabWorkspace() {
 		vPanel = new VerticalPanel();
 		iframe = new Frame("about:blank");
-
-		DOM.setElementProperty(iframe.getElement(), "frameborder", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginwidth", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginheight", "0");
+		iframe.getElement().setAttribute("frameborder", "0");
+		iframe.getElement().setAttribute("marginwidth", "0");
+		iframe.getElement().setAttribute("marginheight", "0");
 
 		// Commented because on IE show clear if allowtransparency=true
-		DOM.setElementProperty(iframe.getElement(), "allowtransparency", "false");
-		DOM.setElementProperty(iframe.getElement(), "scrolling", "auto");
+		iframe.getElement().setAttribute("allowtransparency", "false");
+		iframe.getElement().setAttribute("scrolling", "auto");
 
 		iframe.setUrl(Main.CONTEXT + "/extra/index.jsp");
 		iframe.setStyleName("okm-Iframe");

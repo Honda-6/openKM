@@ -28,7 +28,7 @@ import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -95,7 +95,7 @@ public class Draggable extends Composite implements OriginPanel {
 							if (clickedTreeItem != null
 									&& (((GWTFolder) clickedTreeItem.getUserObject()).getPermissions() & GWTPermission.WRITE) == GWTPermission.WRITE) {
 								final TreeItem draggedTreeItem = Main.get().activeFolderTree.getActualItem();
-								boolean isChild = DOM.isOrHasChild(draggedTreeItem.getElement(),
+								boolean isChild = draggedTreeItem.getElement().isOrHasChild(
 										clickedTreeItem.getElement());
 
 								if (draggedTreeItem != clickedTreeItem && !isChild) {
@@ -133,7 +133,7 @@ public class Draggable extends Composite implements OriginPanel {
 
 									// Unselects folder destination on tree
 									if (lastSelectElement != null) {
-										DOM.setElementProperty(lastSelectElement, "className", "gwt-TreeItem");
+										lastSelectElement.setClassName("gwt-TreeItem");
 									}
 
 									if (Main.get().mainPanel.desktop.browser.fileBrowser.isFolderSelected()) {
@@ -213,7 +213,7 @@ public class Draggable extends Composite implements OriginPanel {
 					// Removes always style of last selected treeItem
 					if (lastSelectedTreeItem != null && !actualItem.equals(lastSelectedTreeItem)
 							&& lastSelectElement != null) {
-						DOM.setElementProperty(lastSelectElement, "className", "gwt-TreeItem");
+						lastSelectElement.setClassName("gwt-TreeItem");
 						lastSelectedTreeItem = null;
 					}
 
@@ -223,11 +223,11 @@ public class Draggable extends Composite implements OriginPanel {
 						if (selectedElement == null) {
 							Window.alert("Problem: '" + selectedTreeItem.getElement().getInnerHTML() + "'");
 						}
-						DOM.setElementProperty(selectedElement, "className", "gwt-TreeItem gwt-TreeItem-selected");
+						selectedElement.setClassName("gwt-TreeItem gwt-TreeItem-selected");
 
 						if (lastSelectedTreeItem != null && !selectedTreeItem.equals(lastSelectedTreeItem)
 								&& !actualItem.equals(lastSelectedTreeItem) && lastSelectElement != null) {
-							DOM.setElementProperty(lastSelectElement, "className", "gwt-TreeItem");
+							lastSelectElement.setClassName("gwt-TreeItem");
 						}
 
 						lastSelectedTreeItem = selectedTreeItem;

@@ -1140,6 +1140,7 @@ public class DbDocumentModule implements DocumentModule {
 	public LockInfo getLockInfo(String token, String docId) throws AccessDeniedException, PathNotFoundException, LockException,
 			DatabaseException {
 		log.debug("getLock({}, {})", token, docId);
+		@SuppressWarnings("unused")
 		Authentication auth, oldAuth = null;
 		String docPath;
 		String docUuid;
@@ -1179,6 +1180,7 @@ public class DbDocumentModule implements DocumentModule {
 	public void purge(String token, String docId) throws LockException, AccessDeniedException, RepositoryException,
 			PathNotFoundException, DatabaseException {
 		log.debug("purge({}, {})", token, docId);
+		@SuppressWarnings("unused")
 		Authentication auth = null, oldAuth = null;
 		String docPath;
 		String docUuid;

@@ -59,7 +59,7 @@ public class NotEmptyFileUploadValidator extends Validator<NotEmptyFileUploadVal
 
 		return null;
 	}
-
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (fileUpload != null) {
 			for (ValidationAction<FileUpload> action : getFailureActions())

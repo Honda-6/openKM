@@ -1098,6 +1098,7 @@ public class DbDashboardModule implements DashboardModule {
 
 		if (elto != null) {
 			log.debug("Get '{}' from cache", source);
+			@SuppressWarnings("unchecked")
 			List<DashboardFolderResult> cachedResults = (List<DashboardFolderResult>) elto.getObjectValue();
 			al = allowedCachedFolderResults(cachedResults);
 		} else {
@@ -1292,6 +1293,7 @@ public class DbDashboardModule implements DashboardModule {
 	 * Get documents from statement
 	 */
 	
+	@SuppressWarnings("unchecked")
 	private ArrayList<DashboardDocumentResult> getUserDocuments(String user, String source, String qs) throws DatabaseException {
 		log.debug("getUserDocuments({}, {}, {})", user, source, qs);
 		ArrayList<DashboardDocumentResult> al = new ArrayList<>();
@@ -1345,6 +1347,7 @@ public class DbDashboardModule implements DashboardModule {
 	 * Get mails from statement
 	 */
 	
+	@SuppressWarnings("unchecked")
 	private ArrayList<DashboardMailResult> getUserMails(String user, String source, String qs) throws DatabaseException {
 		log.debug("getUserMails({}, {}, {})", user, source, qs);
 		ArrayList<DashboardMailResult> al = new ArrayList<>();

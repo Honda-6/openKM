@@ -225,7 +225,7 @@ public class FindDocumentSelectPopup extends DialogBox {
 				break;
 
 			case ORIGIN_MAIL_EDITOR_ADD_DOCUMENT:
-				String url = Main.get().workspaceUserProperties.getApplicationURL() + "?uuid=" + uuid;
+				//String url = Main.get().workspaceUserProperties.getApplicationURL() + "?uuid=" + uuid;
 				addDocumentToMailEditor(uuid, Util.getName(docPath));
 				break;
 		}

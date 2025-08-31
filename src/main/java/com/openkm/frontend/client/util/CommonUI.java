@@ -59,6 +59,7 @@ public class CommonUI {
 	 * @param path    The parent path
 	 * @param docPath The document full path
 	 */
+	@SuppressWarnings("null")
 	public static void openPath(String path, String docPath) {
 		boolean found = false;
 		boolean visibleByProfile = true;
@@ -291,7 +292,7 @@ public class CommonUI {
 				taskInstanceId != null && !taskInstanceId.equals("")) {
 			Main.get().mainPanel.topPanel.tabWorkspace.changeSelectedTab(UIDockPanelConstants.DASHBOARD);
 			Main.get().mainPanel.dashboard.horizontalToolBar.showWorkflowView();
-			workflowService.getUserTaskInstance(new Long(taskInstanceId), new AsyncCallback<GWTTaskInstance>() {
+			workflowService.getUserTaskInstance(Long.valueOf(taskInstanceId), new AsyncCallback<GWTTaskInstance>() {
 				@Override
 				public void onSuccess(GWTTaskInstance taskInstance) {
 					// Taskintance = null indicates is not valid user task instance

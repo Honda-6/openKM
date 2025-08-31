@@ -22,7 +22,6 @@
 package com.openkm.extension.frontend.client.widget.htmleditor;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.Frame;
@@ -73,14 +72,14 @@ public class HTMLEditorPopup extends DialogBox implements CaptionHandler {
 		}
 
 		iframe = new Frame("about:blank");
-		DOM.setElementProperty(iframe.getElement(), "id", "htmlEditor");
-		DOM.setElementProperty(iframe.getElement(), "frameborder", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginwidth", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginheight", "0");
-		DOM.setElementProperty(iframe.getElement(), "scrolling", "no");
+		iframe.getElement().setAttribute("id", "htmlEditor");
+		iframe.getElement().setAttribute("frameborder", "0");
+		iframe.getElement().setAttribute("marginwidth", "0");
+		iframe.getElement().setAttribute("marginheight", "0");
+		iframe.getElement().setAttribute("scrolling", "no");
 
 		// Commented because on IE show clear if allowtransparency=true
-		DOM.setElementProperty(iframe.getElement(), "allowtransparency", "false");
+		iframe.getElement().setAttribute("allowtransparency", "false");
 
 		iframe.setUrl(Main.CONTEXT + "/frontend/tinymce4.jsp");
 		iframe.setStyleName("okm-Iframe");

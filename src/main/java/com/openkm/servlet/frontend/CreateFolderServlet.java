@@ -9,10 +9,6 @@ import com.openkm.extension.core.ExtensionException;
 import com.openkm.frontend.client.constants.UploadConstants;
 import com.openkm.frontend.client.constants.service.ErrorCode;
 import com.openkm.util.PathUtils;
-// import org.apache.commons.fileupload.FileItem;
-// import org.apache.commons.fileupload.FileItemFactory;
-// import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-// import org.apache.commons.fileupload.servlet.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.io.IOUtils;
@@ -127,8 +123,10 @@ public class CreateFolderServlet extends OKMHttpServlet {
 			sendErrorResponse(out, action, fuResponse.get(), request, response, redirect, redirectURL);
 		} finally {
 			IOUtils.closeQuietly(is);
-			out.flush();
-			IOUtils.closeQuietly(out);
+			if (out != null) {
+				out.flush();
+				IOUtils.closeQuietly(out);
+			}
 			System.gc();
 		}
 	}

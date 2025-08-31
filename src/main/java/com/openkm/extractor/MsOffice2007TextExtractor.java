@@ -71,6 +71,7 @@ public class MsOffice2007TextExtractor extends AbstractTextExtractor {
 						XWPFWordExtractor extractor = new XWPFWordExtractor(opcPackage);
 						String text = extractor.getText();
 						log.debug("TEXT: " + text);
+						extractor.close();
 						return text;
 					}
 
@@ -80,6 +81,7 @@ public class MsOffice2007TextExtractor extends AbstractTextExtractor {
 						XSSFExcelExtractor extractor = new XSSFExcelExtractor(opcPackage);
 						String text = extractor.getText();
 						log.debug("TEXT: " + text);
+						extractor.close();
 						return text;
 					}
 
@@ -90,6 +92,7 @@ public class MsOffice2007TextExtractor extends AbstractTextExtractor {
 						XSLFPowerPointExtractor extractor = new XSLFPowerPointExtractor(opcPackage);
 						String text = extractor.getText();
 						log.debug("TEXT: " + text);
+						extractor.close();
 						return text;
 					}
 

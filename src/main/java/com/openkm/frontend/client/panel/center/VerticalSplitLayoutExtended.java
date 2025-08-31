@@ -49,8 +49,8 @@ public class VerticalSplitLayoutExtended extends SplitLayoutPanel {
 	@Override
 	public void onResize() {
 		super.onResize();
-		topHeight = Integer.parseInt(DOM.getStyleAttribute(DOM.getChild(this.getElement(), 2), "top").replace("px", "").trim());
-		bottomHeight = this.getOffsetHeight() - Integer.parseInt(DOM.getStyleAttribute(DOM.getChild(this.getElement(), 3), "top").replace("px", "").trim());
+		topHeight = Integer.parseInt(DOM.getChild(this.getElement(), 2).getStyle().getProperty("top").replace("px", "").trim());
+		bottomHeight = this.getOffsetHeight() - Integer.parseInt(DOM.getChild(this.getElement(), 3).getStyle().getProperty("top").replace("px", "").trim());
 		if (topHeight < 0) {
 			topHeight = 0;
 		}
@@ -86,8 +86,8 @@ public class VerticalSplitLayoutExtended extends SplitLayoutPanel {
 	@Override
 	public int getOffsetHeight() {
 		int offsetHeight = super.getOffsetHeight(); // when widget is hidden value is 0
-		if (offsetHeight == 0 && DOM.getStyleAttribute(this.getElement(), "height") != null && !DOM.getStyleAttribute(this.getElement(), "height").isEmpty()) {
-			offsetHeight = Integer.parseInt(DOM.getStyleAttribute(this.getElement(), "height").replaceAll("px", ""));
+		if (offsetHeight == 0 && this.getElement().getStyle().getProperty("height") != null && !this.getElement().getStyle().getProperty("height").isEmpty()) {
+			offsetHeight = Integer.parseInt(this.getElement().getStyle().getProperty("height").replaceAll("px", ""));
 		}
 		return offsetHeight;
 	}
@@ -95,8 +95,8 @@ public class VerticalSplitLayoutExtended extends SplitLayoutPanel {
 	@Override
 	public int getOffsetWidth() {
 		int offsetWidth = super.getOffsetWidth(); // when widget is hidden value is 0
-		if (offsetWidth == 0 && DOM.getStyleAttribute(this.getElement(), "width") != null && !DOM.getStyleAttribute(this.getElement(), "width").isEmpty()) {
-			offsetWidth = Integer.parseInt(DOM.getStyleAttribute(this.getElement(), "width").replaceAll("px", ""));
+		if (offsetWidth == 0 && this.getElement().getStyle().getProperty("width") != null && !this.getElement().getStyle().getProperty("width").isEmpty()) {
+			offsetWidth = Integer.parseInt(this.getElement().getStyle().getProperty("width").replaceAll("px", ""));
 		}
 		return offsetWidth;
 	}

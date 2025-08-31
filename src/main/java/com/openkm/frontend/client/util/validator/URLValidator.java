@@ -50,6 +50,7 @@ public class URLValidator extends Validator<URLValidator> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (textBox != null) {
 			for (ValidationAction<TextBoxBase> va : this.getFailureActions())

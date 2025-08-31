@@ -24,7 +24,6 @@ package com.openkm.extension.frontend.client.widget.zoho;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
 import com.openkm.extension.frontend.client.service.OKMZohoService;
@@ -70,9 +69,9 @@ public class ZohoPopup extends DialogBox {
 		vPanel = new VerticalPanel();
 
 		frame = new Frame(url);
-		DOM.setElementProperty(frame.getElement(), "frameborder", "0");
-		DOM.setElementProperty(frame.getElement(), "marginwidth", "0");
-		DOM.setElementProperty(frame.getElement(), "marginheight", "0");
+		frame.getElement().setAttribute("frameborder", "0");
+		frame.getElement().setAttribute("marginwidth", "0");
+		frame.getElement().setAttribute("marginheight", "0");
 		frame.setWidth(String.valueOf(width) + "px");
 		frame.setHeight(String.valueOf(height - UIDialogConstants.FRAME_OFFSET - UIDialogConstants.DIALOG_TOP) + "px");
 		frame.setStyleName("okm-Popup-text");

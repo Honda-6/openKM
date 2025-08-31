@@ -135,7 +135,7 @@ public class IntegerMaxValidator extends Validator<IntegerMaxValidator> {
 
 		return null;
 	}
-
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (text != null) {
 			for (ValidationAction<TextBoxBase> action : getFailureActions())

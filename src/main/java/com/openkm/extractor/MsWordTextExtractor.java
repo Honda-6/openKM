@@ -62,7 +62,10 @@ public class MsWordTextExtractor extends AbstractTextExtractor {
 	 */
 	public String extractText(InputStream stream, String type, String encoding) throws IOException {
 		try {
-			return new WordExtractor(stream).getText();
+			WordExtractor extractor = new WordExtractor(stream);
+			String text = extractor.getText();
+			extractor.close();
+			return text;
 		} catch (Exception e) {
 			log.warn("Failed to extract Word text content", e);
 			throw new IOException(e.getMessage(), e);

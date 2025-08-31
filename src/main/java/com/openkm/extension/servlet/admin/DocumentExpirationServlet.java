@@ -14,7 +14,8 @@ import com.openkm.principal.PrincipalAdapterException;
 import com.openkm.servlet.admin.BaseServlet;
 import com.openkm.util.WebUtils;
 import org.hibernate.HibernateException;
-import org.hibernate.Query;
+import org.hibernate.query.MutationQuery;
+import org.hibernate.query.Query;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,6 @@ public class DocumentExpirationServlet extends BaseServlet {
 	/**
 	 * Group List
 	 */
-	@SuppressWarnings("unchecked")
 	private void groupList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException,
 			DatabaseException, PrincipalAdapterException {
 		log.debug("groupList({}, {})", request, response);
@@ -83,8 +83,8 @@ public class DocumentExpirationServlet extends BaseServlet {
 		try {
 			dbSession = HibernateUtil.getSessionFactory().openSession();
 			tx = dbSession.beginTransaction();
-			Query q = dbSession.createQuery(qs);
-			List<String> groups = q.list();
+			Query<String> q = dbSession.createQuery(qs, String.class);
+			List<String> groups = q.getResultList();
 			sc.setAttribute("groups", groups);
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {
@@ -101,7 +101,6 @@ public class DocumentExpirationServlet extends BaseServlet {
 	/**
 	 * Edit
 	 */
-	@SuppressWarnings("unchecked")
 	private void edit(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException,
 			DatabaseException, PrincipalAdapterException {
 		log.debug("edit({}, {})", request, response);
@@ -115,7 +114,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 
 			if (WebUtils.getBoolean(request, "persist")) {
 				String qs = "delete from DatabaseMetadataValue dmv where dmv.table='group' and dmv.col00=:group";
-				Query q = dbSession.createQuery(qs);
+				MutationQuery q = dbSession.createMutationQuery(qs);
 				q.setParameter("group", group);
 				q.executeUpdate();
 				List<String> users = WebUtils.getStringList(request, "users");
@@ -125,7 +124,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 					dmv.setTable("group");
 					dmv.setCol00(group);
 					dmv.setCol01(user);
-					dbSession.save(dmv);
+					dbSession.persist(dmv);
 					// DatabaseMetadataDAO.createValue(dmv);
 				}
 
@@ -133,9 +132,9 @@ public class DocumentExpirationServlet extends BaseServlet {
 			} else {
 				ServletContext sc = getServletContext();
 				String qs = "select dmv.col01 from DatabaseMetadataValue dmv where dmv.table='group' and dmv.col00=:group";
-				Query q = dbSession.createQuery(qs);
+				Query<String> q = dbSession.createQuery(qs, String.class);
 				q.setParameter("group", group);
-				List<String> users = q.list();
+				List<String> users = q.getResultList();
 				HibernateUtil.commit(tx);
 				List<String> availableUsers = new ArrayList<>();
 
@@ -180,7 +179,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 
 			if (WebUtils.getBoolean(request, "persist")) {
 				String qs = "delete from DatabaseMetadataValue dmv where dmv.table='group' and dmv.col00=:group";
-				Query q = dbSession.createQuery(qs);
+				MutationQuery q = dbSession.createMutationQuery(qs);
 				q.setParameter("group", group);
 				q.executeUpdate();
 
@@ -190,7 +189,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 					dmv.setTable("group");
 					dmv.setCol00(group);
 					dmv.setCol01(user);
-					dbSession.save(dmv);
+					dbSession.persist(dmv);
 					// DatabaseMetadataDAO.createValue(dmv);
 				}
 
@@ -227,7 +226,6 @@ public class DocumentExpirationServlet extends BaseServlet {
 	/**
 	 * Delete
 	 */
-	@SuppressWarnings("unchecked")
 	private void delete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException,
 			DatabaseException, PrincipalAdapterException {
 		log.debug("delete({}, {})", request, response);
@@ -241,16 +239,16 @@ public class DocumentExpirationServlet extends BaseServlet {
 
 			if (WebUtils.getBoolean(request, "persist")) {
 				String qs = "delete from DatabaseMetadataValue dmv where dmv.table='group' and dmv.col00=:group";
-				Query q = dbSession.createQuery(qs);
+				MutationQuery q = dbSession.createMutationQuery(qs);
 				q.setParameter("group", group);
 				q.executeUpdate();
 				HibernateUtil.commit(tx);
 			} else {
 				ServletContext sc = getServletContext();
 				String qs = "select dmv.col01 from DatabaseMetadataValue dmv where dmv.table='group' and dmv.col00=:group";
-				Query q = dbSession.createQuery(qs);
+				Query<String> q = dbSession.createQuery(qs, String.class);
 				q.setParameter("group", group);
-				List<String> users = q.list();
+				List<String> users = q.getResultList();
 				HibernateUtil.commit(tx);
 				List<String> availableUsers = new ArrayList<>();
 
@@ -304,7 +302,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 			// Delete all users
 			for (String user : availableUsers) {
 				String qs = "delete from DatabaseMetadataValue dmv where dmv.table='group' and dmv.col00=:group";
-				Query q = dbSession.createQuery(qs);
+				MutationQuery q = dbSession.createMutationQuery(qs);
 				q.setParameter("group", user);
 				q.executeUpdate();
 			}
@@ -315,7 +313,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 				dmv.setTable("group");
 				dmv.setCol00(user);
 				dmv.setCol01(user);
-				dbSession.save(dmv);
+				dbSession.persist(dmv);
 				// DatabaseMetadataDAO.createValue(dmv);
 			}
 			HibernateUtil.commit(tx);
@@ -354,7 +352,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 			// Delete all roles
 			for (String role : availableRoles) {
 				String qs = "delete from DatabaseMetadataValue dmv where dmv.table='group' and dmv.col00=:group";
-				Query q = dbSession.createQuery(qs);
+				MutationQuery q = dbSession.createMutationQuery(qs);
 				q.setParameter("group", role);
 				q.executeUpdate();
 
@@ -377,7 +375,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 					dmv.setTable("group");
 					dmv.setCol00(role);
 					dmv.setCol01(user);
-					dbSession.save(dmv);
+					dbSession.persist(dmv);
 					// DatabaseMetadataDAO.createValue(dmv);
 				}
 
@@ -406,7 +404,7 @@ public class DocumentExpirationServlet extends BaseServlet {
 			dbSession = HibernateUtil.getSessionFactory().openSession();
 			tx = dbSession.beginTransaction();
 			String qs = "delete from DatabaseMetadataValue dmv where dmv.table='group'";
-			Query q = dbSession.createQuery(qs);
+			MutationQuery q = dbSession.createMutationQuery(qs);
 			q.executeUpdate();
 			HibernateUtil.commit(tx);
 		} catch (HibernateException e) {

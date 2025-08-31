@@ -45,6 +45,7 @@ public class NotEmptyFlextTableValidator extends Validator<NotEmptyFlextTableVal
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (flexTable != null) {
 			for (ValidationAction<FlexTable> va : this.getFailureActions())

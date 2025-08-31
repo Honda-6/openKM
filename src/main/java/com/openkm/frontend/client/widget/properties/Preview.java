@@ -50,6 +50,7 @@ public class Preview extends Composite {
 	private int width = 0;
 	private int height = 0;
 	private boolean previewAvailable = false;
+	@SuppressWarnings("unused")
 	private boolean previewConversion = true;
 	String mediaUrl = "";
 	private String mediaProvider = "";

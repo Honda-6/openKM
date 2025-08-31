@@ -137,7 +137,7 @@ public class IntegerMinValidator extends Validator<IntegerMinValidator> {
 
 		return null;
 	}
-
+	@SuppressWarnings("unchecked")
 	public void invokeActions(ValidationResult result) {
 		if (text != null) {
 			for (ValidationAction<TextBoxBase> action : getFailureActions())

@@ -122,18 +122,13 @@ public class CheckTextExtractionServlet extends BaseServlet {
 				if (is != null) {
 					if (!MimeTypeConfig.MIME_UNDEFINED.equals(mimeType)) {
 						try {
-							if (extractor != null && !extractor.isEmpty()) {
-								TextExtractor extClass = (TextExtractor) Class.forName(extractor).getDeclaredConstructor().newInstance();
-								text = extClass.extractText(is, mimeType, null);
-							} else {
-								TextExtractor extClass = RegisteredExtractors.getTextExtractor(mimeType);
+							TextExtractor extClass = RegisteredExtractors.getTextExtractor(mimeType);
 
-								if (extClass != null) {
-									extractor = extClass.getClass().getCanonicalName();
-									text = RegisteredExtractors.getText(mimeType, null, is);
-								} else {
-									extractor = "Undefined text extractor";
-								}
+							if (extClass != null) {
+								extractor = extClass.getClass().getCanonicalName();
+								text = RegisteredExtractors.getText(mimeType, null, is);
+							} else {
+								extractor = "Undefined text extractor";
 							}
 						} catch (Exception e) {
 							error = e.getMessage();

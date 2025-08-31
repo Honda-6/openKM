@@ -34,6 +34,7 @@ import eu.maydu.gwt.validation.client.i18n.ValidationMessages;
  * @author jllort
  *
  */
+@SuppressWarnings("unchecked")
 public class AlphaNumericValidator extends Validator<AlphaNumericValidator> {
 	private String regexPattern = "[a-zA-z0-9]*";
 	private SuggestBox suggestBox = null;

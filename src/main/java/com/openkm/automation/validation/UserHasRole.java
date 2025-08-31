@@ -41,6 +41,7 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
  */
 @PluginImplementation
 public class UserHasRole implements Validation {
+	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(UserHasRole.class);
 
 	@Override

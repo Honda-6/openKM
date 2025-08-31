@@ -22,8 +22,7 @@
 package com.openkm.frontend.client.extension.comunicator;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.openkm.frontend.client.Main;
@@ -107,7 +106,7 @@ public class GeneralComunicator {
 	 */
 	public static void extensionCallOwnDownload(String url) {
 		final Element downloadIframe = RootPanel.get("__download").getElement();
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 	}
 
 	/**

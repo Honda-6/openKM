@@ -34,6 +34,7 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 @PluginImplementation
 public class PathMatches implements Validation {
+	@SuppressWarnings("unused")
 	private static Logger log = LoggerFactory.getLogger(PathMatches.class);
 
 	@Override

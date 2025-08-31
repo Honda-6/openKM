@@ -21,12 +21,14 @@
 
 package com.openkm.extension.frontend.client.widget.messaging.stack.messagereceived;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.Event;
 import com.openkm.extension.frontend.client.widget.messaging.MessagingToolBarBox;
 
 /**
@@ -64,39 +66,39 @@ public class ExtendedFlexTable extends FlexTable {
 	/* (non-Javadoc)
 	 * @see com.google.gwt.user.client.EventListener#onBrowserEvent(com.google.gwt.user.client.Event)
 	 */
-	public void onBrowserEvent(Event event) {
+	public void onBrowserEvent(com.google.gwt.user.client.Event event) {
 		int selectedRow = 0;
 
-		if (DOM.eventGetType(event) == Event.ONDBLCLICK || DOM.eventGetType(event) == Event.ONMOUSEDOWN) {
-			Element td = getMouseEventTargetCell(event);
+		String eventType = event.getType().toLowerCase();
+
+		if ("dblclick".equals(eventType) || "mousedown".equals(eventType)) {
+			TableCellElement td = getMouseEventTargetCell(event);
 			if (td == null) return;
-			Element tr = DOM.getParent(td);
-			Element body = DOM.getParent(tr);
-			selectedRow = DOM.getChildIndex(body, tr);
+			TableRowElement tr = td.getParentElement().cast();
+			TableSectionElement body = tr.getParentElement().cast();
+			selectedRow = -1;
+			for (int i = 0; i < body.getChildCount(); i++) {
+				if (body.getChild(i).equals(tr)) {
+					selectedRow = i;
+					break;
+				}
+			}
 		}
 
-		// Only if selectedRow >= 0, indicates a document row value and must apear menu or double click action
 		if (selectedRow >= 0) {
+			mouseX = event.getClientX();
+			mouseY = event.getClientY();
 
-			// When de button mouse is released
-			mouseX = DOM.eventGetClientX(event);
-			mouseY = DOM.eventGetClientY(event);
-
-			// On double click not sends event to onCellClicked across super.onBrowserEvent();
-			if (DOM.eventGetType(event) == Event.ONDBLCLICK) {
-				// Disables the event propagation the sequence is:
-				// Two time entry onCellClicked before entry on onBrowserEvent and disables the
-				// Tree onCellClicked that produces inconsistence error refreshing
-				DOM.eventCancelBubble(event, true);
+			if ("dblclick".equals(eventType)) {
+				event.stopPropagation();
 				MessagingToolBarBox.get().messageDashboard.messageStack.messageReceived.refreshMessagesReceived();
-
-			} else if (DOM.eventGetType(event) == Event.ONMOUSEDOWN) {
-				switch (DOM.eventGetButton(event)) {
-					case Event.BUTTON_RIGHT:
+			} else if ("mousedown".equals(eventType)) {
+				switch (event.getButton()) {
+					case com.google.gwt.user.client.Event.BUTTON_RIGHT:
 						markSelectedRow(selectedRow);
 						MessagingToolBarBox.get().messageDashboard.messageStack.messageReceived.menuPopup.setPopupPosition(mouseX, mouseY);
 						MessagingToolBarBox.get().messageDashboard.messageStack.messageReceived.menuPopup.show();
-						DOM.eventPreventDefault(event); // Prevent to fire event to browser
+						event.preventDefault();
 						break;
 					default:
 						break;
@@ -169,24 +171,20 @@ public class ExtendedFlexTable extends FlexTable {
 
 	/**
 	 * Method originally copied from HTMLTable superclass where it was defined private
-	 * Now implemented differently to only return target cell if it'spart of 'this' table
+	 * Now implemented differently to only return target cell if it's part of 'this' table
 	 */
-	private Element getMouseEventTargetCell(Event event) {
-		Element td = DOM.eventGetTarget(event);
-		//locate enclosing td element
-		while (!DOM.getElementProperty(td, "tagName").equalsIgnoreCase("td")) {
-			// If we run out of elements, or run into the table itself, then give up.
-			if ((td == null) || td == getElement())
-				return null;
-			td = DOM.getParent(td);
+	private TableCellElement getMouseEventTargetCell(NativeEvent event) {
+		com.google.gwt.dom.client.Element td = com.google.gwt.dom.client.Element.as(event.getEventTarget());
+		while (td != null && !"td".equalsIgnoreCase(td.getTagName())) {
+			if (td == null || td == getElement()) return null;
+			td = td.getParentElement();
 		}
-		//test if the td is actually from this table
-		Element tr = DOM.getParent(td);
-		Element body = DOM.getParent(tr);
-		if (body == this.getBodyElement()) {
-			return td;
+		if (td == null) return null;
+		TableRowElement tr = td.getParentElement().cast();
+		TableSectionElement body = tr.getParentElement().cast();
+		if (body == getBodyElement().cast()) {
+			return td.cast();
 		}
-		//Didn't find appropriate cell
 		return null;
 	}
 

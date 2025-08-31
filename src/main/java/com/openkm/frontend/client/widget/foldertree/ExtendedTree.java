@@ -25,7 +25,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
@@ -92,15 +92,15 @@ public class ExtendedTree extends Tree{
 		// When de button mouse is released
 		if (DOM.eventGetType(event) == Event.ONMOUSEDOWN) {
 			// When de button mouse is released
-			mouseX = DOM.eventGetClientX(event);
-			mouseY = DOM.eventGetClientY(event);
+			mouseX = event.getClientX();
+			mouseY = event.getClientY();
 
 			// remove dragable item
 			Main.get().draggable.clear();
 
-			switch (DOM.eventGetButton(event)) {
+			switch (event.getButton()) {
 				case Event.BUTTON_RIGHT:
-					DOM.eventPreventDefault(event); // Prevent to fire event to browser
+					event.preventDefault(); // Prevent to fire event to browser
 					flagPopup = true;
 					mouseDownX = 0;
 					mouseDownY = 0;
@@ -115,9 +115,9 @@ public class ExtendedTree extends Tree{
 					mouseDownX = event.getScreenX();
 					mouseDownY = event.getClientY();
 			}
-		} else if (DOM.eventGetType(event) == Event.ONMOUSEMOVE) {
-			mouseX = DOM.eventGetClientX(event);
-			mouseY = DOM.eventGetClientY(event);
+		} else if (event.getTypeInt() == Event.ONMOUSEMOVE) {
+			mouseX = event.getClientX();
+			mouseY = event.getClientY();
 			if (Main.get().activeFolderTree.canDrag() && dragged && mouseDownX > 0 && mouseDownY > 0
 					&& evalDragPixelSensibility()) {
 				TreeItem actualItem = Main.get().activeFolderTree.getActualItem();

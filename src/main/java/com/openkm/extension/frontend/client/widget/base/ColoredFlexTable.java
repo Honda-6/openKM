@@ -22,7 +22,7 @@
 package com.openkm.extension.frontend.client.widget.base;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlexTable;
 
@@ -62,7 +62,7 @@ public class ColoredFlexTable extends FlexTable {
 		Element td = getEventTargetCell(event);
 		if (td == null)
 			return;
-		Element tr = DOM.getParent(td);
+		Element tr = td.getParentElement();
 
 		switch (DOM.eventGetType(event)) {
 			case Event.ONMOUSEOVER:

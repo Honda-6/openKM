@@ -728,6 +728,7 @@ public class DbAuthModule implements AuthModule, ApplicationContextAware {
 
 	@Override
 	public void updateUser(String token, String user, String password, String email, String name, boolean active) throws PrincipalAdapterException {
+		@SuppressWarnings("unused")
 		Authentication auth = null, oldAuth = null;
 
 		try {
@@ -796,6 +797,7 @@ public class DbAuthModule implements AuthModule, ApplicationContextAware {
 
 	@Override
 	public void updateRole(String token, String role, boolean active) throws PrincipalAdapterException {
+		@SuppressWarnings("unused")
 		Authentication auth = null, oldAuth = null;
 
 		try {

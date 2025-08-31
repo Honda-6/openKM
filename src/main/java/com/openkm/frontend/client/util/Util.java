@@ -24,8 +24,7 @@ package com.openkm.frontend.client.util;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.openkm.frontend.client.Main;
@@ -227,7 +226,7 @@ public class Util {
 
 		final Element downloadIframe = RootPanel.get("__download").getElement();
 		String url = RPCService.DownloadServlet + "?" + params + "uuid=" + URL.encodeQueryString(uuid);
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 	}
 
 	/**
@@ -241,7 +240,7 @@ public class Util {
 
 		final Element downloadIframe = RootPanel.get("__download").getElement();
 		String url = RPCService.DownloadServlet + "?" + params + "path=" + URL.encodeQueryString(path);
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 	}
 
 	/**
@@ -259,7 +258,7 @@ public class Util {
 			url += "&uuidList=" + URL.encodeQueryString(uuid);
 		}
 
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 	}
 
 	/**
@@ -280,7 +279,7 @@ public class Util {
 			url += "&pathList=" + URL.encodeQueryString(p);
 		}
 
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 	}
 
 	/**
@@ -289,7 +288,7 @@ public class Util {
 	public static void downloadFilePdf(String uuid) {
 		final Element downloadIframe = RootPanel.get("__download").getElement();
 		String url = RPCService.ConverterServlet + "?inline=false&toPdf=true&uuid=" + URL.encodeQueryString(uuid);
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 		Main.get().conversionStatus.getStatus();
 	}
 
@@ -307,7 +306,7 @@ public class Util {
 
 		final Element downloadIframe = RootPanel.get("__download").getElement();
 		String url = RPCService.ReportServlet + "?" + "id=" + id + parameters;
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 	}
 
 	/**
@@ -316,7 +315,7 @@ public class Util {
 	public static void print(String uuid) {
 		final Element printIframe = RootPanel.get("__print").getElement();
 		String url = RPCService.ConverterServlet + "?inline=true&print=true&toPdf=true&uuid=" + URL.encodeQueryString(uuid);
-		DOM.setElementAttribute(printIframe, "src", url);
+		printIframe.setAttribute("src", url);
 	}
 
 	/**
@@ -325,7 +324,7 @@ public class Util {
 	public static void downloadCSVFile(String params) {
 		final Element downloadIframe = RootPanel.get("__download").getElement();
 		String url = RPCService.CSVExporterServlet + "?" + params;
-		DOM.setElementAttribute(downloadIframe, "src", url);
+		downloadIframe.setAttribute("src", url);
 	}
 
 	/**

@@ -115,21 +115,22 @@ public class ExtendedScrollTable extends ScrollTable {
 		setSelectedPanel(true);
 
 		// When de button mouse is released
-		mouseX = DOM.eventGetClientX(event);
-		mouseY = DOM.eventGetClientY(event);
+		mouseX = event.getClientX();
+		mouseY = event.getClientY();
+
 
 		// On double click not sends event to onCellClicked across super.onBrowserEvent();
-		if (DOM.eventGetType(event) == Event.ONDBLCLICK) {
+		if (event.getTypeInt() == Event.ONDBLCLICK) {
 			// Disables the event propagation the sequence is:
 			// Two time entry onCellClicked before entry on onBrowserEvent and disbles the
 			// Tree onCellClicked that produces inconsistence error refreshing
-			DOM.eventCancelBubble(event, true);
+			event.stopPropagation();
 			if ((isDocumentSelected() || isAttachmentSelected()) && Main.get().workspaceUserProperties.getWorkspace().getAvailableOption().isDownloadOption()) {
 				Main.get().mainPanel.search.searchBrowser.searchResult.searchCompactResult.downloadDocument();
 			}
 
-		} else if (DOM.eventGetType(event) == Event.ONMOUSEDOWN) {
-			switch (DOM.eventGetButton(event)) {
+		} else if (event.getTypeInt() == Event.ONMOUSEDOWN) {
+			switch (event.getButton()) {
 				case Event.BUTTON_RIGHT:
 					if (!headerFired) {
 						if (isDocumentSelected() || isAttachmentSelected()) {
@@ -141,7 +142,7 @@ public class ExtendedScrollTable extends ScrollTable {
 						}
 						Main.get().mainPanel.search.searchBrowser.searchResult.searchCompactResult.menuPopup.menu.evaluateMenuOptions();
 						Main.get().mainPanel.search.searchBrowser.searchResult.searchCompactResult.showMenu();
-						DOM.eventPreventDefault(event); // Prevent to fire event to browser
+						event.preventDefault(); // Prevent to fire event to browser
 					}
 					break;
 				default:

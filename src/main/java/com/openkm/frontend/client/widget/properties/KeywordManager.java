@@ -99,7 +99,7 @@ public class KeywordManager {
 				}
 			}
 		});
-		suggestKey.getTextBox().addClickHandler(new ClickHandler() {
+		suggestKey.getValueBox().addClickHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				if (suggestKey.getText().equals(Main.i18n("dashboard.keyword.suggest"))) {
@@ -108,7 +108,7 @@ public class KeywordManager {
 			}
 		});
 
-		suggestKey.getTextBox().addMouseOutHandler(new MouseOutHandler() {
+		suggestKey.getValueBox().addMouseOutHandler(new MouseOutHandler() {
 			@Override
 			public void onMouseOut(MouseOutEvent event) {
 				if (!keyShortcutsEnabled) {
@@ -118,7 +118,7 @@ public class KeywordManager {
 			}
 		});
 
-		suggestKey.getTextBox().addMouseOverHandler(new MouseOverHandler() {
+		suggestKey.getValueBox().addMouseOverHandler(new MouseOverHandler() {
 			@Override
 			public void onMouseOver(MouseOverEvent event) {
 				if (keyShortcutsEnabled) {
@@ -356,7 +356,7 @@ public class KeywordManager {
 	 *
 	 */
 	public void setKeywordEnabled(boolean enabled) {
-		suggestKey.getTextBox().setEnabled(enabled);
+		suggestKey.getValueBox().setEnabled(enabled);
 	}
 
 	/**

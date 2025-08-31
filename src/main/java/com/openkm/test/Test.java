@@ -26,10 +26,18 @@ public class Test {
 		cfg.setProperty("hibernate.dialect", Config.HIBERNATE_DIALECT);
 		cfg.setProperty("hibernate.hbm2ddl.auto", "create");
 
-		SchemaExport se = new SchemaExport(cfg);
+		org.hibernate.boot.registry.StandardServiceRegistryBuilder registryBuilder =
+				new org.hibernate.boot.registry.StandardServiceRegistryBuilder().applySettings(cfg.getProperties());
+		org.hibernate.service.ServiceRegistry serviceRegistry = registryBuilder.build();
+
+		org.hibernate.boot.MetadataSources metadataSources = new org.hibernate.boot.MetadataSources(serviceRegistry);
+		metadataSources.addAnnotatedClass(NodeFolder.class);
+		org.hibernate.boot.Metadata metadata = metadataSources.buildMetadata();
+
+		SchemaExport se = new SchemaExport();
 		se.setOutputFile("/home/pavila/export.sql");
 		se.setDelimiter(";");
 		se.setFormat(false);
-		se.create(false, false);
+		se.create(java.util.EnumSet.of(org.hibernate.tool.schema.TargetType.SCRIPT), metadata);
 	}
 }

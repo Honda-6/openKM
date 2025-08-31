@@ -23,7 +23,7 @@ package com.openkm.frontend.client.widget.foldertree;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.*;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Composite;
@@ -668,7 +668,7 @@ public class FolderTree extends Composite implements OriginPanel {
 	 * Get the child folder if folder child path exists on actual tree Item selected
 	 */
 	public TreeItem getChildFolder(String path) {
-		boolean found = false;
+		//boolean found = false;
 		int i = 0;
 		TreeItem tmp;
 
@@ -676,7 +676,7 @@ public class FolderTree extends Composite implements OriginPanel {
 			tmp = actualItem.getChild(i);
 
 			if (((GWTFolder) tmp.getUserObject()).getPath().equals(path)) {
-				found = true;
+				//found = true;
 				return tmp;
 			}
 			i++;

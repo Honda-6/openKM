@@ -21,7 +21,6 @@
 
 package com.openkm.frontend.client.panel.center;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Frame;
 import com.openkm.frontend.client.Main;
@@ -41,13 +40,13 @@ public class Administration extends Composite {
 	public Administration() {
 		iframe = new Frame("about:blank");
 
-		DOM.setElementProperty(iframe.getElement(), "frameborder", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginwidth", "0");
-		DOM.setElementProperty(iframe.getElement(), "marginheight", "0");
-		DOM.setElementProperty(iframe.getElement(), "scrolling", "no");
+		iframe.getElement().setAttribute("frameborder", "0");
+		iframe.getElement().setAttribute("marginwidth", "0");
+		iframe.getElement().setAttribute("marginheight", "0");
+		iframe.getElement().setAttribute("scrolling", "no");
 
 		// Commented because on IE show clear if allowtransparency=true
-		DOM.setElementProperty(iframe.getElement(), "allowtransparency", "false");
+		iframe.getElement().setAttribute("allowtransparency", "false");
 
 		iframe.setUrl(Main.CONTEXT + "/admin/index.jsp");
 		iframe.setStyleName("okm-Iframe");

@@ -49,8 +49,8 @@ public class HorizontalSplitLayoutExtended extends SplitLayoutPanel {
 	@Override
 	public void onResize() {
 		super.onResize();
-		leftWidth = Integer.parseInt(DOM.getStyleAttribute(DOM.getChild(this.getElement(), 2), "left").replace("px", "").trim());
-		rightWidth = this.getOffsetWidth() - Integer.parseInt(DOM.getStyleAttribute(DOM.getChild(this.getElement(), 3), "left").replace("px", "").trim());
+		leftWidth = Integer.parseInt(DOM.getChild(this.getElement(), 2).getStyle().getProperty("left").replace("px", "").trim());
+		rightWidth = this.getOffsetWidth() - Integer.parseInt(DOM.getChild(this.getElement(), 3).getStyle().getProperty("left").replace("px", "").trim());
 		if (leftWidth < 0) {
 			leftWidth = 0;
 		}
@@ -77,8 +77,9 @@ public class HorizontalSplitLayoutExtended extends SplitLayoutPanel {
 	@Override
 	public int getOffsetHeight() {
 		int offsetHeight = super.getOffsetHeight(); // when widget is hidden value is 0
-		if (offsetHeight == 0 && DOM.getStyleAttribute(this.getElement(), "height") != null && !DOM.getStyleAttribute(this.getElement(), "height").isEmpty()) {
-			offsetHeight = Integer.parseInt(DOM.getStyleAttribute(this.getElement(), "height").replaceAll("px", ""));
+		String heightValue = this.getElement().getStyle().getProperty("height");
+		if (offsetHeight == 0 && heightValue != null && !heightValue.isEmpty()) {
+			offsetHeight = Integer.parseInt(heightValue.replaceAll("px", ""));
 		}
 		return offsetHeight;
 	}
@@ -86,8 +87,9 @@ public class HorizontalSplitLayoutExtended extends SplitLayoutPanel {
 	@Override
 	public int getOffsetWidth() {
 		int offsetWidth = super.getOffsetWidth(); // when widget is hidden value is 0
-		if (offsetWidth == 0 && DOM.getStyleAttribute(this.getElement(), "width") != null && !DOM.getStyleAttribute(this.getElement(), "width").isEmpty()) {
-			offsetWidth = Integer.parseInt(DOM.getStyleAttribute(this.getElement(), "width").replaceAll("px", ""));
+		String widthValue = this.getElement().getStyle().getProperty("width");
+		if (offsetWidth == 0 && widthValue != null && !widthValue.isEmpty()) {
+			offsetWidth = Integer.parseInt(widthValue.replaceAll("px", ""));
 		}
 		return offsetWidth;
 	}
