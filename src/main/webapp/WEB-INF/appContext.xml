@@ -5,13 +5,13 @@
              xmlns:jee="http://www.springframework.org/schema/jee"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="http://www.springframework.org/schema/beans
-                                 http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+                                 http://www.springframework.org/schema/beans/spring-beans.xsd
                                  http://www.springframework.org/schema/security
-                                 http://www.springframework.org/schema/security/spring-security-3.2.xsd
+                                 http://www.springframework.org/schema/security/spring-security.xsd
                                  http://www.springframework.org/schema/context
-                                 http://www.springframework.org/schema/context/spring-context-3.1.xsd
+                                 http://www.springframework.org/schema/context/spring-context.xsd
                                  http://www.springframework.org/schema/jee
-                                 http://www.springframework.org/schema/jee/spring-jee-3.1.xsd">
+                                 http://www.springframework.org/schema/jee/spring-jee.xsd">
 
   <context:component-scan base-package="com.openkm"/>
 
@@ -33,114 +33,22 @@
 
   <security:global-method-security secured-annotations="enabled"/>
 
-  <!-- Remove prefix to be able of use custom roles -->
-  <beans:bean id="roleVoter" class="org.springframework.security.access.vote.RoleVoter">
-    <beans:property name="rolePrefix" value="ROLE_"/>
-  </beans:bean>
-
-  <!-- Status -->
-  <security:http pattern="/Status" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- Download -->
-  <security:http pattern="/Download" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- Workflow deploy -->
-  <security:http pattern="/workflow-register" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- WebDAV using Basic authentication -->
-  <security:http pattern="/webdav/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <security:authentication-manager>
-    <security:authentication-provider ref="keycloakAuthProvider"/>
-  </security:authentication-manager>
-
-  <!-- Syndication using Basic authentication -->
-  <security:http pattern="/feed/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- OpenCMIS (Browser) using Basic authentication -->
-  <security:http pattern="/cmis/browser/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- OpenCMIS (AtomPub) using Basic authentication -->
-  <security:http pattern="/cmis/atom/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- OpenCMIS (AtomPub) using Basic authentication -->
-  <security:http pattern="/cmis/atom11/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- REST -->
-  <security:http pattern="/services/rest/**" create-session="stateless">
-    <security:intercept-url pattern="/**" access="IS_AUTHENTICATED_FULLY"/>
-    <security:http-basic/>
-  </security:http>
-
-  <!-- Additional filter chain for normal users, matching all other requests -->
-  <!-- http://info.michael-simons.eu/2011/01/28/disable-jsessionid-path-parameter-in-java-web-applications/ -->
-  <security:http access-decision-manager-ref="accessDecisionManager" access-denied-page="/unauthorized.jsp">
-
-    <!-- GWT -->
-    <security:intercept-url pattern="/frontend/**" access="IS_AUTHENTICATED_FULLY"/>
-
-    <!-- JSPs -->
-    <security:intercept-url pattern="/login.jsp" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
-    <security:intercept-url pattern="/admin/**" access="ROLE_ADMIN"/>
-    <security:intercept-url pattern="/mobile/**" access="IS_AUTHENTICATED_FULLY"/>
-
-    <!-- Servlets -->
-    <security:intercept-url pattern="/RepositoryStartup" access="IS_AUTHENTICATED_FULLY"/>
-    <security:intercept-url pattern="/TextToSpeech" access="IS_AUTHENTICATED_FULLY"/>
-    <security:intercept-url pattern="/HtmlPreview" access="IS_AUTHENTICATED_FULLY"/>
-    <security:intercept-url pattern="/SyntaxHighlighter" access="IS_AUTHENTICATED_FULLY"/>
-    <security:intercept-url pattern="/Test" access="IS_AUTHENTICATED_FULLY"/>
-
-    <!-- Extensions -->
-    <security:intercept-url pattern="/extension/ZohoFileUpload" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
-    <security:intercept-url pattern="/extension/**" access="IS_AUTHENTICATED_FULLY"/>
-
-    <!-- Login page -->
-    <security:form-login login-page="/login.jsp" authentication-failure-url="/login.jsp?error=1"/>
-
-  </security:http>
-
   <!-- Needed for changing default role prefix -->
-  <beans:bean id="accessDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">
-    <beans:property name="decisionVoters">
-      <beans:list>
-        <beans:bean class="org.springframework.security.web.access.expression.WebExpressionVoter"/>
-        <beans:ref bean="roleVoter"/>
-        <beans:bean class="org.springframework.security.access.vote.AuthenticatedVoter"/>
-      </beans:list>
-    </beans:property>
-  </beans:bean>
+<!--  <beans:bean id="accessDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">-->
+<!--    <beans:constructor-arg>-->
+<!--      <beans:list>-->
+<!--        <beans:bean class="org.springframework.security.web.access.expression.WebExpressionVoter"/>-->
+<!--        <beans:ref bean="roleVoter"/>-->
+<!--        <beans:bean class="org.springframework.security.access.vote.AuthenticatedVoter"/>-->
+<!--      </beans:list>-->
+<!--    </beans:constructor-arg>-->
+<!--  </beans:bean>-->
   <context:property-placeholder location="classpath:application.properties" />
   <!-- Security access logger -->
   <beans:bean id="loggerListener" class="com.openkm.spring.LoggerListener"/>
-  <beans:bean id="keycloakUtils" class="com.openkm.util.KeycloakUtils"/>
+  <!-- <beans:bean id="keycloakUtils" class="com.openkm.util.KeycloakUtils"/> -->
   <beans:bean id="keycloakAuthProvider" class="com.openkm.spring.KeycloakAuthenticationProvider"/>
   <jee:jndi-lookup id="dataSource" jndi-name="jdbc/OpenKMDS" resource-ref="true"/>
-
   <!-- Security configuration moved to $CATALINA_HOME/OpenKM.xml -->
   <!-- WINFIX
   <security:authentication-manager alias="authenticationManager">

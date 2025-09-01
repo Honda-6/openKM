@@ -53,7 +53,7 @@ public class PrincipalUtils {
 		String user = null;
 
 		for (Principal obj : subject.getPrincipals()) {
-			if (!(obj instanceof java.security.acl.Group)) {
+			if (!(obj instanceof Group)) {
 				java.security.Principal principal = obj;
 				user = principal.getName();
 			}
@@ -70,8 +70,8 @@ public class PrincipalUtils {
 		Set<String> roles = new HashSet<>();
 
 		for (Object obj : subject.getPrincipals()) {
-			if (obj instanceof java.security.acl.Group) {
-				java.security.acl.Group group = (java.security.acl.Group) obj;
+			if (obj instanceof Group) {
+				Group group = (Group) obj;
 
 				for (Enumeration<? extends java.security.Principal> groups = group.members(); groups.hasMoreElements(); ) {
 					java.security.Principal rol = groups.nextElement();
