@@ -106,11 +106,6 @@
       <artifactId>catch-exception</artifactId>
       <version>1.2.0</version>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>javax.transaction</groupId>-->
-<!--      <artifactId>jta</artifactId>-->
-<!--      <version>1.1</version>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>jakarta.transaction</groupId>
       <artifactId>jakarta.transaction-api</artifactId>
@@ -135,36 +130,12 @@
     </dependency>
 
     <!-- Provided libraries -->
-<!--    <dependency>-->
-<!--      <groupId>javax.servlet</groupId>-->
-<!--      <artifactId>javax.servlet-api</artifactId>-->
-<!--      <version>3.0.1</version>-->
-<!--      <scope>provided</scope>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
       <version>6.0.0</version>
       <scope>provided</scope>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>javax.websocket</groupId>-->
-<!--      <artifactId>javax.websocket-api</artifactId>-->
-<!--      <version>1.0</version>-->
-<!--      <scope>provided</scope>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>javax.servlet.jsp</groupId>-->
-<!--      <artifactId>jsp-api</artifactId>-->
-<!--      <version>2.2</version>-->
-<!--      <scope>provided</scope>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>com.sun.mail</groupId>-->
-<!--      <artifactId>javax.mail</artifactId>-->
-<!--      <version>1.6.2</version>-->
-<!--      <scope>provided</scope>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>jakarta.websocket</groupId>
       <artifactId>jakarta.websocket-api</artifactId>
@@ -210,11 +181,6 @@
     </dependency>
 
     <!-- Misc -->
-<!--    <dependency>-->
-<!--      <groupId>javax.servlet</groupId>-->
-<!--      <artifactId>jstl</artifactId>-->
-<!--      <version>1.2</version>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>jakarta.servlet.jsp.jstl</groupId>
       <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
@@ -359,7 +325,7 @@
       <version>3.3.1.OKM</version>
     </dependency>
 
-    <!-- Hibernate -->
+    <!-- Hibernate OLD-->
     <!-- <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-core</artifactId>
@@ -517,7 +483,7 @@
       <version>1.6.5.132-6</version>
     </dependency>
 
-    <!-- GWT -->
+    <!-- GWT OLD-->
     <!-- <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-servlet</artifactId>
@@ -1015,7 +981,6 @@
       <groupId>org.gwtproject</groupId>
       <artifactId>gwt-servlet-jakarta</artifactId>
       <version>2.12.0</version>
-      <!-- <scope>runtime</scope> -->
     </dependency>
     <dependency>
       <groupId>org.gwtproject</groupId>

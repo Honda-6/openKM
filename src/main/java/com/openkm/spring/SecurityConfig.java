@@ -48,43 +48,5 @@ public class SecurityConfig {
 		.exceptionHandling(exception -> exception.accessDeniedPage("/unauthorized.jsp"));
 		
 		return http.build();
-		// http
-		// 	.csrf().disable()
-		// 	.authorizeRequests()
-		// 	.antMatchers("/Status/**").authenticated()
-		// 	.antMatchers("/css/**", "/js/**", "/img/**", "/logo/**","/fonts/**","/Rss").permitAll()
-		// 	.antMatchers("/Download/**").authenticated()
-		// 	.antMatchers("/workflow-register/**").authenticated()
-		// 	.antMatchers("/webdav/**").authenticated()
-		// 	.antMatchers("/feed/**").authenticated()
-		// 	.antMatchers("/cmis/browser/**").authenticated()
-		// 	.antMatchers("/cmis/atom/**").authenticated()
-		// 	.antMatchers("/cmis/atom11/**").authenticated()
-		// 	.antMatchers("/services/rest/**").authenticated()
-		// 	.antMatchers("/frontend/**").authenticated()
-		// 	.antMatchers("/login.jsp").anonymous()
-		// 	.antMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
-		// 	.antMatchers("/mobile/**").authenticated()
-		// 	.antMatchers("/RepositoryStartup").authenticated()
-		// 	.antMatchers("/TextToSpeech").authenticated()
-		// 	.antMatchers("/HtmlPreview").authenticated()
-		// 	.antMatchers("/SyntaxHighlighter").authenticated()
-		// 	.antMatchers("/Test").authenticated()
-		// 	.antMatchers("/extension/ZohoFileUpload").anonymous()
-		// 	.antMatchers("/extension/**").authenticated()
-		// 	.anyRequest().authenticated()
-		// 	.and()
-		// 	.formLogin()
-		// 	.loginPage("/login.jsp")
-		// 	.defaultSuccessUrl("/frontend/index.jsp", true)
-		// 	.failureUrl("/login.jsp?error=1")
-		// 	.loginProcessingUrl("/j_spring_security_check")
-		// 	.usernameParameter("j_username")
-		// 	.passwordParameter("j_password")
-		// 	.and()
-		// 	.exceptionHandling()
-		// 	.accessDeniedPage("/unauthorized.jsp")
-		// 	.and()
-		// 	.headers().frameOptions().sameOrigin();
 	}
 }

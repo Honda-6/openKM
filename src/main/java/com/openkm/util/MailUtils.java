@@ -66,7 +66,6 @@ import jakarta.mail.internet.*;
 import jakarta.mail.search.FlagTerm;
 import jakarta.mail.util.ByteArrayDataSource;
 import javax.naming.InitialContext;
-//import jakarta.rmi.PortableRemoteObject;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
