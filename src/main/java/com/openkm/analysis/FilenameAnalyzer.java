@@ -32,8 +32,14 @@ import java.io.Reader;
  */
 public class FilenameAnalyzer extends Analyzer {
 
+	// @Override
+	// public TokenStream tokenStream(String fieldName, Reader reader) {
+	// 	return new FilenameTokenizer(reader);
+	// }
+
 	@Override
-	public TokenStream tokenStream(String fieldName, Reader reader) {
-		return new FilenameTokenizer(reader);
+	protected TokenStreamComponents createComponents(String arg0) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'createComponents'");
 	}
 }

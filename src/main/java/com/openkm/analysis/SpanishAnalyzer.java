@@ -21,14 +21,14 @@
 
 package com.openkm.analysis;
 
-import com.openkm.core.Config;
+// import com.openkm.core.Config;
 import org.apache.lucene.analysis.*;
-import org.apache.lucene.analysis.standard.StandardFilter;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
+// // import org.apache.lucene.analysis.standard.StandardFilter;
+// import org.apache.lucene.analysis.standard.StandardTokenizer;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
+// import java.io.File;
+// import java.io.IOException;
+// import java.io.Reader;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -85,36 +85,42 @@ public class SpanishAnalyzer extends Analyzer {
 	@SuppressWarnings("unused")
 	private Set<Object> exclTable = new HashSet<>();
 
+	@Override
+	protected TokenStreamComponents createComponents(String arg0) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'createComponents'");
+	}
+
 	/**
 	 * Builds an analyzer with the default stop words.
 	 */
-	public SpanishAnalyzer() {
-		stopTable = StopFilter.makeStopSet(Config.LUCENE_VERSION, SPANISH_STOP_WORDS);
-	}
+	// public SpanishAnalyzer() {
+	// 	stopTable = StopFilter.makeStopSet(Config.LUCENE_VERSION, SPANISH_STOP_WORDS);
+	// }
 
-	/** Builds an analyzer with the given stop words. */
-	public SpanishAnalyzer(String[] stopWords) {
-		stopTable = StopFilter.makeStopSet(Config.LUCENE_VERSION, stopWords);
-	}
+	// /** Builds an analyzer with the given stop words. */
+	// public SpanishAnalyzer(String[] stopWords) {
+	// 	stopTable = StopFilter.makeStopSet(Config.LUCENE_VERSION, stopWords);
+	// }
 
-	/**
-	 * Builds an analyzer with the given stop words from file.
-	 * @throws IOException
-	 */
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public SpanishAnalyzer(File stopWords) throws IOException {
-		stopTable = new HashSet(WordlistLoader.getWordSet(stopWords));
-	}
+	// /**
+	//  * Builds an analyzer with the given stop words from file.
+	//  * @throws IOException
+	//  */
+	// @SuppressWarnings({"unchecked", "rawtypes"})
+	// public SpanishAnalyzer(File stopWords) throws IOException {
+	// 	stopTable = new HashSet(WordlistLoader.getWordSet(stopWords));
+	// }
 
-	/** Constructs a {@link StandardTokenizer} filtered by a {@link
-	 * StandardFilter}, a {@link LowerCaseFilter}, a {@link StopFilter}
-	 * and a {@link SpanishStemFilter}. */
-	public final TokenStream tokenStream(String fieldName, Reader reader) {
-		TokenStream result = new StandardTokenizer(Config.LUCENE_VERSION, reader);
-		result = new StandardFilter(Config.LUCENE_VERSION, result);
-		result = new LowerCaseFilter(Config.LUCENE_VERSION, result);
-		result = new StopFilter(Config.LUCENE_VERSION, result, stopTable);
-		result = new SpanishStemFilter(result);
-		return result;
-	}
+	// /** Constructs a {@link StandardTokenizer} filtered by a {@link
+	//  * StandardFilter}, a {@link LowerCaseFilter}, a {@link StopFilter}
+	//  * and a {@link SpanishStemFilter}. */
+	// public final TokenStream tokenStream(String fieldName, Reader reader) {
+	// 	TokenStream result = new StandardTokenizer(Config.LUCENE_VERSION, reader);
+	// 	result = new StandardFilter(Config.LUCENE_VERSION, result);
+	// 	result = new LowerCaseFilter(Config.LUCENE_VERSION, result);
+	// 	result = new StopFilter(Config.LUCENE_VERSION, result, stopTable);
+	// 	result = new SpanishStemFilter(result);
+	// 	return result;
+	// }
 }

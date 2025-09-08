@@ -78,7 +78,7 @@
 
     <!-- Tell the compiler we can use 1.8 -->
     <java.version>17</java.version>
-    <java.compiler>21</java.compiler>
+    <java.compiler>17</java.compiler>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
 

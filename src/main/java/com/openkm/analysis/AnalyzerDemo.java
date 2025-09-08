@@ -21,13 +21,9 @@
 
 package com.openkm.analysis;
 
-import com.openkm.core.Config;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.SimpleAnalyzer;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.cjk.CJKAnalyzer;
-import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.slf4j.Logger;
@@ -35,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringReader;
-
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 /**
  * @author pavila
  *
@@ -45,11 +41,9 @@ public class AnalyzerDemo {
 	private static String[] strings = {"专项信息管理"};
 
 	private static Analyzer[] analyzers = {
-			new SimpleAnalyzer(Config.LUCENE_VERSION),
-			new StandardAnalyzer(Config.LUCENE_VERSION),
-			new CJKAnalyzer(Config.LUCENE_VERSION),
-			new SmartChineseAnalyzer(Config.LUCENE_VERSION),
-			new WhitespaceAnalyzer(Config.LUCENE_VERSION)
+			new StandardAnalyzer(),
+			new CJKAnalyzer(),
+			new WhitespaceAnalyzer()
 	};
 
 	public static void main(String args[]) throws Exception {

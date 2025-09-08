@@ -1,221 +1,99 @@
 package com.openkm.dao;
 
-import org.hibernate.HibernateException;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.cfg.NamingStrategy;
-import org.hibernate.cfg.Settings;
-import org.hibernate.connection.ConnectionProvider;
-import org.hibernate.connection.ConnectionProviderFactory;
-import org.hibernate.dialect.Dialect;
-import org.hibernate.tool.hbm2ddl.DatabaseMetadata;
-import org.hibernate.util.ReflectHelper;
+import org.hibernate.boot.Metadata;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.tool.schema.spi.SchemaManagementToolCoordinator;
+import org.hibernate.tool.schema.spi.DelayedDropAction;
+import org.hibernate.tool.schema.spi.DelayedDropRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.Writer;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Map;
 
 /**
- * A commandline tool to update a database schema. May also be called from
- * inside an application.
- *
- * @author Christoph Sturm
- * @author Paco Avila
- * @see http://opensource.atlassian.com/projects/hibernate/browse/HHH-1186
+ * Hibernate 6 SchemaUpdate replacement.
  */
 public class SchemaUpdate {
-	private static Logger log = LoggerFactory.getLogger(SchemaUpdate.class);
-	private ConnectionProvider connectionProvider;
-	private Configuration configuration;
-	private Dialect dialect;
-	private List<Exception> exceptions;
-	private String outputFile;
+    private static final Logger log = LoggerFactory.getLogger(SchemaUpdate.class);
+    private final StandardServiceRegistry registry;
+    private final Metadata metadata;
+    private final List<Exception> exceptions = new ArrayList<>();
+    private String outputFile;
 
-	public SchemaUpdate(Configuration cfg) throws HibernateException {
-		this(cfg, cfg.getProperties());
-	}
+    public SchemaUpdate(String cfgFile) {
+        registry = new StandardServiceRegistryBuilder()
+                .configure(cfgFile != null ? cfgFile : "hibernate.cfg.xml")
+                .build();
+        metadata = new MetadataSources(registry).buildMetadata();
+    }
 
-	public SchemaUpdate(Configuration cfg, Properties connectionProperties) throws HibernateException {
-		this.configuration = cfg;
-		dialect = Dialect.getDialect(connectionProperties);
-		Properties props = new Properties();
-		props.putAll(dialect.getDefaultProperties());
-		props.putAll(connectionProperties);
-		connectionProvider = ConnectionProviderFactory.newConnectionProvider(props);
-		exceptions = new ArrayList<>();
-	}
+    public SchemaUpdate setOutputFile(String filename) {
+        this.outputFile = filename;
+        return this;
+    }
 
-	public SchemaUpdate(Configuration cfg, Settings settings) throws HibernateException {
-		this.configuration = cfg;
-		dialect = settings.getDialect();
-		connectionProvider = settings.getConnectionProvider();
-		exceptions = new ArrayList<>();
-	}
+    public void execute(boolean script, boolean doUpdate) {
+        log.info("Running schema update with Hibernate 6 API");
 
-	public static void main(String[] args) {
-		try {
-			Configuration cfg = new Configuration();
-			String outFile = null;
+        try {
+            Map<String, Object> settings = new HashMap<>();
 
-			boolean script = true;
-			// If true then execute db updates, otherwise just generate and
-			// display updates
-			boolean doUpdate = true;
-			String propFile = null;
+            // Control execution behavior via settings
+            settings.put("hibernate.hbm2ddl.schema_update", true);
+            settings.put("hibernate.hbm2ddl.script", script);
+            settings.put("hibernate.hbm2ddl.auto", doUpdate ? "update" : "none");
+            if (outputFile != null) {
+                settings.put("hibernate.hbm2ddl.import_files_output", outputFile);
+            }
 
-			for (String arg : args) {
-				if (arg.startsWith("--")) {
-					if (arg.equals("--quiet")) {
-						script = false;
-					} else if (arg.startsWith("--properties=")) {
-						propFile = arg.substring(13);
-					} else if (arg.startsWith("--config=")) {
-						cfg.configure(arg.substring(9));
-					} else if (arg.startsWith("--text")) {
-						doUpdate = false;
-					} else if (arg.startsWith("--naming=")) {
-						cfg.setNamingStrategy((NamingStrategy) ReflectHelper.classForName(
-								arg.substring(9)).getDeclaredConstructor().newInstance());
-					} else if (arg.startsWith("--output=")) {
-						outFile = arg.substring(9);
-					}
-				} else {
-					cfg.addFile(arg);
-				}
+            SchemaManagementToolCoordinator.process(
+                    metadata,
+                    registry,
+                    settings,
+       				runnable -> { /* ignore */ }
 
-			}
+            );
 
-			if (propFile != null) {
-				Properties props = new Properties();
-				props.putAll(cfg.getProperties());
-				props.load(new FileInputStream(propFile));
-				cfg.setProperties(props);
-			}
+            log.info("Schema update complete");
+        } catch (Exception e) {
+            exceptions.add(e);
+            log.error("Schema update failed", e);
+        }
+    }
 
-			new SchemaUpdate(cfg).setOutputFile(outFile).execute(script, doUpdate);
-		} catch (Exception e) {
-			log.error("Error running schema update", e);
-			e.printStackTrace();
-		}
-	}
+    public List<Exception> getExceptions() {
+        return exceptions;
+    }
 
-	/**
-	 * Set an output filename. The generated script will be written to this
-	 * file.
-	 */
-	public SchemaUpdate setOutputFile(String filename) {
-		outputFile = filename;
-		return this;
-	}
+    public static void main(String[] args) {
+        try {
+            String configFile = null;
+            String outFile = null;
+            boolean script = true;
+            boolean doUpdate = true;
 
-	/**
-	 * Execute the schema updates
-	 *
-	 * @param script print all DDL to the console
-	 */
-	public void execute(boolean script, boolean doUpdate) {
-		log.info("Running hbm2ddl schema update");
-		Connection connection = null;
-		Statement stmt = null;
-		boolean autoCommitWasEnabled = true;
-		Writer outputFileWriter = null;
-		exceptions.clear();
+            for (String arg : args) {
+                if (arg.startsWith("--config=")) {
+                    configFile = arg.substring(9);
+                } else if (arg.startsWith("--output=")) {
+                    outFile = arg.substring(9);
+                } else if (arg.equals("--text")) {
+                    doUpdate = false;
+                } else if (arg.equals("--quiet")) {
+                    script = false;
+                }
+            }
 
-		try {
-			DatabaseMetadata meta;
-
-			try {
-				log.info("fetching database metadata");
-				connection = connectionProvider.getConnection();
-
-				if (!connection.getAutoCommit()) {
-					connection.commit();
-					connection.setAutoCommit(true);
-					autoCommitWasEnabled = false;
-				}
-
-				meta = new DatabaseMetadata(connection, dialect);
-				stmt = connection.createStatement();
-			} catch (SQLException sqle) {
-				exceptions.add(sqle);
-				log.error("could not get database metadata", sqle);
-				throw sqle;
-			}
-
-			log.info("updating schema");
-
-			if (outputFile != null) {
-				log.info("writing generated schema to file: " + outputFile);
-				outputFileWriter = new FileWriter(outputFile);
-			}
-
-			String[] createSQL = configuration.generateSchemaUpdateScript(dialect, meta);
-
-			for (final String sql : createSQL) {
-				try {
-					if (script) {
-						log.info("writing generated schema to console: ");
-						log.info(sql);
-					}
-
-					if (outputFile != null) {
-						outputFileWriter.write(sql + "\n");
-					}
-
-					if (doUpdate) {
-						log.debug(sql);
-						stmt.executeUpdate(sql);
-					}
-				} catch (SQLException e) {
-					exceptions.add(e);
-					log.error("Unsuccessful: " + sql);
-					log.error(e.getMessage());
-				}
-			}
-
-			log.info("schema update complete");
-		} catch (Exception e) {
-			exceptions.add(e);
-			log.error("could not complete schema update", e);
-		} finally {
-			try {
-				if (stmt != null)
-					stmt.close();
-				if (!autoCommitWasEnabled)
-					connection.setAutoCommit(false);
-				if (connection != null)
-					connection.close();
-				if (connectionProvider != null)
-					connectionProvider.close();
-			} catch (Exception e) {
-				exceptions.add(e);
-				log.error("Error closing connection", e);
-			}
-
-			try {
-				if (outputFileWriter != null) {
-					outputFileWriter.close();
-				}
-			} catch (Exception e) {
-				exceptions.add(e);
-				log.error("Error closing connection", e);
-			}
-		}
-	}
-
-	/**
-	 * Returns a List of all Exceptions which occured during the export.
-	 *
-	 * @return A List containig the Exceptions occured during the export
-	 */
-	public List<Exception> getExceptions() {
-		return exceptions;
-	}
+            new SchemaUpdate(configFile)
+                    .setOutputFile(outFile)
+                    .execute(script, doUpdate);
+        } catch (Exception e) {
+            log.error("Error running schema update", e);
+        }
+    }
 }

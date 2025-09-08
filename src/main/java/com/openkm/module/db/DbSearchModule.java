@@ -43,13 +43,14 @@ import com.openkm.module.db.base.BaseMailModule;
 import com.openkm.spring.PrincipalUtils;
 import com.openkm.util.*;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.hibernate.HibernateException;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
+import org.apache.lucene.util.BytesRef;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -153,12 +154,12 @@ public class DbSearchModule implements SearchModule {
 				auth = PrincipalUtils.getAuthenticationByToken(token);
 			}
 
-			QueryParser qp = new QueryParser(Config.LUCENE_VERSION, "text", SearchDAO.analyzer);
+			QueryParser qp = new QueryParser("text", SearchDAO.analyzer);
 			Query q = qp.parse(query);
 			ResultSet rs = findByStatementPaginated(auth, q, offset, limit);
 			log.debug("findByQueryPaginated: {}", rs);
 			return rs;
-		} catch (org.apache.lucene.queryParser.ParseException e) {
+		} catch (org.apache.lucene.queryparser.classic.ParseException e) {
 			throw new ParseException(e.getMessage(), e);
 		} finally {
 			if (token != null) {
@@ -172,7 +173,7 @@ public class DbSearchModule implements SearchModule {
 	 */
 	public Query prepareStatement(QueryParams params) throws IOException, ParseException, RepositoryException, DatabaseException {
 		log.debug("prepareStatement({})", params);
-		BooleanQuery query = new BooleanQuery();
+		BooleanQuery.Builder query = new BooleanQuery.Builder();
 
 		// Clean params
 		params.setName(params.getName() != null ? params.getName().trim() : "");
@@ -197,7 +198,7 @@ public class DbSearchModule implements SearchModule {
 		 * DOCUMENT
 		 */
 		if (document) {
-			BooleanQuery queryDocument = new BooleanQuery();
+			BooleanQuery.Builder queryDocument = new BooleanQuery.Builder();
 			Term tEntity = new Term("_hibernate_class", NodeDocument.class.getCanonicalName());
 			queryDocument.add(new TermQuery(tEntity), BooleanClause.Occur.MUST);
 
@@ -230,18 +231,20 @@ public class DbSearchModule implements SearchModule {
 				String sFrom = DAY_FORMAT.format(from);
 				Date to = params.getLastModifiedTo().getTime();
 				String sTo = DAY_FORMAT.format(to);
-				queryDocument.add(new TermRangeQuery("lastModified", sFrom, sTo, true, true), BooleanClause.Occur.MUST);
+				BytesRef lower = new BytesRef(sFrom);
+				BytesRef upper = new BytesRef(sTo);
+				queryDocument.add(new TermRangeQuery("lastModified", lower, upper, true, true), BooleanClause.Occur.MUST);
 			}
 
 			appendCommon(params, queryDocument);
-			query.add(queryDocument, BooleanClause.Occur.SHOULD);
+			query.add(queryDocument.build(), BooleanClause.Occur.SHOULD);
 		}
 
 		/**
 		 * FOLDER
 		 */
 		if (folder) {
-			BooleanQuery queryFolder = new BooleanQuery();
+			BooleanQuery.Builder queryFolder = new BooleanQuery.Builder();
 			Term tEntity = new Term("_hibernate_class", NodeFolder.class.getCanonicalName());
 			queryFolder.add(new TermQuery(tEntity), BooleanClause.Occur.MUST);
 
@@ -251,14 +254,14 @@ public class DbSearchModule implements SearchModule {
 			}
 
 			appendCommon(params, queryFolder);
-			query.add(queryFolder, BooleanClause.Occur.SHOULD);
+			query.add(queryFolder.build(), BooleanClause.Occur.SHOULD);
 		}
 
 		/**
 		 * MAIL
 		 */
 		if (mail) {
-			BooleanQuery queryMail = new BooleanQuery();
+			BooleanQuery.Builder queryMail = new BooleanQuery.Builder();
 			Term tEntity = new Term("_hibernate_class", NodeMail.class.getCanonicalName());
 			queryMail.add(new TermQuery(tEntity), BooleanClause.Occur.MUST);
 
@@ -293,21 +296,23 @@ public class DbSearchModule implements SearchModule {
 				String sFrom = DAY_FORMAT.format(from);
 				Date to = params.getLastModifiedTo().getTime();
 				String sTo = DAY_FORMAT.format(to);
-				queryMail.add(new TermRangeQuery("sentDate", sFrom, sTo, true, true), BooleanClause.Occur.MUST);
+				BytesRef lower = new BytesRef(sFrom);
+				BytesRef upper = new BytesRef(sTo);
+				queryMail.add(new TermRangeQuery("sentDate", lower, upper, true, true), BooleanClause.Occur.MUST);
 			}
 
 			appendCommon(params, queryMail);
-			query.add(queryMail, BooleanClause.Occur.SHOULD);
+			query.add(queryMail.build(), BooleanClause.Occur.SHOULD);
 		}
 
 		log.debug("prepareStatement: {}", query.toString());
-		return query;
+		return query.build();
 	}
 
 	/**
 	 * Add common fields
 	 */
-	private void appendCommon(QueryParams params, BooleanQuery query) throws IOException, ParseException, DatabaseException,
+	private void appendCommon(QueryParams params, BooleanQuery.Builder query) throws IOException, ParseException, DatabaseException,
 			RepositoryException {
 		if (!params.getPath().equals("")) {
 			if (Config.STORE_NODE_PATH) {
@@ -321,7 +326,7 @@ public class DbSearchModule implements SearchModule {
 				if (!params.getPath().equals(context)) {
 					try {
 						String parentUuid = NodeBaseDAO.getInstance().getUuidFromPath(params.getPath());
-						BooleanQuery parent = new BooleanQuery();
+						BooleanQuery.Builder parent = new BooleanQuery.Builder();
 						Term tFld = new Term("parent", parentUuid);
 						parent.add(new TermQuery(tFld), BooleanClause.Occur.SHOULD);
 
@@ -330,7 +335,7 @@ public class DbSearchModule implements SearchModule {
 							parent.add(new TermQuery(tChild), BooleanClause.Occur.SHOULD);
 						}
 
-						query.add(parent, BooleanClause.Occur.MUST);
+						query.add(parent.build(), BooleanClause.Occur.MUST);
 					} catch (BooleanQuery.TooManyClauses e) {
 						throw new RepositoryException("Max clauses reached, please search from a deeper folder", e);
 					} catch (PathNotFoundException e) {
@@ -386,7 +391,9 @@ public class DbSearchModule implements SearchModule {
 								if (from != null && to != null) {
 									String sFrom = DAY_FORMAT.format(from.getTime());
 									String sTo = DAY_FORMAT.format(to.getTime());
-									query.add(new TermRangeQuery(ent.getKey(), sFrom, sTo, true, true), BooleanClause.Occur.MUST);
+									BytesRef lower = new BytesRef(sFrom);
+									BytesRef upper = new BytesRef(sTo);
+									query.add(new TermRangeQuery(ent.getKey(), lower, upper, true, true), BooleanClause.Occur.MUST);
 								}
 							}
 						} else if (fe instanceof Input && ((Input) fe).getType().equals(Input.TYPE_TEXT) || fe instanceof TextArea) {
@@ -674,7 +681,9 @@ public class DbSearchModule implements SearchModule {
 
 			hSession = HibernateUtil.getSessionFactory().openSession();
 			tx = hSession.beginTransaction();
-			org.hibernate.Query hq = hSession.createQuery(qs);
+			//org.hibernate.Query hq = hSession.createQuery(qs);
+			org.hibernate.query.Query<String> hq = hSession.createQuery(qs, String.class);
+
 			List<String> nodeKeywords = hq.list();
 
 			if (filter != null && nodeKeywords.containsAll(filter)) {

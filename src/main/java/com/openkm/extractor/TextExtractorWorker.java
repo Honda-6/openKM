@@ -26,7 +26,8 @@ import com.openkm.core.DatabaseException;
 import com.openkm.dao.NodeDocumentDAO;
 import com.openkm.util.SystemProfiling;
 import com.openkm.util.ThreadPoolManager;
-import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
+
+import org.hibernate.search.mapper.pojo.massindexing.MassIndexingMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,7 +110,7 @@ public class TextExtractorWorker extends TimerTask {
 	/**
 	 * Force text extraction of every document in the repository
 	 */
-	public void rebuildWorker(MassIndexerProgressMonitor monitor) throws DatabaseException, InterruptedException {
+	public void rebuildWorker(MassIndexingMonitor monitor) throws DatabaseException, InterruptedException {
 		if (running) {
 			log.warn("*** Text extraction already running ***");
 		} else {
@@ -137,7 +138,7 @@ public class TextExtractorWorker extends TimerTask {
 	/**
 	 * Process text extraction pending queue
 	 */
-	private void processQueue(MassIndexerProgressMonitor monitor, int maxResults) {
+	private void processQueue(MassIndexingMonitor monitor, int maxResults) {
 		if (Config.MANAGED_TEXT_EXTRACTION_CONCURRENT) {
 			log.debug("Processing queue concurrently with {} processors", Config.AVAILABLE_PROCESSORS);
 			processConcurrent(monitor, maxResults);
@@ -149,7 +150,7 @@ public class TextExtractorWorker extends TimerTask {
 	/**
 	 * Process queue serial
 	 */
-	private void processSerial(MassIndexerProgressMonitor monitor, int maxResults) {
+	private void processSerial(MassIndexingMonitor monitor, int maxResults) {
 		log.debug("processSerial({}, {})", monitor, maxResults);
 		long begin = System.currentTimeMillis();
 
@@ -177,7 +178,7 @@ public class TextExtractorWorker extends TimerTask {
 	/**
 	 * Process queue concurrent
 	 */
-	private void processConcurrent(MassIndexerProgressMonitor monitor, int maxResults) {
+	private void processConcurrent(MassIndexingMonitor monitor, int maxResults) {
 		log.info("processConcurrent({}, {})", monitor, maxResults);
 		long begin = System.currentTimeMillis();
 

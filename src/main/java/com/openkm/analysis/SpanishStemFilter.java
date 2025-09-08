@@ -21,10 +21,11 @@
 
 package com.openkm.analysis;
 
-import org.apache.lucene.analysis.Token;
-import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.TokenFilter;
 import org.tartarus.snowball.ext.SpanishStemmer;
+
+import antlr.Token;
 
 import java.io.IOException;
 

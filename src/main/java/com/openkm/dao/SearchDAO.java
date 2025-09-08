@@ -1,24 +1,3 @@
-/**
- * OpenKM, Open Document Management System (http://www.openkm.com)
- * Copyright (c) 2006-2017 Paco Avila & Josep Llort
- * <p>
- * No bytes were intentionally harmed during the development of this application.
- * <p>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- * <p>
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
 package com.openkm.dao;
 
 import com.openkm.bean.Permission;
@@ -41,709 +20,685 @@ import com.openkm.util.SystemProfiling;
 import net.sf.ehcache.Cache;
 import net.sf.ehcache.Element;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.document.Document; // only for highlighter API types (not entity)
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermDocs;
-import org.apache.lucene.index.TermEnum;
-import org.apache.lucene.queryParser.QueryParser;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.*;
-import org.apache.lucene.search.similar.MoreLikeThis;
-import org.apache.lucene.store.Directory;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.search.FullTextQuery;
-import org.hibernate.search.FullTextSession;
-import org.hibernate.search.Search;
-import org.hibernate.search.SearchFactory;
-import org.hibernate.search.query.dsl.QueryBuilder;
-import org.hibernate.search.reader.ReaderProvider;
-import org.hibernate.search.store.DirectoryProvider;
+import org.hibernate.search.engine.search.query.SearchResult;
+import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.session.SearchSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * Search results are filtered by com.openkm.module.db.stuff.ReadAccessFilterFactory, which limit the results only for
- * those which have read access.
+ * Hibernate Search 6 rewrite of SearchDAO.
  *
- * @author pavila
+ * Security filtering:
+ *  - In HS6 there is no enableFullTextFilter/readAccess hook like old HS4,
+ *    so we evaluate access with DbAccessManager after fetching hits, preserving
+ *    the previous "MORE", "WINDOW", and "LIMITED" behaviors.
  */
 public class SearchDAO {
-	private static Logger log = LoggerFactory.getLogger(SearchDAO.class);
-	private static SearchDAO single = new SearchDAO();
-	private static final int MAX_FRAGMENT_LEN = 256;
-	public static final String SEARCH_LUCENE = "lucene";
-	public static final String SEARCH_ACCESS_MANAGER_MORE = "am_more";
-	public static final String SEARCH_ACCESS_MANAGER_WINDOW = "am_window";
-	public static final String SEARCH_ACCESS_MANAGER_LIMITED = "am_limited";
-	private static final String CACHE_SEARCH_FOLDERS_IN_DEPTH = "com.openkm.cache.searchFoldersInDepth";
-	public static Analyzer analyzer = null;
-
-	static {
-		try {
-			Class<?> Analyzer = Class.forName(Config.HIBERNATE_SEARCH_ANALYZER);
-
-			if (Analyzer.getCanonicalName().startsWith("org.apache.lucene.analysis")) {
-				Constructor<?> constructor = Analyzer.getConstructor(Config.LUCENE_VERSION.getClass());
-				analyzer = (Analyzer) constructor.newInstance(Config.LUCENE_VERSION);
-			} else {
-				analyzer = (Analyzer) Analyzer.getDeclaredConstructor().newInstance();
-			}
-		} catch (Exception e) {
-			log.warn(e.getMessage(), e);
-			analyzer = new StandardAnalyzer(Config.LUCENE_VERSION);
-		}
-
-		log.debug("Analyzer: {}", analyzer.getClass());
-	}
-
-	private SearchDAO() {
-	}
-
-	public static SearchDAO getInstance() {
-		return single;
-	}
-
-	/**
-	 * Search by query
-	 */
-	public NodeResultSet findByQuery(Query query, int offset, int limit) throws ParseException, DatabaseException {
-		log.debug("findByQuery({}, {}, {})", query, offset, limit);
-		FullTextSession ftSession = null;
-		Session session = null;
-		Transaction tx = null;
-
-		try {
-			long begin = System.currentTimeMillis();
-			session = HibernateUtil.getSessionFactory().openSession();
-			ftSession = Search.getFullTextSession(session);
-			tx = ftSession.beginTransaction();
-
-			NodeResultSet result = null;
-
-			if (SEARCH_LUCENE.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryLucene(ftSession, query, offset, limit);
-			} else if (SEARCH_ACCESS_MANAGER_MORE.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryAccessManagerMore(ftSession, query, offset, limit);
-			} else if (SEARCH_ACCESS_MANAGER_WINDOW.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryAccessManagerWindow(ftSession, query, offset, limit);
-			} else if (SEARCH_ACCESS_MANAGER_LIMITED.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryAccessManagerLimited(ftSession, query, offset, limit);
-			}
-
-			HibernateUtil.commit(tx);
-			SystemProfiling.log(query + ", " + offset + ", " + limit, System.currentTimeMillis() - begin);
-			log.trace("findByQuery.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
-			log.debug("findByQuery: {}", result);
-			return result;
-		} catch (IOException | InvalidTokenOffsetsException | HibernateException e) {
-			HibernateUtil.rollback(tx);
-			throw new DatabaseException(e.getMessage(), e);
-		} finally {
-			HibernateUtil.close(ftSession);
-			HibernateUtil.close(session);
-		}
-	}
-
-	/**
-	 * Search by simple query
-	 */
-	public NodeResultSet findBySimpleQuery(String expression, int offset, int limit) throws ParseException,
-			DatabaseException {
-		log.debug("findBySimpleQuery({}, {}, {})", expression, offset, limit);
-		FullTextSession ftSession = null;
-		Session session = null;
-		Transaction tx = null;
-
-		try {
-			long begin = System.currentTimeMillis();
-			session = HibernateUtil.getSessionFactory().openSession();
-			ftSession = Search.getFullTextSession(session);
-			tx = ftSession.beginTransaction();
-
-			QueryParser parser = new QueryParser(Config.LUCENE_VERSION, NodeDocument.TEXT_FIELD, analyzer);
-			Query query = parser.parse(expression);
-			NodeResultSet result = null;
-			log.debug("findBySimpleQuery.query: {}", query);
-
-			if (SEARCH_LUCENE.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryLucene(ftSession, query, offset, limit);
-			} else if (SEARCH_ACCESS_MANAGER_MORE.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryAccessManagerMore(ftSession, query, offset, limit);
-			} else if (SEARCH_ACCESS_MANAGER_WINDOW.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryAccessManagerWindow(ftSession, query, offset, limit);
-			} else if (SEARCH_ACCESS_MANAGER_LIMITED.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-				result = runQueryAccessManagerLimited(ftSession, query, offset, limit);
-			}
-
-			HibernateUtil.commit(tx);
-			SystemProfiling.log(expression + ", " + offset + ", " + limit, System.currentTimeMillis() - begin);
-			log.trace("findBySimpleQuery.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
-			log.debug("findBySimpleQuery: {}", result);
-			return result;
-		} catch (org.apache.lucene.queryParser.ParseException e) {
-			HibernateUtil.rollback(tx);
-			throw new ParseException(e.getMessage(), e);
-		} catch (IOException | InvalidTokenOffsetsException | HibernateException e) {
-			HibernateUtil.rollback(tx);
-			throw new DatabaseException(e.getMessage(), e);
-		} finally {
-			HibernateUtil.close(ftSession);
-			HibernateUtil.close(session);
-		}
-	}
-
-	/**
-	 * Parses a query string, returning a {@link org.apache.lucene.search.Query}.
-	 *
-	 * @param expression the query string to be parsed.
-	 * @param field      the default field for query terms.
-	 */
-	public Query parseQuery(String expression, String field) throws ParseException, DatabaseException {
-		log.debug("parseQuery({}, {})", expression, field);
-
-		try {
-			QueryParser parser = new QueryParser(Config.LUCENE_VERSION, field, analyzer);
-			Query query = parser.parse(expression);
-			log.debug("parseQuery: {}", query);
-			return query;
-		} catch (org.apache.lucene.queryParser.ParseException e) {
-			throw new ParseException(e.getMessage(), e);
-		} catch (HibernateException e) {
-			throw new DatabaseException(e.getMessage(), e);
-		}
-	}
-
-	/**
-	 * Security is evaluated by Lucene, so query result are already pruned. This means that every node
-	 * should have its security (user and role) info stored in Lucene. This provides very quick search
-	 * but security modifications need to be recursively applied to reach every document node in the
-	 * repository. This may take several hours (or days) is big repositories.
-	 */
-	@SuppressWarnings("unchecked")
-	private NodeResultSet runQueryLucene(FullTextSession ftSession, Query query, int offset, int limit)
-			throws IOException, InvalidTokenOffsetsException, HibernateException, DatabaseException {
-		log.debug("runQueryLucene({}, {}, {}, {})", ftSession, query, offset, limit);
-		List<NodeQueryResult> results = new ArrayList<>();
-		NodeResultSet result = new NodeResultSet();
-		FullTextQuery ftq = ftSession.createFullTextQuery(query, NodeDocument.class, NodeFolder.class, NodeMail.class);
-		ftq.setProjection(FullTextQuery.SCORE, FullTextQuery.THIS);
-		ftq.enableFullTextFilter("readAccess");
-		QueryScorer scorer = new QueryScorer(query, NodeDocument.TEXT_FIELD);
-
-		// Set limits
-		ftq.setFirstResult(offset);
-		ftq.setMaxResults(limit);
-
-		// Highlight using a CSS style
-		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class='highlight'>", "</span>");
-		Highlighter highlighter = new Highlighter(formatter, scorer);
-		highlighter.setTextFragmenter(new SimpleSpanFragmenter(scorer, MAX_FRAGMENT_LEN));
-
-		for (Iterator<Object[]> it = ftq.iterate(); it.hasNext(); ) {
-			Object[] qRes = it.next();
-			Float score = (Float) qRes[0];
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			// Add result
-			addResult(ftSession, results, highlighter, score, nBase);
-		}
-
-		result.setTotal(ftq.getResultSize());
-		result.setResults(results);
-		log.debug("runQueryLucene: {}", result);
-		return result;
-	}
-
-	/**
-	 * Security is not evaluate in Lucene but by AccessManager. This means that Lucene will return all the
-	 * matched documents and this list need further prune by checking the READ permission in the AccessManager.
-	 * If the returned document list is very big, maybe lots of documents will be pruned because the user has
-	 * no read access and this would be a time consuming task.
-	 * <p>
-	 * This method will read and check document from the Lucene query result until reach a given offset. After
-	 * that will add all the given document which the user have read access until the limit is reached. After
-	 * that will check if there is another document more who the user can read.
-	 */
-	@SuppressWarnings("unchecked")
-	private NodeResultSet runQueryAccessManagerMore(FullTextSession ftSession, Query query, int offset, int limit)
-			throws IOException, InvalidTokenOffsetsException, DatabaseException, HibernateException {
-		log.debug("runQueryAccessManagerMore({}, {}, {}, {})", ftSession, query, offset, limit);
-		List<NodeQueryResult> results = new ArrayList<>();
-		NodeResultSet result = new NodeResultSet();
-		FullTextQuery ftq = ftSession.createFullTextQuery(query, NodeDocument.class, NodeFolder.class, NodeMail.class);
-		ftq.setProjection(FullTextQuery.SCORE, FullTextQuery.THIS);
-		ftq.enableFullTextFilter("readAccess");
-		QueryScorer scorer = new QueryScorer(query, NodeDocument.TEXT_FIELD);
-		int count = 0;
-
-		// Highlight using a CSS style
-		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class='highlight'>", "</span>");
-		Highlighter highlighter = new Highlighter(formatter, scorer);
-		highlighter.setTextFragmenter(new SimpleSpanFragmenter(scorer, MAX_FRAGMENT_LEN));
-
-		// Set limits
-		Iterator<Object[]> it = ftq.iterate();
-		DbAccessManager am = SecurityHelper.getAccessManager();
-
-		// Bypass offset
-		while (it.hasNext() && count < offset) {
-			Object[] qRes = it.next();
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				count++;
-			}
-		}
-
-		// Read limit results
-		while (it.hasNext() && results.size() < limit) {
-			Object[] qRes = it.next();
-			Float score = (Float) qRes[0];
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				// Add result
-				addResult(ftSession, results, highlighter, score, nBase);
-			}
-		}
-
-		// Check if pending results
-		count = results.size() + offset;
-
-		while (it.hasNext() && count < offset + limit + 1) {
-			Object[] qRes = it.next();
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				count++;
-			}
-		}
-
-		result.setTotal(count);
-		result.setResults(results);
-		log.debug("runQueryAccessManagerMore: {}", result);
-		return result;
-	}
-
-	/**
-	 * Security is not evaluate in Lucene but by AccessManager. This means that Lucene will return all the
-	 * matched documents and this list need further prune by checking the READ permission in the AccessManager.
-	 * If the returned document list is very big, maybe lots of documents will be pruned because the user has
-	 * no read access and this would be a time consuming task.
-	 * <p>
-	 * This method will read and check document from the Lucene query result until reach a given offset. After
-	 * that will add all the given document which the user have read access until the limit is reached. After
-	 * that will check if there are more documents (2 * limit) the user can read.
-	 */
-	@SuppressWarnings("unchecked")
-	private NodeResultSet runQueryAccessManagerWindow(FullTextSession ftSession, Query query, int offset, int limit)
-			throws IOException, InvalidTokenOffsetsException, DatabaseException, HibernateException {
-		log.debug("runQueryAccessManagerWindow({}, {}, {}, {})", ftSession, query, offset, limit);
-		List<NodeQueryResult> results = new ArrayList<>();
-		NodeResultSet result = new NodeResultSet();
-		FullTextQuery ftq = ftSession.createFullTextQuery(query, NodeDocument.class, NodeFolder.class, NodeMail.class);
-		ftq.setProjection(FullTextQuery.SCORE, FullTextQuery.THIS);
-		ftq.enableFullTextFilter("readAccess");
-		QueryScorer scorer = new QueryScorer(query, NodeDocument.TEXT_FIELD);
-		int count = 0;
-
-		// Highlight using a CSS style
-		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class='highlight'>", "</span>");
-		Highlighter highlighter = new Highlighter(formatter, scorer);
-		highlighter.setTextFragmenter(new SimpleSpanFragmenter(scorer, MAX_FRAGMENT_LEN));
-
-		// Set limits
-		Iterator<Object[]> it = ftq.iterate();
-		DbAccessManager am = SecurityHelper.getAccessManager();
-
-		// Bypass offset
-		while (it.hasNext() && count < offset) {
-			Object[] qRes = it.next();
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				count++;
-			}
-		}
-
-		// Read limit results
-		while (it.hasNext() && results.size() < limit) {
-			Object[] qRes = it.next();
-			Float score = (Float) qRes[0];
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				// Add result
-				addResult(ftSession, results, highlighter, score, nBase);
-			}
-		}
-
-		// Check if pending results
-		count = results.size() + offset;
-
-		while (it.hasNext() && count < offset + limit * 2) {
-			Object[] qRes = it.next();
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				count++;
-			}
-		}
-
-		result.setTotal(count);
-		result.setResults(results);
-		log.debug("runQueryAccessManagerWindow: {}", result);
-		return result;
-	}
-
-	/**
-	 * Security is not evaluate in Lucene but by AccessManager. This means that Lucene will return all the
-	 * matched documents and this list need further prune by checking the READ permission in the AccessManager.
-	 * If the returned document list is very big, maybe lots of documents will be pruned because the user has
-	 * no read access and this would be a time consuming task.
-	 * <p>
-	 * This method will read and check document from the Lucene query result until reach a given offset. After
-	 * that will add all the given document which the user have read access until the limit is reached. After
-	 * that will check if there are more documents (MAX_SEARCH_RESULTS) the user can read.
-	 */
-	@SuppressWarnings("unchecked")
-	private NodeResultSet runQueryAccessManagerLimited(FullTextSession ftSession, Query query, int offset, int limit)
-			throws IOException, InvalidTokenOffsetsException, DatabaseException, HibernateException {
-		log.debug("runQueryAccessManagerLimited({}, {}, {}, {})", ftSession, query, offset, limit);
-		List<NodeQueryResult> results = new ArrayList<>();
-		NodeResultSet result = new NodeResultSet();
-		FullTextQuery ftq = ftSession.createFullTextQuery(query, NodeDocument.class, NodeFolder.class, NodeMail.class);
-		ftq.setProjection(FullTextQuery.SCORE, FullTextQuery.THIS);
-		ftq.enableFullTextFilter("readAccess");
-		QueryScorer scorer = new QueryScorer(query, NodeDocument.TEXT_FIELD);
-		int count = 0;
-
-		// Highlight using a CSS style
-		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class='highlight'>", "</span>");
-		Highlighter highlighter = new Highlighter(formatter, scorer);
-		highlighter.setTextFragmenter(new SimpleSpanFragmenter(scorer, MAX_FRAGMENT_LEN));
-
-		// Set limits
-		Iterator<Object[]> it = ftq.iterate();
-		DbAccessManager am = SecurityHelper.getAccessManager();
-
-		// Bypass offset
-		while (it.hasNext() && count < offset) {
-			Object[] qRes = it.next();
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				count++;
-			}
-		}
-
-		// Read limit results
-		while (it.hasNext() && results.size() < limit) {
-			Object[] qRes = it.next();
-			Float score = (Float) qRes[0];
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				// Add result
-				addResult(ftSession, results, highlighter, score, nBase);
-			}
-		}
-
-		// Check if pending results
-		count = results.size() + offset;
-
-		while (it.hasNext() && count < Config.MAX_SEARCH_RESULTS) {
-			Object[] qRes = it.next();
-			NodeBase nBase = (NodeBase) qRes[1];
-
-			if (am.isGranted(nBase, Permission.READ)) {
-				count++;
-			}
-		}
-
-		result.setTotal(count);
-		result.setResults(results);
-		log.debug("Size: {}", results.size());
-		log.debug("runQueryAccessManagerLimited: {}", result);
-		return result;
-	}
-
-	/**
-	 * Add result
-	 */
-	private void addResult(FullTextSession ftSession, List<NodeQueryResult> results, Highlighter highlighter, Float score,
-			NodeBase nBase)	throws IOException, InvalidTokenOffsetsException, DatabaseException {
-		NodeQueryResult qr = new NodeQueryResult();
-		NodeDocument nDocument = null;
-		NodeMail nMail = null;
-		String excerpt = null;
-
-		if (nBase instanceof NodeDocument) {
-			nDocument = (NodeDocument) nBase;
-
-			if (NodeMailDAO.getInstance().itemExists(nDocument.getParent())) {
-				log.debug("NODE DOCUMENT - ATTACHMENT");
-				qr.setAttachment(nDocument);
-			} else {
-				log.debug("NODE DOCUMENT");
-				qr.setDocument(nDocument);
-			}
-		} else if (nBase instanceof NodeFolder) {
-			log.debug("NODE FOLDER");
-			NodeFolder nFld = (NodeFolder) nBase;
-			qr.setFolder(nFld);
-		} else if (nBase instanceof NodeMail) {
-			log.debug("NODE MAIL");
-			nMail = (NodeMail) nBase;
-			qr.setMail(nMail);
-		} else {
-			log.warn("NODE UNKNOWN");
-		}
-
-		if (nDocument != null && nDocument.getText() != null) {
-			excerpt = highlighter.getBestFragment(analyzer, NodeDocument.TEXT_FIELD, nDocument.getText());
-		} else if (nMail != null && nMail.getContent() != null) {
-			excerpt = highlighter.getBestFragment(analyzer, NodeMail.CONTENT_FIELD, nMail.getContent());
-		}
-
-		log.debug("Result: SCORE({}), EXCERPT({}), DOCUMENT({})", score, excerpt, nBase);
-		qr.setScore(score);
-		qr.setExcerpt(FormatUtil.stripNonValidXMLCharacters(excerpt));
-
-		if (qr.getDocument() != null) {
-			NodeDocumentDAO.getInstance().initialize(qr.getDocument(), false);
-			results.add(qr);
-		} else if (qr.getFolder() != null) {
-			NodeFolderDAO.getInstance().initialize(qr.getFolder());
-			results.add(qr);
-		} else if (qr.getMail() != null) {
-			NodeMailDAO.getInstance().initialize(qr.getMail(), false);
-			results.add(qr);
-		} else if (qr.getAttachment() != null) {
-			NodeDocumentDAO.getInstance().initialize(qr.getAttachment(), false);
-			results.add(qr);
-		}
-	}
-
-	/**
-	 * Find by parent in depth
-	 * <p>
-	 * TODO This cache should be for every user (no pass through access manager) and cleaned
-	 * after a create, move or copy folder operation.
-	 */
-	@SuppressWarnings("unchecked")
-	public List<String> findFoldersInDepth(String parentUuid) throws PathNotFoundException, DatabaseException {
-		log.debug("findFoldersInDepth({})", parentUuid);
-		Cache fldResultCache = CacheProvider.getInstance().getCache(CACHE_SEARCH_FOLDERS_IN_DEPTH);
-		String key = "searchFoldersInDepth:" + PrincipalUtils.getUser();
-		Element elto = fldResultCache.get(key);
-		List<String> ret = null;
-
-		if (elto != null) {
-			log.debug("Get '{}' from cache", key);
-			ret = (ArrayList<String>) elto.getValue();
-		} else {
-			log.debug("Get '{}' from database", key);
-			Session session = null;
-			Transaction tx = null;
-
-			try {
-				long begin = System.currentTimeMillis();
-				session = HibernateUtil.getSessionFactory().openSession();
-				tx = session.beginTransaction();
-
-				// Security Check
-				NodeBase parentNode = session.get(NodeBase.class, parentUuid);
-				SecurityHelper.checkRead(parentNode);
-
-				ret = findFoldersInDepthHelper(session, parentUuid);
-				HibernateUtil.commit(tx);
-
-				// TODO DISABLE CACHE
-				// fldResultCache.put(new Element(key, ret));
-				SystemProfiling.log(parentUuid, System.currentTimeMillis() - begin);
-				log.trace("findFoldersInDepth.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
-			} catch (PathNotFoundException | DatabaseException e) {
-				HibernateUtil.rollback(tx);
-				throw e;
-			} catch (HibernateException e) {
-				HibernateUtil.rollback(tx);
-				throw new DatabaseException(e.getMessage(), e);
-			} finally {
-				HibernateUtil.close(session);
-			}
-		}
-
-		log.debug("findFoldersInDepth: {}", ret);
-		return ret;
-	}
-
-	/**
-	 * Find by parent in depth helper
-	 */
-	@SuppressWarnings("unchecked")
-	private List<String> findFoldersInDepthHelper(Session session, String parentUuid) throws HibernateException,
-			DatabaseException {
-		log.debug("findFoldersInDepthHelper({}, {})", "session", parentUuid);
-		List<String> ret = new ArrayList<>();
-		String qs = "from NodeFolder nf where nf.parent=:parent";
-		org.hibernate.Query q = session.createQuery(qs).setCacheable(true);
-		q.setParameter("parent", parentUuid);
-		List<NodeFolder> results = q.getResultList();
-
-		// Security Check
-		DbAccessManager am = SecurityHelper.getAccessManager();
-
-		for (NodeFolder node : results) {
-			if (am.isGranted(node, Permission.READ)) {
-				ret.add(node.getUuid());
-				ret.addAll(findFoldersInDepthHelper(session, node.getUuid()));
-			}
-		}
-
-		log.debug("findFoldersInDepthHelper: {}", ret);
-		return ret;
-	}
-
-	/**
-	 * Return a list of similar documents.
-	 */
-	public NodeResultSet moreLikeThis(String uuid, int maxResults) throws DatabaseException, PathNotFoundException {
-		log.debug("moreLikeThis({}, {})", uuid, maxResults);
-		String[] moreLikeFields = new String[]{"text"};
-		FullTextSession ftSession = null;
-		Session session = null;
-		Transaction tx = null;
-
-		try {
-			long begin = System.currentTimeMillis();
-			session = HibernateUtil.getSessionFactory().openSession();
-			ftSession = Search.getFullTextSession(session);
-			tx = ftSession.beginTransaction();
-			NodeResultSet result = new NodeResultSet();
-
-			MoreLikeThis mlt = new MoreLikeThis(getReader(ftSession, NodeDocument.class));
-			mlt.setFieldNames(moreLikeFields);
-			mlt.setMaxQueryTerms(10);
-			mlt.setMinDocFreq(1);
-			mlt.setAnalyzer(analyzer);
-			mlt.setMaxWordLen(8);
-			mlt.setMinWordLen(7);
-			mlt.setMinTermFreq(1);
-
-			String str = NodeDocumentDAO.getInstance().getExtractedText(session, uuid);
-
-			if (str != null && !str.isEmpty()) {
-				StringReader sr = new StringReader(str);
-				Query likeThisQuery = mlt.like(sr);
-
-				BooleanQuery query = new BooleanQuery();
-				query.add(likeThisQuery, Occur.SHOULD);
-				query.add(new TermQuery(new Term("uuid", uuid)), Occur.MUST_NOT);
-				log.debug("moreLikeThis.Query: {}", query);
-
-				if (SEARCH_LUCENE.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-					result = runQueryLucene(ftSession, query, 0, maxResults);
-				} else if (SEARCH_ACCESS_MANAGER_MORE.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-					result = runQueryAccessManagerMore(ftSession, query, 0, maxResults);
-				} else if (SEARCH_ACCESS_MANAGER_WINDOW.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-					result = runQueryAccessManagerWindow(ftSession, query, 0, maxResults);
-				} else if (SEARCH_ACCESS_MANAGER_LIMITED.equals(Config.SECURITY_SEARCH_EVALUATION)) {
-					result = runQueryAccessManagerLimited(ftSession, query, 0, maxResults);
-				}
-			} else {
-				log.warn("Document has not text extracted: {}", uuid);
-			}
-
-			HibernateUtil.commit(tx);
-			SystemProfiling.log(uuid + ", " + maxResults, System.currentTimeMillis() - begin);
-			log.trace("moreLikeThis.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
-			log.debug("moreLikeThis: {}", result);
-			return result;
-		} catch (IOException | InvalidTokenOffsetsException | HibernateException e) {
-			HibernateUtil.rollback(tx);
-			throw new DatabaseException(e.getMessage(), e);
-		} finally {
-			HibernateUtil.close(ftSession);
-			HibernateUtil.close(session);
-		}
-	}
-
-	/**
-	 * Get Lucene index reader.
-	 */
-	@SuppressWarnings("rawtypes")
-	private IndexReader getReader(FullTextSession session, Class entity) {
-		SearchFactory searchFactory = session.getSearchFactory();
-		DirectoryProvider provider = searchFactory.getDirectoryProviders(entity)[0];
-		ReaderProvider readerProvider = searchFactory.getReaderProvider();
-		return readerProvider.openReader(provider);
-	}
-
-	/**
-	 * Get Lucent document terms.
-	 */
-	@SuppressWarnings("unchecked")
-	public List<String> getTerms(Class<?> entityType, String nodeUuid) throws IOException {
-		List<String> terms = new ArrayList<>();
-		FullTextSession ftSession = null;
-		IndexSearcher searcher = null;
-		ReaderProvider provider = null;
-		Session session = null;
-		IndexReader reader = null;
-
-		try {
-			session = HibernateUtil.getSessionFactory().openSession();
-			ftSession = Search.getFullTextSession(session);
-			SearchFactory sFactory = ftSession.getSearchFactory();
-			provider = sFactory.getReaderProvider();
-			QueryBuilder builder = sFactory.buildQueryBuilder().forEntity(entityType).get();
-			Query query = builder.keyword().onField("uuid").matching(nodeUuid).createQuery();
-
-			DirectoryProvider<Directory>[] dirProv = sFactory.getDirectoryProviders(NodeDocument.class);
-			reader = provider.openReader(dirProv[0]);
-			searcher = new IndexSearcher(reader);
-			TopDocs topDocs = searcher.search(query, 1);
-
-			for (ScoreDoc sDoc : topDocs.scoreDocs) {
-				if (!reader.isDeleted(sDoc.doc)) {
-					for (TermEnum te = reader.terms(); te.next(); ) {
-						Term t = te.term();
-
-						if ("text".equals(t.field())) {
-							for (TermDocs tds = reader.termDocs(t); tds.next(); ) {
-								if (sDoc.doc == tds.doc()) {
-									terms.add(t.text());
-									//log.info("Field: {} - {}", t.field(), t.text());
-								}
-							}
-						}
-					}
-				}
-			}
-		} finally {
-			if (provider != null && reader != null) {
-				provider.closeReader(reader);
-			}
-
-			if (searcher != null) {
-				searcher.close();
-			}
-			HibernateUtil.close(ftSession);
-			HibernateUtil.close(session);
-		}
-
-		return terms;
-	}
+    private static final Logger log = LoggerFactory.getLogger(SearchDAO.class);
+    private static final SearchDAO SINGLETON = new SearchDAO();
+
+    private static final int MAX_FRAGMENT_LEN = 256;
+
+    public static final String SEARCH_LUCENE = "lucene";
+    public static final String SEARCH_ACCESS_MANAGER_MORE = "am_more";
+    public static final String SEARCH_ACCESS_MANAGER_WINDOW = "am_window";
+    public static final String SEARCH_ACCESS_MANAGER_LIMITED = "am_limited";
+
+    private static final String CACHE_SEARCH_FOLDERS_IN_DEPTH = "com.openkm.cache.searchFoldersInDepth";
+
+    public static Analyzer analyzer;
+
+    static {
+        try {
+            // Try to respect custom analyzer from config if present.
+            Class<?> analyzerClass = Class.forName(Config.HIBERNATE_SEARCH_ANALYZER);
+            if (Analyzer.class.isAssignableFrom(analyzerClass)) {
+                // Prefer no-arg constructor (Lucene 9 analyzers no longer take Version)
+                try {
+                    analyzer = (Analyzer) analyzerClass.getDeclaredConstructor().newInstance();
+                } catch (NoSuchMethodException noNoArg) {
+                    // fallback: try any constructor with zero parameters anyway
+                    Constructor<?>[] ctors = analyzerClass.getConstructors();
+                    for (Constructor<?> c : ctors) {
+                        if (c.getParameterCount() == 0) {
+                            analyzer = (Analyzer) c.newInstance();
+                            break;
+                        }
+                    }
+                    if (analyzer == null) throw noNoArg;
+                }
+            } else {
+                analyzer = new StandardAnalyzer();
+            }
+        } catch (Exception e) {
+            log.warn("Falling back to StandardAnalyzer: {}", e.getMessage(), e);
+            analyzer = new StandardAnalyzer();
+        }
+        log.debug("Analyzer in use: {}", analyzer.getClass().getName());
+    }
+
+    private SearchDAO() {}
+
+    public static SearchDAO getInstance() {
+        return SINGLETON;
+    }
+
+    /* ------------------------------------------------------------------
+     * Public API
+     * ------------------------------------------------------------------ */
+
+    /**
+     * Execute a Lucene query against NodeDocument, NodeFolder, NodeMail.
+     * Applies security filtering according to Config.SECURITY_SEARCH_EVALUATION.
+     */
+    public NodeResultSet findByQuery(Query luceneQuery, int offset, int limit)
+            throws ParseException, DatabaseException {
+        log.debug("findByQuery({}, {}, {})", luceneQuery, offset, limit);
+
+        Session session = null;
+        Transaction tx = null;
+
+        try {
+            long begin = System.currentTimeMillis();
+            session = HibernateUtil.getSessionFactory().openSession();
+            tx = session.beginTransaction();
+            SearchSession searchSession = Search.session(session);
+
+            NodeResultSet result;
+
+            // Route based on configured evaluation strategy
+            String mode = Config.SECURITY_SEARCH_EVALUATION;
+            if (SEARCH_LUCENE.equals(mode)) {
+                // In HS6 there is no Lucene-side security filter hook.
+                // We treat this like AccessManagerLimited (fast cap) to avoid very large scans.
+                result = runQueryAccessManagerLimited(searchSession, luceneQuery, offset, limit);
+            } else if (SEARCH_ACCESS_MANAGER_MORE.equals(mode)) {
+                result = runQueryAccessManagerMore(searchSession, luceneQuery, offset, limit);
+            } else if (SEARCH_ACCESS_MANAGER_WINDOW.equals(mode)) {
+                result = runQueryAccessManagerWindow(searchSession, luceneQuery, offset, limit);
+            } else if (SEARCH_ACCESS_MANAGER_LIMITED.equals(mode)) {
+                result = runQueryAccessManagerLimited(searchSession, luceneQuery, offset, limit);
+            } else {
+                // Default safety
+                result = runQueryAccessManagerLimited(searchSession, luceneQuery, offset, limit);
+            }
+
+            HibernateUtil.commit(tx);
+            SystemProfiling.log(luceneQuery + ", " + offset + ", " + limit, System.currentTimeMillis() - begin);
+            log.trace("findByQuery.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
+            log.debug("findByQuery: {}", result);
+            return result;
+        } catch (IOException | InvalidTokenOffsetsException | HibernateException e) {
+            HibernateUtil.rollback(tx);
+            throw new DatabaseException(e.getMessage(), e);
+        } finally {
+            HibernateUtil.close(session);
+        }
+    }
+
+    /**
+     * Parse a simple query string with Lucene classic QueryParser, then route to findByQuery.
+     */
+    public NodeResultSet findBySimpleQuery(String expression, int offset, int limit)
+            throws ParseException, DatabaseException {
+        log.debug("findBySimpleQuery({}, {}, {})", expression, offset, limit);
+
+        Session session = null;
+        Transaction tx = null;
+
+        try {
+            long begin = System.currentTimeMillis();
+            session = HibernateUtil.getSessionFactory().openSession();
+            tx = session.beginTransaction();
+
+            QueryParser parser = new QueryParser(NodeDocument.TEXT_FIELD, analyzer);
+            Query luceneQuery = parser.parse(expression);
+            log.debug("findBySimpleQuery.query: {}", luceneQuery);
+
+            SearchSession searchSession = Search.session(session);
+            NodeResultSet result;
+
+            String mode = Config.SECURITY_SEARCH_EVALUATION;
+            if (SEARCH_LUCENE.equals(mode)) {
+                result = runQueryAccessManagerLimited(searchSession, luceneQuery, offset, limit);
+            } else if (SEARCH_ACCESS_MANAGER_MORE.equals(mode)) {
+                result = runQueryAccessManagerMore(searchSession, luceneQuery, offset, limit);
+            } else if (SEARCH_ACCESS_MANAGER_WINDOW.equals(mode)) {
+                result = runQueryAccessManagerWindow(searchSession, luceneQuery, offset, limit);
+            } else if (SEARCH_ACCESS_MANAGER_LIMITED.equals(mode)) {
+                result = runQueryAccessManagerLimited(searchSession, luceneQuery, offset, limit);
+            } else {
+                result = runQueryAccessManagerLimited(searchSession, luceneQuery, offset, limit);
+            }
+
+            HibernateUtil.commit(tx);
+            SystemProfiling.log(expression + ", " + offset + ", " + limit, System.currentTimeMillis() - begin);
+            log.trace("findBySimpleQuery.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
+            log.debug("findBySimpleQuery: {}", result);
+            return result;
+        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+            HibernateUtil.rollback(tx);
+            throw new ParseException(e.getMessage(), e);
+        } catch (IOException | InvalidTokenOffsetsException | HibernateException e) {
+            HibernateUtil.rollback(tx);
+            throw new DatabaseException(e.getMessage(), e);
+        } finally {
+            HibernateUtil.close(session);
+        }
+    }
+
+    /**
+     * Utility to parse a Lucene Query from expression/field using configured analyzer.
+     */
+    public Query parseQuery(String expression, String field) throws ParseException, DatabaseException {
+        log.debug("parseQuery({}, {})", expression, field);
+        try {
+            QueryParser parser = new QueryParser(field, analyzer);
+            Query q = parser.parse(expression);
+            log.debug("parseQuery: {}", q);
+            return q;
+        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+            throw new ParseException(e.getMessage(), e);
+        } catch (HibernateException e) {
+            throw new DatabaseException(e.getMessage(), e);
+        }
+    }
+
+    /* ------------------------------------------------------------------
+     * Main query implementations (HS6 + AccessManager filters)
+     * ------------------------------------------------------------------ */
+
+    private NodeResultSet runQueryAccessManagerMore(SearchSession ss, Query luceneQuery, int offset, int limit)
+            throws IOException, InvalidTokenOffsetsException, DatabaseException {
+        log.debug("runQueryAccessManagerMore({}, {}, {}, {})", "SearchSession", luceneQuery, offset, limit);
+        return filterAndCollect(ss, luceneQuery, offset, limit,
+                /*pendingCountStrategy*/ PendingCountStrategy.MORE);
+    }
+
+    private NodeResultSet runQueryAccessManagerWindow(SearchSession ss, Query luceneQuery, int offset, int limit)
+            throws IOException, InvalidTokenOffsetsException, DatabaseException {
+        log.debug("runQueryAccessManagerWindow({}, {}, {}, {})", "SearchSession", luceneQuery, offset, limit);
+        return filterAndCollect(ss, luceneQuery, offset, limit,
+                /*pendingCountStrategy*/ PendingCountStrategy.WINDOW);
+    }
+
+    private NodeResultSet runQueryAccessManagerLimited(SearchSession ss, Query luceneQuery, int offset, int limit)
+            throws IOException, InvalidTokenOffsetsException, DatabaseException {
+        log.debug("runQueryAccessManagerLimited({}, {}, {}, {})", "SearchSession", luceneQuery, offset, limit);
+        return filterAndCollect(ss, luceneQuery, offset, limit,
+                /*pendingCountStrategy*/ PendingCountStrategy.LIMITED);
+    }
+
+    private enum PendingCountStrategy { MORE, WINDOW, LIMITED }
+
+    /**
+     * Core fetch/filter/highlight flow used by all strategies.
+     */
+    @SuppressWarnings("unchecked")
+    private NodeResultSet filterAndCollect(SearchSession ss, Query luceneQuery, int offset, int limit,
+                                           PendingCountStrategy strategy)
+            throws IOException, InvalidTokenOffsetsException, DatabaseException {
+
+        // We'll search across these types together
+        List<Class<?>> types = Arrays.asList(NodeDocument.class, NodeFolder.class, NodeMail.class);
+
+        // Build a projector to get score + entity
+        var search = ss.search(types);
+        var resultWithProjection = search.select(f -> f.composite(
+                (Float score, Object entity) -> new AbstractMap.SimpleEntry<>(score, entity),
+                f.score(),
+                f.entity()
+        ));
+
+        // We fetch in chunks to honor offset semantics after access checks.
+        final int pageSize = Math.max(limit * 2, 50); // heuristic to reduce round-trips
+        int fetched = 0;
+        int scannedReadable = 0;
+        int totalCountForStrategy = 0;
+        int page = 0;
+
+        DbAccessManager am = SecurityHelper.getAccessManager();
+        List<NodeQueryResult> out = new ArrayList<>();
+
+        // Highlighter setup (works on text we load from entities)
+        QueryScorer scorer = new QueryScorer(luceneQuery,
+                NodeDocument.TEXT_FIELD /* used when highlighting document text */);
+        SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class='highlight'>", "</span>");
+        Highlighter highlighter = new Highlighter(formatter, scorer);
+        highlighter.setTextFragmenter(new SimpleSpanFragmenter(scorer, MAX_FRAGMENT_LEN));
+
+        // First, skip readable docs until we reach the desired offset
+        while (true) {
+            SearchResult<AbstractMap.SimpleEntry<Float, Object>> pageResult = resultWithProjection
+                    .where(f -> f.luceneQuery(luceneQuery))
+                    .fetch(page * pageSize, pageSize);
+
+            List<AbstractMap.SimpleEntry<Float, Object>> hits = pageResult.hits();
+            if (hits.isEmpty()) break;
+
+            for (AbstractMap.SimpleEntry<Float, Object> hit : hits) {
+                Object entity = hit.getValue();
+                if (!(entity instanceof NodeBase)) continue;
+                NodeBase nBase = (NodeBase) entity;
+
+                if (am.isGranted(nBase, Permission.READ)) {
+                    if (scannedReadable < offset) {
+                        scannedReadable++;
+                    } else if (out.size() < limit) {
+                        addResult(ss, out, highlighter, hit.getKey(), nBase);
+                    } else {
+                        // We've filled the window; we may still need to count "pending" depending on strategy
+                        switch (strategy) {
+                            case MORE -> {
+                                totalCountForStrategy = countMoreReadable(ss, resultWithProjection, luceneQuery,
+                                        page, hits.indexOf(hit), scannedReadable + out.size(), offset, limit, am);
+                                NodeResultSet res = new NodeResultSet();
+                                res.setResults(out);
+                                res.setTotal(totalCountForStrategy);
+                                return res;
+                            }
+                            case WINDOW -> {
+                                totalCountForStrategy = countWindowReadable(ss, resultWithProjection, luceneQuery,
+                                        page, hits.indexOf(hit), scannedReadable + out.size(), offset, limit, am);
+                                NodeResultSet res = new NodeResultSet();
+                                res.setResults(out);
+                                res.setTotal(totalCountForStrategy);
+                                return res;
+                            }
+                            case LIMITED -> {
+                                // We’ll compute total up to MAX_SEARCH_RESULTS readable (cap)
+                                totalCountForStrategy = countLimitedReadable(ss, resultWithProjection, luceneQuery,
+                                        page, hits.indexOf(hit), scannedReadable + out.size(), offset, limit, am);
+                                NodeResultSet res = new NodeResultSet();
+                                res.setResults(out);
+                                res.setTotal(totalCountForStrategy);
+                                return res;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // If we didn’t fill the result yet, continue to next page
+            page++;
+            fetched += hits.size();
+        }
+
+        // If we reach here, either we filled less than limit or exhausted results
+        int totalReadable = scannedReadable + out.size();
+
+        NodeResultSet res = new NodeResultSet();
+        res.setResults(out);
+        res.setTotal(totalReadable);
+        return res;
+    }
+
+    /* -------------------- Pending count helpers -------------------- */
+
+    private int countMoreReadable(
+            SearchSession ss,
+            var resultWithProjection,
+            Query luceneQuery,
+            int currentPage,
+            int currentIndexInPage,
+            int alreadyCounted,
+            int offset,
+            int limit,
+            DbAccessManager am
+    ) {
+        // Continue counting readable docs until we have (offset + limit + 1)
+        return countUntil(ss, resultWithProjection, luceneQuery,
+                currentPage, currentIndexInPage, alreadyCounted, offset + limit + 1, am);
+    }
+
+    private int countWindowReadable(
+            SearchSession ss,
+            var resultWithProjection,
+            Query luceneQuery,
+            int currentPage,
+            int currentIndexInPage,
+            int alreadyCounted,
+            int offset,
+            int limit,
+            DbAccessManager am
+    ) {
+        // Continue counting up to offset + limit*2
+        return countUntil(ss, resultWithProjection, luceneQuery,
+                currentPage, currentIndexInPage, alreadyCounted, offset + (limit * 2), am);
+    }
+
+    private int countLimitedReadable(
+            SearchSession ss,
+            var resultWithProjection,
+            Query luceneQuery,
+            int currentPage,
+            int currentIndexInPage,
+            int alreadyCounted,
+            int offset,
+            int limit,
+            DbAccessManager am
+    ) {
+        // Continue counting up to Config.MAX_SEARCH_RESULTS (cap)
+        return countUntil(ss, resultWithProjection, luceneQuery,
+                currentPage, currentIndexInPage, alreadyCounted, Config.MAX_SEARCH_RESULTS, am);
+    }
+
+    @SuppressWarnings("unchecked")
+    private int countUntil(
+            SearchSession ss,
+            var resultWithProjection,
+            Query luceneQuery,
+            int page,
+            int indexInPage,
+            int alreadyCountedReadable,
+            int targetReadableCount,
+            DbAccessManager am
+    ) {
+        final int pageSize = 200; // just for counting
+        int readable = alreadyCountedReadable;
+        int currentPage = page;
+        int startIndex = indexInPage; // continue within current page
+
+        while (readable < targetReadableCount) {
+            SearchResult<AbstractMap.SimpleEntry<Float, Object>> r = resultWithProjection
+                    .where(f -> f.luceneQuery(luceneQuery))
+                    .fetch(currentPage * pageSize, pageSize);
+
+            List<AbstractMap.SimpleEntry<Float, Object>> hits = r.hits();
+            if (hits.isEmpty()) break;
+
+            for (int i = startIndex; i < hits.size(); i++) {
+                Object entity = hits.get(i).getValue();
+                if (entity instanceof NodeBase nBase) {
+                    if (am.isGranted(nBase, Permission.READ)) {
+                        readable++;
+                        if (readable >= targetReadableCount) break;
+                    }
+                }
+            }
+
+            currentPage++;
+            startIndex = 0;
+        }
+
+        return readable;
+    }
+
+    /* ------------------------------------------------------------------
+     * Result assembling & highlighting
+     * ------------------------------------------------------------------ */
+
+    private void addResult(SearchSession ss, List<NodeQueryResult> results, Highlighter highlighter,
+                           Float score, NodeBase nBase)
+            throws IOException, InvalidTokenOffsetsException, DatabaseException {
+
+        NodeQueryResult qr = new NodeQueryResult();
+        NodeDocument nDocument = null;
+        NodeMail nMail = null;
+        String excerpt = null;
+
+        if (nBase instanceof NodeDocument) {
+            nDocument = (NodeDocument) nBase;
+            if (NodeMailDAO.getInstance().itemExists(nDocument.getParent())) {
+                log.debug("NODE DOCUMENT - ATTACHMENT");
+                qr.setAttachment(nDocument);
+            } else {
+                log.debug("NODE DOCUMENT");
+                qr.setDocument(nDocument);
+            }
+        } else if (nBase instanceof NodeFolder) {
+            log.debug("NODE FOLDER");
+            qr.setFolder((NodeFolder) nBase);
+        } else if (nBase instanceof NodeMail) {
+            log.debug("NODE MAIL");
+            nMail = (NodeMail) nBase;
+            qr.setMail(nMail);
+        } else {
+            log.warn("NODE UNKNOWN");
+        }
+
+        // Highlight on entity text/content if available
+        if (nDocument != null && nDocument.getText() != null) {
+            excerpt = highlighter.getBestFragment(analyzer, NodeDocument.TEXT_FIELD, nDocument.getText());
+        } else if (nMail != null && nMail.getContent() != null) {
+            excerpt = highlighter.getBestFragment(analyzer, NodeMail.CONTENT_FIELD, nMail.getContent());
+        }
+
+        log.debug("Result: SCORE({}), EXCERPT({}), ENTITY({})", score, excerpt, nBase);
+        qr.setScore(score);
+        qr.setExcerpt(FormatUtil.stripNonValidXMLCharacters(excerpt));
+
+        if (qr.getDocument() != null) {
+            NodeDocumentDAO.getInstance().initialize(qr.getDocument(), false);
+            results.add(qr);
+        } else if (qr.getFolder() != null) {
+            NodeFolderDAO.getInstance().initialize(qr.getFolder());
+            results.add(qr);
+        } else if (qr.getMail() != null) {
+            NodeMailDAO.getInstance().initialize(qr.getMail(), false);
+            results.add(qr);
+        } else if (qr.getAttachment() != null) {
+            NodeDocumentDAO.getInstance().initialize(qr.getAttachment(), false);
+            results.add(qr);
+        }
+    }
+
+    /* ------------------------------------------------------------------
+     * Folders-in-depth (same HQL, Hibernate 6 compatible)
+     * ------------------------------------------------------------------ */
+
+    @SuppressWarnings("unchecked")
+    public List<String> findFoldersInDepth(String parentUuid) throws PathNotFoundException, DatabaseException {
+        log.debug("findFoldersInDepth({})", parentUuid);
+        Cache fldResultCache = CacheProvider.getInstance().getCache(CACHE_SEARCH_FOLDERS_IN_DEPTH);
+        String key = "searchFoldersInDepth:" + PrincipalUtils.getUser();
+        Element elto = fldResultCache.get(key);
+        List<String> ret;
+
+        if (elto != null) {
+            log.debug("Get '{}' from cache", key);
+            ret = (ArrayList<String>) elto.getValue();
+        } else {
+            log.debug("Get '{}' from database", key);
+            Session session = null;
+            Transaction tx = null;
+
+            try {
+                long begin = System.currentTimeMillis();
+                session = HibernateUtil.getSessionFactory().openSession();
+                tx = session.beginTransaction();
+
+                // Security Check
+                NodeBase parentNode = session.get(NodeBase.class, parentUuid);
+                SecurityHelper.checkRead(parentNode);
+
+                ret = findFoldersInDepthHelper(session, parentUuid);
+                HibernateUtil.commit(tx);
+
+                // Disabled cache as per original TODO
+                // fldResultCache.put(new Element(key, ret));
+
+                SystemProfiling.log(parentUuid, System.currentTimeMillis() - begin);
+                log.trace("findFoldersInDepth.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
+            } catch (PathNotFoundException | DatabaseException e) {
+                HibernateUtil.rollback(tx);
+                throw e;
+            } catch (HibernateException e) {
+                HibernateUtil.rollback(tx);
+                throw new DatabaseException(e.getMessage(), e);
+            } finally {
+                HibernateUtil.close(session);
+            }
+        }
+
+        log.debug("findFoldersInDepth: {}", ret);
+        return ret;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> findFoldersInDepthHelper(Session session, String parentUuid)
+            throws HibernateException, DatabaseException {
+        log.debug("findFoldersInDepthHelper({}, {})", "session", parentUuid);
+        List<String> ret = new ArrayList<>();
+        String hql = "from NodeFolder nf where nf.parent=:parent";
+        org.hibernate.query.Query<NodeFolder> q = session.createQuery(hql, NodeFolder.class).setCacheable(true);
+        q.setParameter("parent", parentUuid);
+        List<NodeFolder> results = q.getResultList();
+
+        DbAccessManager am = SecurityHelper.getAccessManager();
+        for (NodeFolder node : results) {
+            if (am.isGranted(node, Permission.READ)) {
+                ret.add(node.getUuid());
+                ret.addAll(findFoldersInDepthHelper(session, node.getUuid()));
+            }
+        }
+
+        log.debug("findFoldersInDepthHelper: {}", ret);
+        return ret;
+    }
+
+    /* ------------------------------------------------------------------
+     * MoreLikeThis (HS6-friendly reimplementation)
+     * ------------------------------------------------------------------ */
+
+    public NodeResultSet moreLikeThis(String uuid, int maxResults)
+            throws DatabaseException, PathNotFoundException {
+        log.debug("moreLikeThis({}, {})", uuid, maxResults);
+
+        Session session = null;
+        Transaction tx = null;
+
+        try {
+            long begin = System.currentTimeMillis();
+            session = HibernateUtil.getSessionFactory().openSession();
+            tx = session.beginTransaction();
+            SearchSession ss = Search.session(session);
+
+            String sourceText = NodeDocumentDAO.getInstance().getExtractedText(session, uuid);
+
+            NodeResultSet result = new NodeResultSet();
+            if (sourceText != null && !sourceText.isEmpty()) {
+                // Build a simpleQueryString against the "text" field and exclude the same uuid
+                var search = ss.search(NodeDocument.class).select(f -> f.composite(
+                        (Float score, NodeDocument doc) -> new AbstractMap.SimpleEntry<>(score, doc),
+                        f.score(), f.entity()
+                ));
+
+                var sr = search.where(f -> f.bool(b -> {
+                            b.must(f.simpleQueryString().fields(NodeDocument.TEXT_FIELD).matching(sourceText));
+                            b.mustNot(f.match().field("uuid").matching(uuid));
+                        }))
+                        .fetch(0, maxResults);
+
+                // Build highlighter against the sourceText-based query for consistent snippets
+                try {
+                    QueryParser parser = new QueryParser(NodeDocument.TEXT_FIELD, analyzer);
+                    Query q = parser.parse(QueryParser.escape(sourceText));
+                    QueryScorer scorer = new QueryScorer(q, NodeDocument.TEXT_FIELD);
+                    SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<span class='highlight'>", "</span>");
+                    Highlighter highlighter = new Highlighter(formatter, scorer);
+                    highlighter.setTextFragmenter(new SimpleSpanFragmenter(scorer, MAX_FRAGMENT_LEN));
+
+                    List<NodeQueryResult> out = new ArrayList<>();
+                    for (AbstractMap.SimpleEntry<Float, NodeDocument> e : sr.hits()) {
+                        addResult(ss, out, highlighter, e.getKey(), e.getValue());
+                    }
+                    result.setResults(out);
+                    result.setTotal(out.size());
+                } catch (Exception highlightEx) {
+                    // Fallback without highlighting if something goes wrong
+                    log.warn("Highlighter fallback in moreLikeThis: {}", highlightEx.getMessage());
+                    List<NodeQueryResult> out = sr.hits().stream().map(e -> {
+                        NodeQueryResult qr = new NodeQueryResult();
+                        qr.setDocument(e.getValue());
+                        qr.setScore(e.getKey());
+                        return qr;
+                    }).collect(Collectors.toList());
+                    result.setResults(out);
+                    result.setTotal(out.size());
+                }
+
+            } else {
+                log.warn("Document has no extracted text: {}", uuid);
+                result.setResults(Collections.emptyList());
+                result.setTotal(0);
+            }
+
+            HibernateUtil.commit(tx);
+            SystemProfiling.log(uuid + ", " + maxResults, System.currentTimeMillis() - begin);
+            log.trace("moreLikeThis.Time: {}", FormatUtil.formatMiliSeconds(System.currentTimeMillis() - begin));
+            log.debug("moreLikeThis: {}", result);
+            return result;
+        } catch (HibernateException e) {
+            HibernateUtil.rollback(tx);
+            throw new DatabaseException(e.getMessage(), e);
+        } finally {
+            HibernateUtil.close(session);
+        }
+    }
+
+    /* ------------------------------------------------------------------
+     * Terms extraction – analyze entity text (no direct IndexReader in HS6)
+     * ------------------------------------------------------------------ */
+
+    public List<String> getTerms(Class<?> entityType, String nodeUuid) throws IOException {
+        List<String> terms = new ArrayList<>();
+        Session session = null;
+
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
+
+            if (NodeDocument.class.equals(entityType)) {
+                NodeDocument doc = session.get(NodeDocument.class, nodeUuid);
+                if (doc != null && doc.getText() != null) {
+                    terms = analyzeToTerms(NodeDocument.TEXT_FIELD, doc.getText());
+                }
+            } else if (NodeMail.class.equals(entityType)) {
+                NodeMail mail = session.get(NodeMail.class, nodeUuid);
+                if (mail != null && mail.getContent() != null) {
+                    terms = analyzeToTerms(NodeMail.CONTENT_FIELD, mail.getContent());
+                }
+            } else {
+                // For folders or unknown types, return empty
+                terms = Collections.emptyList();
+            }
+        } finally {
+            HibernateUtil.close(session);
+        }
+
+        return terms;
+    }
+
+    private List<String> analyzeToTerms(String field, String text) throws IOException {
+        List<String> out = new ArrayList<>();
+        try (TokenStream ts = analyzer.tokenStream(field, new StringReader(text))) {
+            CharTermAttribute termAttr = ts.addAttribute(CharTermAttribute.class);
+            ts.reset();
+            while (ts.incrementToken()) {
+                out.add(termAttr.toString());
+            }
+            ts.end();
+        }
+        return out;
+    }
 }
