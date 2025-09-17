@@ -24,8 +24,8 @@ package com.openkm.servlet.admin;
 import com.openkm.cache.CacheProvider;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WebUtils;
-import net.sf.ehcache.Cache;
-import net.sf.ehcache.Statistics;
+import org.ehcache.Cache;
+import org.ehcache.core.statistics.CacheStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,7 @@ import java.util.*;
 public class CacheStatsServlet extends BaseServlet {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = LoggerFactory.getLogger(CacheStatsServlet.class);
-	static Map<String, Statistics> cacheStatistics = Collections.synchronizedMap(new TreeMap<>(Collator.getInstance()));
+    static Map<String, CacheStatistics> cacheStatistics = Collections.synchronizedMap(new TreeMap<>(Collator.getInstance()));
 	private boolean statsEnabled = false;
 
 	@Override
@@ -89,58 +89,48 @@ public class CacheStatsServlet extends BaseServlet {
 	 * Activate stats
 	 */
 	private void activate(HttpServletRequest request, HttpServletResponse response) {
-		for (String name : CacheProvider.getInstance().getOkmCacheNames()) {
-			Cache cache = CacheProvider.getInstance().getCache(name);
-
-			if (!cache.isStatisticsEnabled()) {
-				cache.setStatisticsEnabled(true);
-			}
-
-			statsEnabled = true;
-		}
+        CacheProvider.getInstance().enableStatistics(true);
+		statsEnabled = true;
+		log.info("Cache statistics view activated (Note: Statistics are configured at cache creation in Ehcache 3)");
 	}
 
 	/**
 	 * Deactivate stats
 	 */
 	private void deactivate(HttpServletRequest request, HttpServletResponse response) {
-		for (String name : CacheProvider.getInstance().getOkmCacheNames()) {
-			Cache cache = CacheProvider.getInstance().getCache(name);
-
-			if (cache.isStatisticsEnabled()) {
-				cache.setStatisticsEnabled(false);
-			}
-
+	        CacheProvider.getInstance().enableStatistics(false);
 			statsEnabled = false;
-		}
+			log.info("Cache statistics deactivated (Note: In Ehcache 3, statistics are configured at cache creation)");
 	}
 
 	/**
 	 * Clear stats
 	 */
 	private void clear(HttpServletRequest request, HttpServletResponse response) {
-		for (String name : CacheProvider.getInstance().getOkmCacheNames()) {
-			Cache cache = CacheProvider.getInstance().getCache(name);
-			cache.clearStatistics();
-		}
+		CacheProvider.getInstance().clearStatistics();
+        cacheStatistics.clear();
+		log.info("Cache statistics cleared from view");
 
-		cacheStatistics.clear();
 	}
 
 	/**
 	 * Remove all elements in cache
 	 */
 	private void reset(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		request.setCharacterEncoding("UTF-8");
-		String name = WebUtils.getString(request, "name");
+		 request.setCharacterEncoding("UTF-8");
+        String name = WebUtils.getString(request, "name");
 
-		if (name != null && !name.equals("")) {
-			Cache cache = CacheProvider.getInstance().getCache(name);
-
-			if (cache != null) {
-				cache.removeAll();
-			}
-		}
+        if (name != null && !name.equals("")) {
+            try {
+                Cache<Object, Object> cache = CacheProvider.getInstance().getCache(name);
+                if (cache != null) {
+                    cache.clear();
+                    log.info("Cache '{}' cleared", name);
+                }
+            } catch (Exception e) {
+                log.warn("Error clearing cache '{}': {}", name, e.getMessage());
+            }
+        }
 	}
 
 	/**
@@ -159,20 +149,24 @@ public class CacheStatsServlet extends BaseServlet {
 
 		List<Map<String, String>> cacheStats = new ArrayList<>();
 
-		for (String cache : cacheStatistics.keySet()) {
-			Statistics stats = cacheStatistics.get(cache);
+		  for (String cache : cacheStatistics.keySet()) {
+            CacheStatistics stats = cacheStatistics.get(cache);
 
 			Map<String, String> stat = new HashMap<>();
 			stat.put("cache", cache);
-			stat.put("cacheHits", Long.toString(stats.getCacheHits()));
-			stat.put("cacheMisses", Long.toString(stats.getCacheMisses()));
-			stat.put("objectCount", Long.toString(stats.getObjectCount()));
-			stat.put("inMemoryHits", Long.toString(stats.getInMemoryHits()));
-			stat.put("inMemoryMisses", Long.toString(stats.getInMemoryMisses()));
-			stat.put("memoryStoreObjectCount", Long.toString(stats.getMemoryStoreObjectCount()));
-			stat.put("onDiskHits", Long.toString(stats.getOnDiskHits()));
-			stat.put("onDiskMisses", Long.toString(stats.getOnDiskMisses()));
-			stat.put("diskStoreObjectCount", Long.toString(stats.getDiskStoreObjectCount()));
+			stat.put("cacheHits", String.valueOf(stats.getCacheHits()));
+			stat.put("cacheMisses", String.valueOf(stats.getCacheMisses()));
+			stat.put("cacheMisses", String.valueOf(stats.getCacheMisses()));
+            stat.put("cachePuts", String.valueOf(stats.getCachePuts()));
+            stat.put("cacheRemovals", String.valueOf(stats.getCacheRemovals()));
+            stat.put("cacheEvictions", String.valueOf(stats.getCacheEvictions()));
+			stat.put("objectCount", "N/A");
+			stat.put("inMemoryHits", "N/A");
+			stat.put("inMemoryMisses", "N/A");
+			stat.put("memoryStoreObjectCount", "N/A");
+			stat.put("onDiskHits", "N/A");
+			stat.put("onDiskMisses", "N/A");
+			stat.put("diskStoreObjectCount","0");
 
 			cacheStats.add(stat);
 		}
@@ -191,12 +185,14 @@ public class CacheStatsServlet extends BaseServlet {
 	/**
 	 * Refresh stats
 	 */
-	private synchronized void refresh() {
-		cacheStatistics.clear();
+	 private synchronized void refresh() {
+         cacheStatistics.clear();
 
-		for (String name : CacheProvider.getInstance().getOkmCacheNames()) {
-			Cache cache = CacheProvider.getInstance().getCache(name);
-			cacheStatistics.put(name, cache.getStatistics());
-		}
-	}
+        for (String name : CacheProvider.getInstance().getOkmCacheNames()) {
+            CacheStatistics stats = CacheProvider.getInstance().getStatistics(name);
+            if (stats != null) {
+                cacheStatistics.put(name, stats);
+            }
+        }
+    }
 }

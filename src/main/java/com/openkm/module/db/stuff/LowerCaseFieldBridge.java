@@ -1,47 +1,47 @@
-/**
- * OpenKM, Open Document Management System (http://www.openkm.com)
- * Copyright (c) Paco Avila & Josep Llort
- * <p>
- * No bytes were intentionally harmed during the development of this application.
- * <p>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * <p>
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
 package com.openkm.module.db.stuff;
 
-import org.apache.lucene.document.Document;
-import org.hibernate.search.bridge.FieldBridge;
-import org.hibernate.search.bridge.LuceneOptions;
+import org.hibernate.search.engine.backend.document.DocumentElement;
+import org.hibernate.search.engine.backend.document.IndexFieldReference;
+import org.hibernate.search.mapper.pojo.bridge.PropertyBridge;
+import org.hibernate.search.mapper.pojo.bridge.runtime.PropertyBridgeWriteContext;
+import org.hibernate.search.mapper.pojo.bridge.binding.PropertyBindingContext;
+import org.hibernate.search.mapper.pojo.bridge.mapping.programmatic.PropertyBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @author pavila
- */
-public class LowerCaseFieldBridge implements FieldBridge {
-	private static Logger log = LoggerFactory.getLogger(LowerCaseFieldBridge.class);
+@SuppressWarnings("rawtypes")
+public class LowerCaseFieldBridge implements PropertyBridge {
 
-	@Override
-	public void set(String name, Object value, Document document, LuceneOptions luceneOptions) {
-		if (value instanceof String) {
-			String str = ((String) value).toLowerCase();
-			log.debug("Added field '{}' with value '{}'", name, str);
-			luceneOptions.addFieldToDocument(name, str, document);
-		} else {
-			log.warn("IllegalArgumentException: Support only String");
-			throw new IllegalArgumentException("Support only String");
-		}
-	}
+    private static final Logger log = LoggerFactory.getLogger(LowerCaseFieldBridge.class);
+    private final IndexFieldReference<String> fieldReference;
+
+    public LowerCaseFieldBridge(IndexFieldReference<String> fieldReference) {
+        this.fieldReference = fieldReference;
+    }
+
+    @Override
+    public void write(DocumentElement target, Object bridgedElement, PropertyBridgeWriteContext context) {
+        if (bridgedElement instanceof String) {
+            String str = ((String) bridgedElement).toLowerCase();
+            log.debug("Added field with value '{}'", str);
+            target.addValue(fieldReference, str);
+        } else {
+            log.warn("IllegalArgumentException: Support only String");
+            throw new IllegalArgumentException("Support only String");
+        }
+    }
+
+    public static class Binder implements PropertyBinder {
+        @SuppressWarnings("unchecked")
+		@Override
+        public void bind(PropertyBindingContext context) {
+            String fieldName = context.bridgedElement().name();
+
+            IndexFieldReference<String> fieldRef = context.indexSchemaElement()
+                .field(fieldName, f -> f.asString())
+                .toReference();
+
+            context.bridge(String.class, new LowerCaseFieldBridge(fieldRef));
+        }
+    }
 }

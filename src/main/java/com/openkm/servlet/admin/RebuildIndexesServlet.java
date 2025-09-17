@@ -33,11 +33,11 @@ import com.openkm.util.FileLogger;
 import com.openkm.util.StackTraceUtils;
 import com.openkm.util.UserActivity;
 import com.openkm.util.WebUtils;
+
 import org.hibernate.*;
-import org.hibernate.search.FullTextSession;
-import org.hibernate.search.Search;
-import org.hibernate.search.SearchFactory;
-import org.hibernate.search.batchindexing.MassIndexerProgressMonitor;
+import org.hibernate.search.mapper.orm.Search;
+import org.hibernate.search.mapper.orm.massindexing.MassIndexer;
+import org.hibernate.search.mapper.pojo.massindexing.MassIndexingMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,12 +57,10 @@ public class RebuildIndexesServlet extends BaseServlet {
 	private static final long serialVersionUID = 1L;
 	private static Logger log = LoggerFactory.getLogger(RebuildIndexesServlet.class);
 	private static final String BASE_NAME = RebuildIndexesServlet.class.getSimpleName();
-	private static volatile boolean optimizeIndexesRunning = false;
 	private static final String[][] breadcrumb = new String[][]{
 			new String[]{"utilities.jsp", "Utilities"},
 			new String[]{"rebuild_indexes.jsp", "Rebuild indexes"}
 	};
-
 	@SuppressWarnings("rawtypes")
 	Class[] classes = new Class[]{NodeDocument.class, NodeFolder.class, NodeMail.class};
 
@@ -182,13 +180,12 @@ public class RebuildIndexesServlet extends BaseServlet {
 		header(out, "Rebuild Lucene indexes", breadcrumb);
 		out.flush();
 
-		FullTextSession ftSession = null;
-		Session session = null;
-		Transaction tx = null;
+      
 
 		// Activity log
 		UserActivity.log(request.getRemoteUser(), "ADMIN_FORCE_REBUILD_INDEXES", null, null, null);
-
+		Session session = HibernateUtil.getSessionFactory().openSession();
+		Transaction tx = session.beginTransaction();
 		try {
 			Config.SYSTEM_MAINTENANCE = true;
 			Config.SYSTEM_READONLY = true;
@@ -196,11 +193,8 @@ public class RebuildIndexesServlet extends BaseServlet {
 			out.println("<li>System into maintenance mode</li>");
 			FileLogger.info(BASE_NAME, "BEGIN - Rebuild Lucene indexes");
 
-			session = HibernateUtil.getSessionFactory().openSession();
-			ftSession = Search.getFullTextSession(session);
-			ftSession.setFlushMode(FlushMode.MANUAL);
-			ftSession.setCacheMode(CacheMode.IGNORE);
-			tx = ftSession.beginTransaction();
+			
+
 			Map<String, Long> total = new HashMap<>();
 
 			// Calculate number of entities
@@ -220,28 +214,24 @@ public class RebuildIndexesServlet extends BaseServlet {
 			out.flush();
 
 			// Scrollable results will avoid loading too many objects in memory
-			for (Class cls : classes) {
-				String nodeType = cls.getSimpleName();
-				out.println("<li>Indexing " + nodeType + "</li>");
-				out.flush();
+			var searchSession = Search.session(session);
+            for (Class<?> cls : classes) {
+                long processed = 0;
+                ProgressMonitor monitor =
+                        new ProgressMonitor(out, cls.getSimpleName(), total.get(cls.getSimpleName()));
 
-				ProgressMonitor monitor = new ProgressMonitor(out, nodeType, total.get(nodeType));
-				ScrollableResults results = ftSession.createCriteria(cls)
-						.setFetchSize(Config.HIBERNATE_INDEXER_BATCH_SIZE_LOAD_OBJECTS)
-						.scroll(ScrollMode.FORWARD_ONLY);
-				int index = 0;
-
-				while (results.next()) {
-					monitor.documentsAdded(1);
-					ftSession.index(results.get(0)); // Index each element
-
-					if (index++ % Config.HIBERNATE_INDEXER_BATCH_SIZE_LOAD_OBJECTS == 0) {
-						ftSession.flushToIndexes(); // Apply changes to indexes
-						ftSession.clear(); // Free memory since the queue is processed
-					}
-				}
-			}
-
+                var query = session.createQuery("from " + cls.getName(), cls)
+                                   .setFetchSize(Config.HIBERNATE_INDEXER_BATCH_SIZE_LOAD_OBJECTS);
+                for (Object entity : query.list()) {
+                    searchSession.indexingPlan().addOrUpdate(entity);
+                    processed++;
+                    monitor.documentsAdded(1);
+                    if (processed % Config.HIBERNATE_INDEXER_BATCH_SIZE_LOAD_OBJECTS == 0) {
+                        session.flush();
+                        session.clear();
+                    }
+                }
+            }
 			tx.commit();
 
 			Config.SYSTEM_READONLY = false;
@@ -261,8 +251,7 @@ public class RebuildIndexesServlet extends BaseServlet {
 		} finally {
 			Config.SYSTEM_READONLY = false;
 			Config.SYSTEM_MAINTENANCE = false;
-			HibernateUtil.close(ftSession);
-			HibernateUtil.close(session);
+			session.close();
 		}
 
 		// Finalized
@@ -287,7 +276,6 @@ public class RebuildIndexesServlet extends BaseServlet {
 		header(out, "Rebuild Lucene indexes", breadcrumb);
 		out.flush();
 
-		FullTextSession ftSession = null;
 		Session session = null;
 
 		// Activity log
@@ -301,7 +289,6 @@ public class RebuildIndexesServlet extends BaseServlet {
 			FileLogger.info(BASE_NAME, "BEGIN - Rebuild Lucene indexes");
 
 			session = HibernateUtil.getSessionFactory().openSession();
-			ftSession = Search.getFullTextSession(session);
 			long total = 0;
 
 			// Calculate number of entities
@@ -319,14 +306,14 @@ public class RebuildIndexesServlet extends BaseServlet {
 			// Rebuild indexes
 			out.println("<li>Rebuilding indexes</li>");
 			out.flush();
-			ProgressMonitor monitor = new ProgressMonitor(out, "NodeBase", (int) total);
-			ftSession.createIndexer()
-					.batchSizeToLoadObjects(Config.HIBERNATE_INDEXER_BATCH_SIZE_LOAD_OBJECTS)
-					.threadsForSubsequentFetching(Config.HIBERNATE_INDEXER_THREADS_SUBSEQUENT_FETCHING)
-					.threadsToLoadObjects(Config.HIBERNATE_INDEXER_THREADS_LOAD_OBJECTS)
-					.threadsForIndexWriter(Config.HIBERNATE_INDEXER_THREADS_INDEX_WRITER)
-					.cacheMode(CacheMode.NORMAL) // defaults to CacheMode.IGNORE
-					.progressMonitor(monitor).startAndWait();
+			MassIndexer indexer = Search.session(session)
+                    .massIndexer(classes)
+                    .batchSizeToLoadObjects(Config.HIBERNATE_INDEXER_BATCH_SIZE_LOAD_OBJECTS)
+                    .threadsToLoadObjects(Config.HIBERNATE_INDEXER_THREADS_LOAD_OBJECTS)
+                    .typesToIndexInParallel(Config.HIBERNATE_INDEXER_THREADS_SUBSEQUENT_FETCHING)
+                    .monitor(new ProgressMonitor(out, "NodeBase", total));
+
+            indexer.startAndWait();
 
 			Config.SYSTEM_READONLY = false;
 			Config.SYSTEM_MAINTENANCE = false;
@@ -344,8 +331,7 @@ public class RebuildIndexesServlet extends BaseServlet {
 		} finally {
 			Config.SYSTEM_READONLY = false;
 			Config.SYSTEM_MAINTENANCE = false;
-			HibernateUtil.close(ftSession);
-			HibernateUtil.close(session);
+			session.close();
 		}
 
 		// Finalized
@@ -361,7 +347,7 @@ public class RebuildIndexesServlet extends BaseServlet {
 
 	/**
 	 * Perform index optimization
-	 */
+	 
 	private void optimizeIndexes(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		PrintWriter out = response.getWriter();
 		response.setContentType(MimeTypeConfig.MIME_HTML);
@@ -412,9 +398,8 @@ public class RebuildIndexesServlet extends BaseServlet {
 
 	/**
 	 * Do real indexes optimization.
-	 */
+	 
 	public static void optimizeIndexes() throws Exception {
-		FullTextSession ftSession = null;
 		Session session = null;
 
 		if (optimizeIndexesRunning) {
@@ -425,27 +410,32 @@ public class RebuildIndexesServlet extends BaseServlet {
 
 			try {
 				session = HibernateUtil.getSessionFactory().openSession();
-				ftSession = Search.getFullTextSession(session);
 
-				// Optimize indexes
-				SearchFactory searchFactory = ftSession.getSearchFactory();
-				searchFactory.optimize();
 			} catch (Exception e) {
 				throw e;
 			} finally {
 				optimizeIndexesRunning = false;
-				HibernateUtil.close(ftSession);
-				HibernateUtil.close(session);
+				session.close();
 			}
 
 			log.debug("*** End optimize indexes ***");
 		}
-	}
+	}*/
+	 private void optimizeIndexes(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        PrintWriter out = resp.getWriter();
+        resp.setContentType(MimeTypeConfig.MIME_HTML);
+        header(out, "Optimize indexes", breadcrumb);
+        UserActivity.log(req.getRemoteUser(), "ADMIN_FORCE_OPTIMIZE_INDEXES", null, null, null);
+
+        out.println("<ul><li>No manual optimization required in Hibernate Search 6+</li></ul>");
+        footer(out);
+    }
 
 	/**
 	 * Indexer progress monitor
 	 */
-	class ProgressMonitor implements MassIndexerProgressMonitor {
+	class ProgressMonitor implements MassIndexingMonitor {
 		private PrintWriter pw = null;
 		private long count = 0;
 		private long total = 0;
@@ -493,19 +483,19 @@ public class RebuildIndexesServlet extends BaseServlet {
 		}
 
 		@Override
-		public void documentsBuilt(int number) {
-		}
-
-		@Override
-		public void entitiesLoaded(int size) {
-		}
-
-		@Override
 		public void addToTotalCount(long count) {
 		}
 
 		@Override
 		public void indexingCompleted() {
+		}
+
+		@Override
+		public void documentsBuilt(long arg0) {
+		}
+
+		@Override
+		public void entitiesLoaded(long arg0) {
 		}
 	}
 }

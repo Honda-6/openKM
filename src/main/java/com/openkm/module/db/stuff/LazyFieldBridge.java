@@ -1,48 +1,54 @@
-/**
- * OpenKM, Open Document Management System (http://www.openkm.com)
- * Copyright (c) Paco Avila & Josep Llort
- * <p>
- * No bytes were intentionally harmed during the development of this application.
- * <p>
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- * <p>
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * <p>
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- */
-
 package com.openkm.module.db.stuff;
 
-import org.apache.lucene.document.Document;
-import org.hibernate.search.bridge.FieldBridge;
-import org.hibernate.search.bridge.LuceneOptions;
+import com.openkm.extractor.RegisteredExtractors;
+import org.hibernate.search.engine.backend.document.DocumentElement;
+import org.hibernate.search.engine.backend.document.IndexFieldReference;
+import org.hibernate.search.mapper.pojo.bridge.PropertyBridge;
+import org.hibernate.search.mapper.pojo.bridge.binding.PropertyBindingContext;
+import org.hibernate.search.mapper.pojo.bridge.mapping.programmatic.PropertyBinder;
+import org.hibernate.search.mapper.pojo.bridge.runtime.PropertyBridgeWriteContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @author pavila
- * @see http://community.jboss.org/wiki/HibernateSearchAndOfflineTextExtraction
- */
-public class LazyFieldBridge implements FieldBridge {
-	private static Logger log = LoggerFactory.getLogger(LazyFieldBridge.class);
+import java.io.IOException;
 
-	@Override
-	public void set(String name, Object value, Document document, LuceneOptions luceneOptions) {
-		if (value instanceof PersistentFile) {
-			PersistentFile pf = (PersistentFile) value;
-			LazyField field = new LazyField(name, pf, luceneOptions);
-			document.add(field);
-		} else {
-			log.warn("IllegalArgumentException: Support only String");
-			throw new IllegalArgumentException("Support only String");
-		}
-	}
+public class LazyFieldBridge implements PropertyBridge<PersistentFile> {
+
+    private static final Logger log = LoggerFactory.getLogger(LazyFieldBridge.class);
+    private final IndexFieldReference<String> contentField;
+
+    public LazyFieldBridge(IndexFieldReference<String> contentField) {
+        this.contentField = contentField;
+    }
+
+    @Override
+    public void write(DocumentElement target,
+                      PersistentFile persistentFile,
+                      PropertyBridgeWriteContext context) {
+        if (persistentFile == null) {
+            return;
+        }
+        try {
+            // Extract only when indexing
+            String text = RegisteredExtractors.getText(persistentFile);
+            target.addValue(contentField, text);
+            log.debug("Indexed lazy content for {}", persistentFile);
+        } catch (IOException e) {
+            log.error("Text extraction failed for {}", persistentFile, e);
+        }
+    }
+
+    /**
+     * Binder to register the bridge in your entity mapping.
+     */
+    public static class Binder implements PropertyBinder {
+        @Override
+        public void bind(PropertyBindingContext ctx) {
+            IndexFieldReference<String> ref = ctx.indexSchemaElement()
+                    .field(ctx.bridgedElement().name(),
+                           f -> f.asString().analyzer("standard"))
+                    .toReference();
+            ctx.bridge(PersistentFile.class, new LazyFieldBridge(ref));
+        }
+    }
 }

@@ -21,9 +21,13 @@
 
 package com.openkm.module.db.stuff;
 
-import org.apache.lucene.document.Document;
-import org.hibernate.search.bridge.FieldBridge;
-import org.hibernate.search.bridge.LuceneOptions;
+import org.hibernate.search.engine.backend.document.DocumentElement;
+import org.hibernate.search.engine.backend.document.IndexFieldReference;
+import org.hibernate.search.mapper.pojo.bridge.PropertyBridge;
+import org.hibernate.search.mapper.pojo.bridge.runtime.PropertyBridgeWriteContext;
+
+import org.hibernate.search.mapper.pojo.bridge.binding.PropertyBindingContext;
+import org.hibernate.search.mapper.pojo.bridge.mapping.programmatic.PropertyBinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,30 +36,55 @@ import java.util.Set;
 /**
  * @author pavila
  */
-public class SetFieldBridge implements FieldBridge {
+@SuppressWarnings("rawtypes")
+public class SetFieldBridge implements PropertyBridge  {
 	private static Logger log = LoggerFactory.getLogger(SetFieldBridge.class);
 
+    private final IndexFieldReference<String> fieldReference;
+
+    public SetFieldBridge(IndexFieldReference<String> fieldReference) {
+        this.fieldReference = fieldReference;
+    }
+
 	@Override
-	public void set(String name, Object value, Document document, LuceneOptions luceneOptions) {
-		if (value instanceof Set<?>) {
-			@SuppressWarnings("unchecked")
-			Set<String> set = (Set<String>) value;
+	public void write(DocumentElement target, Object bridgedElement, PropertyBridgeWriteContext context) {
+		
+		if (bridgedElement instanceof Set<?>) {
+            @SuppressWarnings("unchecked")
+            Set<String> set = (Set<String>) bridgedElement;
 
-			for (String elto : set) {
-				if ("keywords".equals(name)) {
-					name = "keyword";
-				} else if ("categories".equals(name)) {
-					name = "category";
-				} else if ("subscriptors".equals(name)) {
-					name = "subscriptor";
-				}
-
-				log.debug("Added field '{}' with value '{}'", name, elto);
-				luceneOptions.addFieldToDocument(name, elto, document);
-			}
-		} else {
-			log.warn("IllegalArgumentException: Support only Set<String>");
-			throw new IllegalArgumentException("Support only Set<String>");
+            for (String elto : set) {
+                log.debug("Added field '{}' with value '{}'", fieldReference, elto);
+                target.addValue(fieldReference, elto);
+            }
+        } else {
+            log.warn("IllegalArgumentException: Support only Set<String>");
+            throw new IllegalArgumentException("Support only Set<String>");
 		}
+
 	}
+    
+public static class SetFieldBridgeBinder implements PropertyBinder {
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void bind(PropertyBindingContext context) {
+        String fieldName = context.bridgedElement().name();
+
+        if ("keywords".equals(fieldName)) {
+            fieldName = "keyword";
+        } else if ("categories".equals(fieldName)) {
+            fieldName = "category";
+        } else if ("subscriptors".equals(fieldName)) {
+            fieldName = "subscriptor";
+        }
+
+        IndexFieldReference<String> fieldRef = context.indexSchemaElement()
+            .field(fieldName, f -> f.asString())
+            .toReference();
+
+        context.bridge(Set.class, new SetFieldBridge(fieldRef));
+    }
+}
+
 }

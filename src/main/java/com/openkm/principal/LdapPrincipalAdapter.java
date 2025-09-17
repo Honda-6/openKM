@@ -250,7 +250,7 @@ public class LdapPrincipalAdapter implements PrincipalAdapter {
 	private List<String> ldapSearch(String cache, String key, List<String> searchBases, String searchFilter, String attribute) {
 		log.debug("ldapSearch({}, {}, {}, {}, {})", cache, key, searchBases, searchFilter, attribute);
 		List<String> al = new ArrayList<>();
-		Cache ldapResultCache = CacheProvider.getInstance().getCache(cache);
+		Cache ldapResultCache = (Cache) CacheProvider.getInstance().getCache(cache);
 		Element elto = ldapResultCache.get(key);
 		DirContext ctx = null;
 

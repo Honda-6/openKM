@@ -510,7 +510,7 @@ public class SearchDAO {
     @SuppressWarnings("unchecked")
     public List<String> findFoldersInDepth(String parentUuid) throws PathNotFoundException, DatabaseException {
         log.debug("findFoldersInDepth({})", parentUuid);
-        Cache fldResultCache = CacheProvider.getInstance().getCache(CACHE_SEARCH_FOLDERS_IN_DEPTH);
+        Cache fldResultCache = (Cache) CacheProvider.getInstance().getCache(CACHE_SEARCH_FOLDERS_IN_DEPTH);
         String key = "searchFoldersInDepth:" + PrincipalUtils.getUser();
         Element elto = fldResultCache.get(key);
         List<String> ret;

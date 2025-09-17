@@ -130,7 +130,7 @@ public class RepositoryStartupServlet extends HttpServlet {
 
 		try {
 			log.info("*** Shutting down cache manager... ***");
-			CacheProvider.getInstance().getManager().shutdown();
+			// CacheProvider.getInstance().getManager().shutdown();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}

@@ -981,7 +981,7 @@ public class DbDashboardModule implements DashboardModule {
 			throws DatabaseException {
 		log.debug("getTopDocuments({}, {}, {}, {})", user, source, qs, (date != null ? date.getTime() : "null"));
 		List<DashboardDocumentResult> al = new ArrayList<>();
-		Cache docResultCache = CacheProvider.getInstance().getCache(CACHE_DASHBOARD_TOP_DOCUMENTS);
+		Cache docResultCache = (Cache) CacheProvider.getInstance().getCache(CACHE_DASHBOARD_TOP_DOCUMENTS);
 		String key = source + ":" + user;
 		Element elto = docResultCache.get(key);
 
@@ -1092,7 +1092,7 @@ public class DbDashboardModule implements DashboardModule {
 			throws RepositoryException, DatabaseException {
 		log.debug("getTopFolders({}, {}, {}, {})", user, source, qs, (date != null ? date.getTime() : "null"));
 		List<DashboardFolderResult> al = new ArrayList<>();
-		Cache fldResultCache = CacheProvider.getInstance().getCache(CACHE_DASHBOARD_TOP_FOLDERS);
+		Cache fldResultCache = (Cache) CacheProvider.getInstance().getCache(CACHE_DASHBOARD_TOP_FOLDERS);
 		String key = source + ":" + user;
 		Element elto = fldResultCache.get(key);
 
@@ -1297,7 +1297,7 @@ public class DbDashboardModule implements DashboardModule {
 	private ArrayList<DashboardDocumentResult> getUserDocuments(String user, String source, String qs) throws DatabaseException {
 		log.debug("getUserDocuments({}, {}, {})", user, source, qs);
 		ArrayList<DashboardDocumentResult> al = new ArrayList<>();
-		Cache docResultCache = CacheProvider.getInstance().getCache(CACHE_DASHBOARD_USER_DOCUMENTS);
+		Cache docResultCache = (Cache) CacheProvider.getInstance().getCache(CACHE_DASHBOARD_USER_DOCUMENTS);
 		String key = source + ":" + user;
 		Element elto = docResultCache.get(key);
 
@@ -1351,7 +1351,7 @@ public class DbDashboardModule implements DashboardModule {
 	private ArrayList<DashboardMailResult> getUserMails(String user, String source, String qs) throws DatabaseException {
 		log.debug("getUserMails({}, {}, {})", user, source, qs);
 		ArrayList<DashboardMailResult> al = new ArrayList<>();
-		Cache mailResultCache = CacheProvider.getInstance().getCache(CACHE_DASHBOARD_USER_MAILS);
+		Cache mailResultCache = (Cache) CacheProvider.getInstance().getCache(CACHE_DASHBOARD_USER_MAILS);
 		String key = source + ":" + user;
 		Element elto = mailResultCache.get(key);
 
