@@ -32,6 +32,8 @@ import org.apache.lucene.search.highlight.*;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.search.backend.lucene.LuceneExtension;
+import org.hibernate.search.engine.search.query.SearchQuery;
 import org.hibernate.search.engine.search.query.SearchResult;
 import org.hibernate.search.mapper.orm.Search;
 import org.hibernate.search.mapper.orm.session.SearchSession;
@@ -254,7 +256,7 @@ public class SearchDAO {
     /**
      * Core fetch/filter/highlight flow used by all strategies.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "deprecation" })
     private NodeResultSet filterAndCollect(SearchSession ss, Query luceneQuery, int offset, int limit,
                                            PendingCountStrategy strategy)
             throws IOException, InvalidTokenOffsetsException, DatabaseException {
@@ -264,11 +266,12 @@ public class SearchDAO {
 
         // Build a projector to get score + entity
         var search = ss.search(types);
-        var resultWithProjection = search.select(f -> f.composite(
-                (Float score, Object entity) -> new AbstractMap.SimpleEntry<>(score, entity),
-                f.score(),
-                f.entity()
-        ));
+        var resultWithProjection = search.extension(LuceneExtension.get())
+                .select(f -> f.composite(
+                    (Float score, Object entity) -> new AbstractMap.SimpleEntry<>(score, entity),
+                    f.score(),
+                    f.entity()
+                ));
 
         // We fetch in chunks to honor offset semantics after access checks.
         final int pageSize = Math.max(limit * 2, 50); // heuristic to reduce round-trips
@@ -289,8 +292,8 @@ public class SearchDAO {
 
         // First, skip readable docs until we reach the desired offset
         while (true) {
-            SearchResult<AbstractMap.SimpleEntry<Float, Object>> pageResult = resultWithProjection
-                    .where(f -> f.luceneQuery(luceneQuery))
+            var pageResult = resultWithProjection
+                    .where(f -> f.fromLuceneQuery(luceneQuery))
                     .fetch(page * pageSize, pageSize);
 
             List<AbstractMap.SimpleEntry<Float, Object>> hits = pageResult.hits();
@@ -307,18 +310,18 @@ public class SearchDAO {
                     } else if (out.size() < limit) {
                         addResult(ss, out, highlighter, hit.getKey(), nBase);
                     } else {
+                        
                         // We've filled the window; we may still need to count "pending" depending on strategy
                         switch (strategy) {
                             case MORE -> {
-                                totalCountForStrategy = countMoreReadable(ss, resultWithProjection, luceneQuery,
-                                        page, hits.indexOf(hit), scannedReadable + out.size(), offset, limit, am);
+                                totalCountForStrategy = countMoreReadable(resultWithProjection.where(f -> f.fromLuceneQuery(luceneQuery)).toQuery(),page, hits.indexOf(hit), scannedReadable + out.size(), offset, limit, am);
                                 NodeResultSet res = new NodeResultSet();
                                 res.setResults(out);
                                 res.setTotal(totalCountForStrategy);
                                 return res;
                             }
                             case WINDOW -> {
-                                totalCountForStrategy = countWindowReadable(ss, resultWithProjection, luceneQuery,
+                                totalCountForStrategy = countWindowReadable(resultWithProjection.where(f -> f.fromLuceneQuery(luceneQuery)).toQuery(),
                                         page, hits.indexOf(hit), scannedReadable + out.size(), offset, limit, am);
                                 NodeResultSet res = new NodeResultSet();
                                 res.setResults(out);
@@ -327,7 +330,7 @@ public class SearchDAO {
                             }
                             case LIMITED -> {
                                 // We’ll compute total up to MAX_SEARCH_RESULTS readable (cap)
-                                totalCountForStrategy = countLimitedReadable(ss, resultWithProjection, luceneQuery,
+                                totalCountForStrategy = countLimitedReadable(resultWithProjection.where(f -> f.fromLuceneQuery(luceneQuery)).toQuery(),
                                         page, hits.indexOf(hit), scannedReadable + out.size(), offset, limit, am);
                                 NodeResultSet res = new NodeResultSet();
                                 res.setResults(out);
@@ -356,9 +359,7 @@ public class SearchDAO {
     /* -------------------- Pending count helpers -------------------- */
 
     private int countMoreReadable(
-            SearchSession ss,
-            var resultWithProjection,
-            Query luceneQuery,
+            SearchQuery<AbstractMap.SimpleEntry<Float, Object>> query,
             int currentPage,
             int currentIndexInPage,
             int alreadyCounted,
@@ -367,14 +368,12 @@ public class SearchDAO {
             DbAccessManager am
     ) {
         // Continue counting readable docs until we have (offset + limit + 1)
-        return countUntil(ss, resultWithProjection, luceneQuery,
+        return countUntil(query,
                 currentPage, currentIndexInPage, alreadyCounted, offset + limit + 1, am);
     }
 
     private int countWindowReadable(
-            SearchSession ss,
-            var resultWithProjection,
-            Query luceneQuery,
+            SearchQuery<AbstractMap.SimpleEntry<Float, Object>> query,
             int currentPage,
             int currentIndexInPage,
             int alreadyCounted,
@@ -383,14 +382,12 @@ public class SearchDAO {
             DbAccessManager am
     ) {
         // Continue counting up to offset + limit*2
-        return countUntil(ss, resultWithProjection, luceneQuery,
+        return countUntil( query,
                 currentPage, currentIndexInPage, alreadyCounted, offset + (limit * 2), am);
     }
 
     private int countLimitedReadable(
-            SearchSession ss,
-            var resultWithProjection,
-            Query luceneQuery,
+            SearchQuery<AbstractMap.SimpleEntry<Float, Object>> query,
             int currentPage,
             int currentIndexInPage,
             int alreadyCounted,
@@ -399,40 +396,45 @@ public class SearchDAO {
             DbAccessManager am
     ) {
         // Continue counting up to Config.MAX_SEARCH_RESULTS (cap)
-        return countUntil(ss, resultWithProjection, luceneQuery,
+        return countUntil( query,
                 currentPage, currentIndexInPage, alreadyCounted, Config.MAX_SEARCH_RESULTS, am);
     }
 
     @SuppressWarnings("unchecked")
     private int countUntil(
-            SearchSession ss,
-            var resultWithProjection,
-            Query luceneQuery,
+            SearchQuery<AbstractMap.SimpleEntry<Float, Object>> query,
             int page,
             int indexInPage,
             int alreadyCountedReadable,
             int targetReadableCount,
             DbAccessManager am
     ) {
+        
         final int pageSize = 200; // just for counting
         int readable = alreadyCountedReadable;
         int currentPage = page;
         int startIndex = indexInPage; // continue within current page
 
         while (readable < targetReadableCount) {
-            SearchResult<AbstractMap.SimpleEntry<Float, Object>> r = resultWithProjection
-                    .where(f -> f.luceneQuery(luceneQuery))
-                    .fetch(currentPage * pageSize, pageSize);
+            
+            
+        var r = query.fetch(currentPage * pageSize, pageSize);
+        List<AbstractMap.SimpleEntry<Float, Object>> hits = r.hits();
 
-            List<AbstractMap.SimpleEntry<Float, Object>> hits = r.hits();
+
             if (hits.isEmpty()) break;
 
             for (int i = startIndex; i < hits.size(); i++) {
                 Object entity = hits.get(i).getValue();
                 if (entity instanceof NodeBase nBase) {
-                    if (am.isGranted(nBase, Permission.READ)) {
-                        readable++;
-                        if (readable >= targetReadableCount) break;
+                    try {
+                        if (am.isGranted(nBase, Permission.READ)) {
+                            readable++;
+                            if (readable >= targetReadableCount) break;
+                        }
+                    } catch (DatabaseException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
                     }
                 }
             }

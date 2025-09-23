@@ -92,6 +92,10 @@
       <name>OpenKM Maven Repository</name>
       <url>https://maven.openkm.com</url>
     </repository>
+    <!-- <repository>
+      <id>central</id>
+      <url>https://repo1.maven.org/maven2/</url>
+   </repository> -->
   </repositories>
 
   <dependencies>
@@ -197,7 +201,7 @@
     <dependency>
       <groupId>commons-io</groupId>
       <artifactId>commons-io</artifactId>
-      <version>2.4</version>
+      <version>2.15.1</version>
     </dependency>
     <dependency>
       <groupId>commons-fileupload</groupId>
@@ -489,19 +493,19 @@
       <artifactId>gwt-servlet</artifactId>
       <version>${gwt.version}</version>
       <scope>runtime</scope>
-    </dependency>
-    <dependency>
+    </dependency> -->
+    <!-- <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-user</artifactId>
-      <version>${gwt.version}</version>
+      <version>2.9.0</version>
       <scope>provided</scope>
     </dependency> -->
     <!-- Only for development -->
-    <!--
+<!-- 
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-dev</artifactId>
-      <version>${gwt.version}</version>
+      <version>2.9.0</version>
       <scope>provided</scope>
     </dependency> -->
 
@@ -988,6 +992,12 @@
       <version>2.12.0</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.gwtproject</groupId>
+      <artifactId>gwt-dev</artifactId>
+      <version>2.12.0</version>
+      <scope>provided</scope>
+    </dependency>
     <!-- <dependency>
       <groupId>net.sf.ehcache</groupId>
       <artifactId>ehcache</artifactId>
@@ -999,7 +1009,16 @@
       <version>3.10.0</version>
     </dependency>
   
-
+    <!-- <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
+      <version>2.3.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.3</version>
+    </dependency> -->
   </dependencies>
 
   <build>
@@ -1076,6 +1095,7 @@
               </execution>
             </executions>
             <configuration>
+              <moduleName>com.openkm.frontend.Main</moduleName>
               <runTarget>frontend/index.html</runTarget>
               <modules>
                 <module>com.openkm.frontend.Main</module>
